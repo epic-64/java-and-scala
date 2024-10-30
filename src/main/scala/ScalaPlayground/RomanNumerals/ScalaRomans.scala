@@ -25,33 +25,31 @@ class ScalaRomansImperative extends Romans:
     val sb        = new StringBuilder
     var remaining = number
 
-    for ((value, numeral) <- valueList) {
+    for ((value, numeral) <- valueList)
       while (remaining >= value) {
         sb.append(numeral)
         remaining -= value
       }
-    }
 
     sb.toString()
   }
-  
+
   override def toInt(roman: String): Int = {
-    var result = 0
+    var result    = 0
     var remaining = roman
-    
-    for ((value, numeral) <- valueList) {
+
+    for ((value, numeral) <- valueList)
       while (remaining.startsWith(numeral)) {
         result += value
         remaining = remaining.substring(numeral.length)
       }
-    }
-    
+
     result
   }
 end ScalaRomansImperative
 
 class ScalaRomansPipeline extends Romans:
-  override def toNumeral(number: Int): String = {
+  override def toNumeral(number: Int): String =
     ("I" * number)
       .replace("IIIII", "V")
       .replace("IIII", "IV")
@@ -65,11 +63,10 @@ class ScalaRomansPipeline extends Romans:
       .replace("CCCC", "CD")
       .replace("DD", "M")
       .replace("DCD", "CM")
-      // custom edge cases
-      //.replace("CMXCIX", "IM") // 999
-      //.replace("XCIX", "IC")   // 99
-  }
-  
+    // custom edge cases
+    // .replace("CMXCIX", "IM") // 999
+    // .replace("XCIX", "IC")   // 99
+
   override def toInt(roman: String): Int =
     roman
       .replace("CM", "DCD")
