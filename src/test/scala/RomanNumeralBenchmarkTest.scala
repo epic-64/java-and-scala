@@ -1,7 +1,7 @@
 import ScalaPlayground.RomanNumerals.ScalaRomansImperative
 import org.scalatest.funsuite.AnyFunSuite
 
-class RomanNumeralsBenchmarkTest extends AnyFunSuite {
+class RomanNumeralBenchmarkTest extends AnyFunSuite {
   test("benchmark the performance of Roman Numerals implementations") {
     def checkDuration(action: Int => String, input: Int, iterations: Int, message: String): Unit = {
       val now = System.nanoTime()

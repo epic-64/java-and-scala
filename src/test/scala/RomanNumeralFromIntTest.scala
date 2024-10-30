@@ -4,7 +4,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.prop.TableDrivenPropertyChecks.*
 import org.scalatest.prop.TableFor2
 
-class IntToRomanNumeralTest extends AnyFunSuite {
+class RomanNumeralFromIntTest extends AnyFunSuite {
   val testCases: TableFor2[Int, String] = Table(
     ("input", "expected"),
     (0, ""),

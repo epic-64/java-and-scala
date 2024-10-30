@@ -35,7 +35,19 @@ class ScalaRomansImperative extends Romans:
     sb.toString()
   }
   
-  override def toInt(roman: String): Int = ???
+  override def toInt(roman: String): Int = {
+    var result = 0
+    var remaining = roman
+    
+    for ((value, numeral) <- valueList) {
+      while (remaining.startsWith(numeral)) {
+        result += value
+        remaining = remaining.substring(numeral.length)
+      }
+    }
+    
+    result
+  }
 end ScalaRomansImperative
 
 class ScalaRomansPipeline extends Romans:
