@@ -1,0 +1,15 @@
+/project/project/target/
+/project/target/
+/target
+/.idea/libraries
+/.idea/modules/scalaandjava.iml
+/.bsp/sbt.json
+/.idea/.name
+/.idea/uiDesigner.xml
+/.idea/modules/
+/.idea/vcs.xml
+/.idea/modules.xml
+/.idea/misc.xml
+/.idea/scala_compiler.xml
+/.idea/scala_settings.xml
+/.idea/compiler.xml
