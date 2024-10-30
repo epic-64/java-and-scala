@@ -63,9 +63,9 @@ class ScalaRomansPipeline extends Romans:
       .replace("CCCC", "CD")
       .replace("DD", "M")
       .replace("DCD", "CM")
-    // custom edge cases
-    // .replace("CMXCIX", "IM") // 999
-    // .replace("XCIX", "IC")   // 99
+      // custom edge cases
+      // .replace("CMXCIX", "IM") // 999
+      // .replace("XCIX", "IC")   // 99
 
   override def toInt(roman: String): Int =
     roman
