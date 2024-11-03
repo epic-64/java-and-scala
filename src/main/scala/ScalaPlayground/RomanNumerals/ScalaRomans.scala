@@ -11,7 +11,7 @@ trait Romans:
   def toNumeral(number: Int): String
   def toInt(roman: String): Int
 
-private val values: Vector[(Int, String)] = Vector(
+private val romanNumerals: Vector[(Int, String)] = Vector(
   1000 -> "M",
   900  -> "CM",
   500  -> "D",
@@ -32,7 +32,7 @@ class ScalaRomansImperative extends Romans:
     val sb        = new StringBuilder
     var remaining = number
 
-    for ((value, numeral) <- values)
+    for ((value, numeral) <- romanNumerals)
       while (remaining >= value) {
         sb.append(numeral)
         remaining -= value
@@ -45,7 +45,7 @@ class ScalaRomansImperative extends Romans:
     var result    = 0
     var remaining = roman
 
-    for ((value, numeral) <- values)
+    for ((value, numeral) <- romanNumerals)
       while (remaining.startsWith(numeral)) {
         result += value
         remaining = remaining.substring(numeral.length)
@@ -64,7 +64,7 @@ class ScalaRomansIdiomatic extends Romans {
         case _ +: tail                                      => convert(remaining, tail, result)
         case _                                              => result
 
-    convert(number, values)
+    convert(number, romanNumerals)
   }
 
   override def toInt(roman: RomanNumeral): Int = ???
