@@ -10,9 +10,8 @@ class App {
 
         ScalaRomansPipeline scalaRomansPipeline = new ScalaRomansPipeline();
         System.out.println(scalaRomansPipeline.toNumeral(999));
-
-        ScalaCalculator calculator = new ScalaCalculator();
-        System.out.println(calculator.add(1, 2));
+        
+        System.out.println(ScalaCalculator.add(1, 2));
     }
 }
 
