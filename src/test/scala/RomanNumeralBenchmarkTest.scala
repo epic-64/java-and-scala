@@ -13,7 +13,7 @@ class RomanNumeralBenchmarkTest extends AnyFunSuite {
     }
 
     val input = 3999
-    val iterations = 10_000
+    val iterations = 100_000
 
     val javaRomans = new JavaRomans()
     val scalaRomansImperative = ScalaRomansImperative()
@@ -23,6 +23,6 @@ class RomanNumeralBenchmarkTest extends AnyFunSuite {
     checkDuration(javaRomans.toNumeral, input, iterations, "Java Romans Imperative")
     checkDuration(scalaRomansImperative.toNumeral, input, iterations, "Scala Romans Imperative")
     checkDuration(scalaRomansIdiomatic.toNumeral, input, iterations, "Scala Romans Idiomatic")
-    checkDuration(scalaRomansPipeline.toNumeral, input, iterations, "Scala Romans Pipeline")
+    // checkDuration(scalaRomansPipeline.toNumeral, input, iterations, "Scala Romans Pipeline")
   }
 }

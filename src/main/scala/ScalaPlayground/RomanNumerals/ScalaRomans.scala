@@ -31,7 +31,7 @@ class ScalaRomansImperative extends Romans:
   override def toNumeral(number: Int): String = {
     val sb        = new StringBuilder
     var remaining = number
-
+    
     for ((value, numeral) <- romanNumerals)
       while (remaining >= value) {
         sb.append(numeral)

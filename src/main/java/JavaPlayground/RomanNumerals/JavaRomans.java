@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class JavaRomans {
-    private static final List<Map.Entry<Integer, String>> values = List.of(
+    private static final List<Map.Entry<Integer, String>> romanNumerals = List.of(
         Map.entry(1000, "M"),
         Map.entry(900, "CM"),
         Map.entry(500, "D"),
@@ -25,12 +25,12 @@ public class JavaRomans {
         StringBuilder sb = new StringBuilder();
         AtomicInteger remaining = new AtomicInteger(number);
 
-        values.forEach(entry -> {
+        for (Map.Entry<Integer, String> entry : romanNumerals) {
             while (remaining.get() >= entry.getKey()) {
                 remaining.addAndGet(-entry.getKey());
                 sb.append(entry.getValue());
             }
-        });
+        }
 
         return sb.toString();
     }
@@ -39,7 +39,7 @@ public class JavaRomans {
         AtomicInteger result = new AtomicInteger(0);
         AtomicInteger index = new AtomicInteger(0);
 
-        values.forEach(entry -> {
+        romanNumerals.forEach(entry -> {
             while (numeral.startsWith(entry.getValue(), index.get())) {
                 result.addAndGet(entry.getKey());
                 index.addAndGet(entry.getValue().length());
