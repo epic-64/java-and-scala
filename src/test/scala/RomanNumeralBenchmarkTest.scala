@@ -1,3 +1,4 @@
+import JavaPlayground.JavaRomans
 import ScalaPlayground.RomanNumerals.ScalaRomansImperative
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -8,14 +9,13 @@ class RomanNumeralBenchmarkTest extends AnyFunSuite {
       for (_ <- 1 to iterations) action(input)
       val elapsed = System.nanoTime() - now
 
-      println(message)
-      println(elapsed / 1_000_000 + " ms")
+      info(s"$message: ${elapsed / 1_000_000} ms")
     }
 
     val input = 3999
     val iterations = 1_000_000
 
-    val javaRomans = new JavaPlayground.JavaRomans()
+    val javaRomans = new JavaRomans()
     val scalaRomans = ScalaRomansImperative()
 
     checkDuration(javaRomans.toNumeral, input, iterations, "Java Romans Imperative")
