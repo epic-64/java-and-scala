@@ -1,5 +1,6 @@
 package JavaPlayground;
 
+import JavaPlayground.RomanNumerals.JavaRomans;
 import ScalaPlayground.RomanNumerals.ScalaRomansPipeline;
 
 class App {

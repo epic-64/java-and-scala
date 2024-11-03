@@ -1,5 +1,5 @@
-import JavaPlayground.JavaRomans
-import ScalaPlayground.RomanNumerals.ScalaRomansImperative
+import JavaPlayground.RomanNumerals.JavaRomans
+import ScalaPlayground.RomanNumerals.*
 import org.scalatest.funsuite.AnyFunSuite
 
 class RomanNumeralBenchmarkTest extends AnyFunSuite {
@@ -13,12 +13,14 @@ class RomanNumeralBenchmarkTest extends AnyFunSuite {
     }
 
     val input = 3999
-    val iterations = 1_000_000
+    val iterations = 100_000
 
     val javaRomans = new JavaRomans()
-    val scalaRomans = ScalaRomansImperative()
+    val scalaRomansImperative = ScalaRomansImperative()
+    val scalaRomansIdiomatic = ScalaRomansIdiomatic()
 
     checkDuration(javaRomans.toNumeral, input, iterations, "Java Romans Imperative")
-    checkDuration(scalaRomans.toNumeral, input, iterations, "Scala Romans Imperative")
+    checkDuration(scalaRomansImperative.toNumeral, input, iterations, "Scala Romans Imperative")
+    checkDuration(scalaRomansIdiomatic.toNumeral, input, iterations, "Scala Romans Idiomatic")
   }
 }

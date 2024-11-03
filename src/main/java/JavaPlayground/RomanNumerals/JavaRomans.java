@@ -1,4 +1,4 @@
-package JavaPlayground;
+package JavaPlayground.RomanNumerals;
 
 import java.util.List;
 import java.util.Map;
@@ -21,7 +21,7 @@ public class JavaRomans {
         Map.entry(1, "I")
     );
 
-    public String toNumeral(Integer number) {
+    public String toNumeral(int number) {
         StringBuilder sb = new StringBuilder();
         AtomicInteger remaining = new AtomicInteger(number);
 
@@ -33,5 +33,19 @@ public class JavaRomans {
         });
 
         return sb.toString();
+    }
+    
+    public int toInt(String numeral) {
+        AtomicInteger result = new AtomicInteger(0);
+        AtomicInteger index = new AtomicInteger(0);
+
+        values.forEach(entry -> {
+            while (numeral.startsWith(entry.getValue(), index.get())) {
+                result.addAndGet(entry.getKey());
+                index.addAndGet(entry.getValue().length());
+            }
+        });
+
+        return result.get();
     }
 }

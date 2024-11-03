@@ -1,5 +1,5 @@
-import JavaPlayground.JavaRomans
-import ScalaPlayground.RomanNumerals.{ScalaRomansImperative, ScalaRomansPipeline}
+import JavaPlayground.RomanNumerals.JavaRomans
+import ScalaPlayground.RomanNumerals.*
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.prop.TableDrivenPropertyChecks.*
 import org.scalatest.prop.TableFor2
@@ -21,10 +21,11 @@ class RomanNumeralToIntTest extends AnyFunSuite {
   val javaRomans = new JavaRomans
   val scalaRomansPipeline = new ScalaRomansPipeline
   val scalaRomansImperative = new ScalaRomansImperative
+  val scalaRomansIdiomatic = new ScalaRomansIdiomatic
 
   testCases.foreach { case (input, expected) =>
     test(s"Java and Scala implementations return $expected for input $input") {
-      // assert(javaRomans.toInt(input) == expected)
+      assert(javaRomans.toInt(input) == expected)
       assert(scalaRomansPipeline.toInt(input) == expected)
       assert(scalaRomansImperative.toInt(input) == expected)
     }

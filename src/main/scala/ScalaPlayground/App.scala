@@ -1,6 +1,6 @@
 package ScalaPlayground
 
-import JavaPlayground.JavaRomans
+import JavaPlayground.RomanNumerals.JavaRomans
 import ScalaPlayground.RomanNumerals.{ScalaRomansImperative, ScalaRomansPipeline}
 
 object App {
