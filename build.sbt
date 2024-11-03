@@ -2,7 +2,7 @@ import scala.collection.Seq
 
 ThisBuild / version      := "0.0.1-SNAPSHOT"
 ThisBuild / scalaVersion := "3.6.1"
-ThisBuild / javacOptions ++= Seq("--release", "17")
+ThisBuild / javacOptions ++= Seq("--release", "11")
 
 libraryDependencies ++= Seq(
   "com.lihaoyi"                   %% "upickle"      % "4.0.2",

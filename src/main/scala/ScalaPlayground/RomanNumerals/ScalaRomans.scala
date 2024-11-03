@@ -5,7 +5,7 @@ trait Romans:
   def toInt(roman: String): Int
 
 class ScalaRomansImperative extends Romans:
-  private val valueList: Vector[(Int, String)] = Vector(
+  private val values: Vector[(Int, String)] = Vector(
     1000 -> "M",
     900  -> "CM",
     500  -> "D",
@@ -25,7 +25,7 @@ class ScalaRomansImperative extends Romans:
     val sb        = new StringBuilder
     var remaining = number
 
-    for ((value, numeral) <- valueList)
+    for ((value, numeral) <- values)
       while (remaining >= value) {
         sb.append(numeral)
         remaining -= value
@@ -38,7 +38,7 @@ class ScalaRomansImperative extends Romans:
     var result    = 0
     var remaining = roman
 
-    for ((value, numeral) <- valueList)
+    for ((value, numeral) <- values)
       while (remaining.startsWith(numeral)) {
         result += value
         remaining = remaining.substring(numeral.length)
