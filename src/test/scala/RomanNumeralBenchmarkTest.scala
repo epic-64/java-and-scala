@@ -24,11 +24,9 @@ class RomanNumeralBenchmarkTest extends AnyFunSuite {
     val javaRomans = new JavaRomans()
     val scalaRomansImperative = ScalaRomansImperative()
     val scalaRomansIdiomatic = ScalaRomansIdiomatic()
-    val scalaRomansPipeline = ScalaRomansPipeline()
 
     benchmark(javaRomans.toNumeral, input, iterations, "Java Romans Imperative")
     benchmark(scalaRomansImperative.toNumeral, input, iterations, "Scala Romans Imperative")
     benchmark(scalaRomansIdiomatic.toNumeral, input, iterations, "Scala Romans Idiomatic")
-    benchmark(scalaRomansPipeline.toNumeral, input, iterations, "Scala Romans Pipeline")
   }
 }
