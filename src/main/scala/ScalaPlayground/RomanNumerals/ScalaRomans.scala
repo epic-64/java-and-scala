@@ -2,10 +2,8 @@ package ScalaPlayground.RomanNumerals
 
 import scala.annotation.tailrec
 
-type RomanNumeral = String
-
 extension (n: Int) def toRomanNumeral: String    = ScalaRomansImperative().toNumeral(n)
-extension (numeral: RomanNumeral) def toInt: Int = ScalaRomansImperative().toInt(numeral)
+extension (numeral: String) def toInt: Int = ScalaRomansImperative().toInt(numeral)
 
 trait Romans:
   def toNumeral(number: Int): String
@@ -67,7 +65,7 @@ class ScalaRomansIdiomatic extends Romans {
     convert(number, romanNumerals)
   }
 
-  override def toInt(roman: RomanNumeral): Int = ???
+  override def toInt(roman: String): Int = ???
 }
 
 class ScalaRomansPipeline extends Romans:
