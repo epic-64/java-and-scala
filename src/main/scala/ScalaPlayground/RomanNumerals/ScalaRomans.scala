@@ -2,8 +2,8 @@ package ScalaPlayground.RomanNumerals
 
 import scala.annotation.tailrec
 
-extension (n: Int) def toRomanNumeral: String    = ScalaRomansImperative().toNumeral(n)
-extension (numeral: String) def toInt: Int = ScalaRomansImperative().toInt(numeral)
+extension (n: Int) def toRomanNumeral: String = ScalaRomansImperative().toNumeral(n)
+extension (numeral: String) def toInt: Int    = ScalaRomansImperative().toInt(numeral)
 
 trait Romans:
   def toNumeral(number: Int): String
@@ -56,11 +56,12 @@ end ScalaRomansImperative
 class ScalaRomansIdiomatic extends Romans {
   def toNumeral(number: Int): String = {
     @tailrec
-    def convert(remaining: Int, pairs: Vector[(Int, String)], result: String = ""): String =
+    def convert(remaining: Int, pairs: Vector[(Int, String)], result: String = ""): String = {
       pairs match
-        case (value, numeral) +: tail if remaining >= value => convert(remaining - value, pairs, result + numeral)
-        case _ +: tail                                      => convert(remaining, tail, result)
-        case _                                              => result
+        case (value, numeral) +: _ if remaining >= value => convert(remaining - value, pairs, result + numeral)
+        case _ +: tail                                   => convert(remaining, tail, result)
+        case _                                           => result
+    }
 
     convert(number, romanNumerals)
   }
