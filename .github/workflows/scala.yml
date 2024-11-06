@@ -39,7 +39,7 @@ jobs:
           git checkout --orphan gh-pages
           git reset --hard
 
-          # Add the coverage report
+          # Copy only the coverage report files
           mkdir -p coverage
           cp -r target/scala-*/scoverage-report/* coverage/
 
@@ -47,7 +47,10 @@ jobs:
           BADGE_URL="https://img.shields.io/badge/coverage-${{ env.COVERAGE }}%25-brightgreen.svg"
           curl -o coverage/coverage-badge.svg "$BADGE_URL"
 
+          # Clean up any other unnecessary files in the target folder
+          rm -rf target
+
           # Commit and force-push to gh-pages
-          git add .
+          git add coverage/
           git commit -m "Update gh-pages with latest coverage report and badge"
           git push --force origin gh-pages
