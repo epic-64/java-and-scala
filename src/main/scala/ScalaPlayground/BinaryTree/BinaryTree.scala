@@ -20,6 +20,7 @@ object App {
         .insert(18)
         .insert(19)
         .insert(7)
+        .insert(32)
 
       val formatter = TreeFormatter[Int]()
       println(formatter.visualize(tree))
@@ -59,7 +60,7 @@ object App {
         .insert(Person("Grace", 19))
         .insert(Person("Helen", 22))
         .insert(Person("Ivy", 27))
-      
+
       println(s"Sorted array: ${tree.toList}")
     }
   }
@@ -73,7 +74,7 @@ sealed trait BinaryTree[+A] {
 
 case object EmptyNode extends BinaryTree[Nothing] {
   def insert[B: Ordering](value: B): BinaryTree[B]           = Tree(value, EmptyNode, EmptyNode)
-  def toList: List[Nothing]                           = Nil
+  def toList: List[Nothing]                                  = Nil
   def findShortestPath[B: Ordering](from: B, to: B): List[B] = Nil
 }
 
@@ -94,7 +95,7 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
     pathToLca ++ pathFromLcaToTarget.tail // Combine paths and avoid duplicate LCA node
   }
 
-  private def findPathToRoot[B >: A : Ordering](target: B): List[B] = {
+  private def findPathToRoot[B >: A: Ordering](target: B): List[B] = {
     given ord: Ordering[B] = summon[Ordering[B]]
     if ord.equiv(target, value) then List(value)
     else if ord.lt(target, value) then value :: left.asInstanceOf[Tree[B]].findPathToRoot(target)
@@ -102,10 +103,9 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
   }
 
   @tailrec
-  private def lowestCommonAncestor[B >: A : Ordering](node1: B, node2: B): A = {
+  private def lowestCommonAncestor[B >: A: Ordering](node1: B, node2: B): A = {
     given ord: Ordering[B] = summon[Ordering[B]]
-    if ord.lt(node1, value) && ord.lt(node2, value) then
-      left.asInstanceOf[Tree[A]].lowestCommonAncestor(node1, node2)
+    if ord.lt(node1, value) && ord.lt(node2, value) then left.asInstanceOf[Tree[A]].lowestCommonAncestor(node1, node2)
     else if ord.gt(node1, value) && ord.gt(node2, value) then
       right.asInstanceOf[Tree[A]].lowestCommonAncestor(node1, node2)
     else value
@@ -113,7 +113,7 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
 }
 
 class TreeFormatter[A] {
-  private val padding = 2 // Minimum number of horizontal spaces between nodes
+  private val padding = 4 // Minimum number of horizontal spaces between nodes
 
   private def indent(lines: ListBuffer[String], margin: Int): Int = {
     if (margin >= 0) return margin
@@ -124,14 +124,18 @@ class TreeFormatter[A] {
 
   private def merge(left: ListBuffer[String], right: ListBuffer[String]): ListBuffer[String] = {
     val minSize = math.min(left.size, right.size)
-    var offset = 0
+    var offset  = 0
+    
     for (i <- 0 until minSize) {
       offset = math.max(offset, left(i).length + padding - right(i).replaceAll("\\S.*", "").length)
     }
+    
     indent(right, -indent(left, offset))
+    
     for (i <- 0 until minSize) {
       left(i) = left(i) + right(i).substring(left(i).length)
     }
+    
     if (right.size > minSize) {
       left ++= right.drop(minSize)
     }
@@ -139,27 +143,25 @@ class TreeFormatter[A] {
   }
 
   private def buildLines(node: BinaryTree[A]): ListBuffer[String] = node match {
-    case EmptyNode => ListBuffer.empty
+    case EmptyNode                => ListBuffer.empty
     case Tree(value, left, right) =>
-      val leftLines = buildLines(left)
+      val leftLines  = buildLines(left)
       val rightLines = buildLines(right)
-      val lines = merge(leftLines, rightLines)
+      val lines      = merge(leftLines, rightLines)
 
       val half = value.toString.length / 2
-      var i = half
+      var i    = half
 
       if (lines.nonEmpty) {
         i = lines.head.indexOf('*') // Marker position
         val line = (left, right) match {
-          case (EmptyNode, EmptyNode) =>
-            " " * i + "┌─┘"
-          case (_, EmptyNode) =>
-            " " * i + "┌─┘"
-          case (EmptyNode, _) =>
-            " " * indent(lines, i - 2) + "└─┐"
-          case (_, _) =>
+          case (EmptyNode, EmptyNode) => " " * i + "┌─┘"
+          case (_, EmptyNode)         => " " * i + "┌─┘"
+          case (EmptyNode, _)         => " " * indent(lines, i - 2) + "└─┐"
+          case (_, _)                 => {
             val dist = lines.head.length - 1 - i // Calculate distance between roots
             s"${" " * i}┌${"─" * (dist / 2 - 1)}┴${"─" * ((dist - 1) / 2)}┐"
+          }
         }
         lines(0) = line
       }
