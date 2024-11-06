@@ -62,8 +62,14 @@ object App {
         .insert(Person("Grace", 19))
         .insert(Person("Helen", 22))
         .insert(Person("Ivy", 27))
+        .insert(Person("Jack", 26))
 
+      val formatter = TreeFormatter[Person](padding = 2)
+      println(formatter.visualize(tree))
       println(s"Sorted array: ${tree.toList}")
+      println(
+        s"Shortest path between Grace and Jack: ${tree.findShortestPath(Person("Grace", 19), Person("Jack", 26))}"
+      )
     }
   }
 }
@@ -132,9 +138,7 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
   }
 }
 
-class TreeFormatter[A] {
-  private val padding = 4 // Minimum number of horizontal spaces between nodes
-
+class TreeFormatter[A](padding: Int = 4) {
   private def indent(lines: ListBuffer[String], margin: Int): Int = {
     if (margin >= 0) return margin
     val spaces = " " * -margin
