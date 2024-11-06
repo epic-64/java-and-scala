@@ -1,3 +1,7 @@
+![Coverage](https://epic-64.github.io/java-and-scala/coverage/coverage-badge.md)
+
+[View Coverage Report](https://epic-64.github.io/java-and-scala/coverage/index.html)
+
 ## Setting up the project in IntelliJ IDEA
 1. install the Scala plugin
 2. clone and open the project

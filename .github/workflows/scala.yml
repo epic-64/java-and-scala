@@ -1,4 +1,4 @@
-name: Scala CI
+name: Scala CI with Coverage
 
 on:
   push:
@@ -10,9 +10,29 @@ permissions:
   contents: write
 
 jobs:
+  # Job to check and create the gh-pages branch if it doesn't exist
+  setup-gh-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Ensure gh-pages branch exists
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          if ! git ls-remote --exit-code --heads origin gh-pages; then
+            git checkout --orphan gh-pages
+            git rm -rf .
+            echo "# GitHub Pages" > index.html
+            git add index.html
+            git commit -m "Initialize GitHub Pages branch"
+            git push -u origin gh-pages
+          fi
+
+  # Main job for building, testing, generating coverage report, and updating the badge
   build:
     runs-on: ubuntu-latest
-
+    needs: setup-gh-pages
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 21
@@ -23,11 +43,27 @@ jobs:
           cache: 'sbt'
       - name: Run tests with coverage
         run: sbt clean coverage test coverageReport
-      - name: Deploy coverage report to GitHub Pages
+      - name: Parse coverage percentage
+        id: coverage
+        run: |
+          COVERAGE=$(grep -oP '(?<=statement-rate=")[^"]*' target/scala-*/scoverage-report/scoverage.xml | awk '{printf("%.0f", $1 * 100)}')
+          echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
+      - name: Deploy coverage report and badge to GitHub Pages
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          git add -f target/scala-*/scoverage-report
-          git commit -m "Update coverage report"
-          git push -u origin gh-pages || git checkout -b gh-pages && git push -u origin gh-pages
+          git checkout gh-pages
+          
+          # Copy the coverage report and create a badge
+          mkdir -p coverage
+          cp -r target/scala-*/scoverage-report/* coverage/
+          
+          # Generate the badge with the latest coverage
+          BADGE_URL="https://img.shields.io/badge/coverage-${{ env.COVERAGE }}%25-brightgreen"
+          echo "![](${BADGE_URL})" > coverage/coverage-badge.md
+          
+          # Commit and push the updated report and badge
+          git add coverage/
+          git commit -m "Update coverage report and badge"
+          git push origin gh-pages
         if: success()
