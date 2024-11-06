@@ -35,15 +35,15 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
           git checkout gh-pages
-          
-          # Copy the coverage report and create a badge
+
+          # Copy the coverage report
           mkdir -p coverage
           cp -r target/scala-*/scoverage-report/* coverage/
-          
-          # Generate the badge with the latest coverage
-          BADGE_URL="https://img.shields.io/badge/coverage-${{ env.COVERAGE }}%25-brightgreen"
-          echo "![Coverage Badge](${BADGE_URL})" > coverage/coverage-badge.md
-          
+
+          # Generate the badge as an SVG
+          BADGE_URL="https://img.shields.io/badge/coverage-${{ env.COVERAGE }}%25-brightgreen.svg"
+          curl -o coverage/coverage-badge.svg "$BADGE_URL"
+
           # Commit and push the updated report and badge
           git add coverage/
           git commit -m "Update coverage report and badge"

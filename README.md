@@ -1,4 +1,4 @@
-![Coverage](https://epic-64.github.io/java-and-scala/coverage/coverage-badge.md)
+![Coverage](https://epic-64.github.io/java-and-scala/coverage/coverage-badge.svg)
 
 [View Coverage Report](https://epic-64.github.io/java-and-scala/coverage/index.html)
 
