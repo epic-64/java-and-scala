@@ -10,7 +10,6 @@ permissions:
   contents: write
 
 jobs:
-  # Main job for building, testing, generating coverage report, and updating the badge
   build:
     runs-on: ubuntu-latest
     steps:
@@ -32,7 +31,6 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          git fetch origin gh-pages:gh-pages
           git checkout gh-pages
           
           # Copy the coverage report and create a badge
@@ -41,10 +39,9 @@ jobs:
           
           # Generate the badge with the latest coverage
           BADGE_URL="https://img.shields.io/badge/coverage-${{ env.COVERAGE }}%25-brightgreen"
-          echo "![](${BADGE_URL})" > coverage/coverage-badge.md
+          echo "![Coverage Badge](${BADGE_URL})" > coverage/coverage-badge.md
           
           # Commit and push the updated report and badge
           git add coverage/
           git commit -m "Update coverage report and badge"
           git push origin gh-pages
-        if: success()
