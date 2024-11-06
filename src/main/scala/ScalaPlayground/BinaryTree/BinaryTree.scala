@@ -25,7 +25,9 @@ object App {
       val formatter = TreeFormatter[Int]()
       println(formatter.visualize(tree))
       println(s"Sorted array: ${tree.toList}")
-      println(s"Shortest path between 3 and 18: ${tree.findShortestPath(3, 18)}")
+      println(s"Shortest path between 3 and 15: ${tree.findShortestPath(3, 15)}")
+      println(s"Shortest path between 32 and 19: ${tree.findShortestPath(32, 19)}")
+      println(s"Shortest path between 7 and 7: ${tree.findShortestPath(7, 7)}")
     }
 
     val example2: Unit = {
@@ -89,25 +91,43 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
   def toList: List[A] = left.toList ++ List(value) ++ right.toList
 
   def findShortestPath[B >: A: Ordering](from: B, to: B): List[B] = {
-    val lca                 = lowestCommonAncestor(from, to)
-    val pathToLca           = findPathToRoot(from).takeWhile(_ != lca) :+ lca
-    val pathFromLcaToTarget = findPathToRoot(to).dropWhile(_ != lca)
-    pathToLca ++ pathFromLcaToTarget.tail // Combine paths and avoid duplicate LCA node
+    val sharedAncestor = lowestCommonAncestor(from, to)
+    val pathFromLocal  = findPathToRoot(from).dropWhile(_ != sharedAncestor).reverse :+ sharedAncestor
+    val pathFromTarget = findPathToRoot(to).dropWhile(_ != sharedAncestor)
+    
+    pathFromLocal.dropRight(1) ++ pathFromTarget.tail
   }
 
   private def findPathToRoot[B >: A: Ordering](target: B): List[B] = {
     given ord: Ordering[B] = summon[Ordering[B]]
+
     if ord.equiv(target, value) then List(value)
-    else if ord.lt(target, value) then value :: left.asInstanceOf[Tree[B]].findPathToRoot(target)
-    else value :: right.asInstanceOf[Tree[B]].findPathToRoot(target)
+    else if ord.lt(target, value) then
+      left match {
+        case EmptyNode        => Nil
+        case subtree: Tree[B] => value :: subtree.findPathToRoot(target)
+      }
+    else
+      right match {
+        case EmptyNode        => Nil
+        case subtree: Tree[B] => value :: subtree.findPathToRoot(target)
+      }
   }
 
   @tailrec
   private def lowestCommonAncestor[B >: A: Ordering](node1: B, node2: B): A = {
     given ord: Ordering[B] = summon[Ordering[B]]
-    if ord.lt(node1, value) && ord.lt(node2, value) then left.asInstanceOf[Tree[A]].lowestCommonAncestor(node1, node2)
+
+    if ord.lt(node1, value) && ord.lt(node2, value) then
+      left match {
+        case EmptyNode        => value
+        case subtree: Tree[A] => subtree.lowestCommonAncestor(node1, node2)
+      }
     else if ord.gt(node1, value) && ord.gt(node2, value) then
-      right.asInstanceOf[Tree[A]].lowestCommonAncestor(node1, node2)
+      right match {
+        case EmptyNode        => value
+        case subtree: Tree[A] => subtree.lowestCommonAncestor(node1, node2)
+      }
     else value
   }
 }
@@ -125,17 +145,15 @@ class TreeFormatter[A] {
   private def merge(left: ListBuffer[String], right: ListBuffer[String]): ListBuffer[String] = {
     val minSize = math.min(left.size, right.size)
     var offset  = 0
-    
-    for (i <- 0 until minSize) {
+
+    for (i <- 0 until minSize)
       offset = math.max(offset, left(i).length + padding - right(i).replaceAll("\\S.*", "").length)
-    }
-    
+
     indent(right, -indent(left, offset))
-    
-    for (i <- 0 until minSize) {
+
+    for (i <- 0 until minSize)
       left(i) = left(i) + right(i).substring(left(i).length)
-    }
-    
+
     if (right.size > minSize) {
       left ++= right.drop(minSize)
     }
@@ -158,10 +176,9 @@ class TreeFormatter[A] {
           case (EmptyNode, EmptyNode) => " " * i + "┌─┘"
           case (_, EmptyNode)         => " " * i + "┌─┘"
           case (EmptyNode, _)         => " " * indent(lines, i - 2) + "└─┐"
-          case (_, _)                 => {
+          case (_, _)                 =>
             val dist = lines.head.length - 1 - i // Calculate distance between roots
             s"${" " * i}┌${"─" * (dist / 2 - 1)}┴${"─" * ((dist - 1) / 2)}┐"
-          }
         }
         lines(0) = line
       }
