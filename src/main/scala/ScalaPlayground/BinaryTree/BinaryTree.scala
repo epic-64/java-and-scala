@@ -89,9 +89,12 @@ case object EmptyNode extends BinaryTree[Nothing] {
 case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends BinaryTree[A] {
   def insert[B >: A: Ordering](newValue: B): BinaryTree[B] = {
     given ord: Ordering[B] = summon[Ordering[B]]
-    if ord.lt(newValue, value) then Tree(value, left.insert(newValue), right)
-    else if ord.gt(newValue, value) then Tree(value, left, right.insert(newValue))
-    else this
+
+    ord match {
+      case _ if ord.lt(newValue, value) => Tree(value, left.insert(newValue), right)
+      case _ if ord.gt(newValue, value) => Tree(value, left, right.insert(newValue))
+      case _                            => this
+    }
   }
 
   def toList: List[A] = left.toList ++ List(value) ++ right.toList
