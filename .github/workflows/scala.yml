@@ -27,7 +27,7 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          git add target/scala-*/scoverage-report
+          git add -f target/scala-*/scoverage-report
           git commit -m "Update coverage report"
-          git push origin `gh-pages`
+          git push origin gh-pages
         if: success()
