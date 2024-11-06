@@ -110,17 +110,18 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
   private def findPathToRoot[B >: A: Ordering](target: B): List[B] = {
     given ord: Ordering[B] = summon[Ordering[B]]
 
-    if ord.equiv(target, value) then List(value)
-    else if ord.lt(target, value) then
-      left match {
-        case Tree(leftValue, leftLeft, leftRight) => value :: left.asInstanceOf[Tree[A]].findPathToRoot(target)
-        case EmptyNode                            => Nil
-      }
-    else
-      right match {
-        case Tree(rightValue, rightLeft, rightRight) => value :: right.asInstanceOf[Tree[A]].findPathToRoot(target)
-        case EmptyNode                               => Nil
-      }
+    ord match
+      case _ if ord.equiv(target, value) => List(value)
+      case _ if ord.lt(target, value)    =>
+        left match {
+          case Tree(leftValue, leftLeft, leftRight) => value :: left.asInstanceOf[Tree[A]].findPathToRoot(target)
+          case EmptyNode                            => Nil
+        }
+      case _                             =>
+        right match {
+          case Tree(rightValue, rightLeft, rightRight) => value :: right.asInstanceOf[Tree[A]].findPathToRoot(target)
+          case EmptyNode                               => Nil
+        }
   }
 
   @tailrec
