@@ -56,17 +56,26 @@ end ScalaRomansImperative
 class ScalaRomansIdiomatic extends Romans {
   def toNumeral(number: Int): String = {
     @tailrec
-    def convert(remaining: Int, pairs: Vector[(Int, String)], result: String = ""): String = {
+    def convert(remaining: Int, pairs: Vector[(Int, String)], result: String = ""): String =
       pairs match
         case (value, numeral) +: _ if remaining >= value => convert(remaining - value, pairs, result + numeral)
         case _ +: tail                                   => convert(remaining, tail, result)
         case _                                           => result
-    }
 
     convert(number, romanNumerals)
   }
 
-  override def toInt(roman: String): Int = ???
+  override def toInt(roman: String): Int = {
+    @tailrec
+    def convert(remaining: String, pairs: Vector[(Int, String)], result: Int = 0): Int =
+      pairs match
+        case (value, numeral) +: _ if remaining.startsWith(numeral) =>
+          convert(remaining.substring(numeral.length), pairs, result + value)
+        case _ +: tail                                              => convert(remaining, tail, result)
+        case _                                                      => result
+
+    convert(roman, romanNumerals)
+  }
 }
 
 class ScalaRomansPipeline extends Romans:

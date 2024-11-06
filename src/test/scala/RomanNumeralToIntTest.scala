@@ -28,6 +28,7 @@ class RomanNumeralToIntTest extends AnyFunSuite {
       assert(javaRomans.toInt(input) == expected)
       assert(scalaRomansPipeline.toInt(input) == expected)
       assert(scalaRomansImperative.toInt(input) == expected)
+      assert(scalaRomansIdiomatic.toInt(input) == expected)
     }
   }
 }
