@@ -35,12 +35,15 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
 
+          # Copy README.md from master
+          cp README.md temp_README.md
+
           # Create a fresh gh-pages branch based on the latest master
           git checkout --orphan gh-pages
           git reset --hard
 
-          # Copy README.md as index.md for GitHub Pages
-          cp README.md index.md
+          # Move README.md to index.md for GitHub Pages
+          mv temp_README.md index.md
 
           # Copy the coverage report
           mkdir -p coverage
