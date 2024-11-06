@@ -34,12 +34,15 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          
+
           # Create a fresh gh-pages branch based on the latest master
           git checkout --orphan gh-pages
           git reset --hard
 
-          # Copy only the coverage report files
+          # Copy README.md as index.md for GitHub Pages
+          cp README.md index.md
+
+          # Copy the coverage report
           mkdir -p coverage
           cp -r target/scala-*/scoverage-report/* coverage/
 
@@ -47,10 +50,10 @@ jobs:
           BADGE_URL="https://img.shields.io/badge/coverage-${{ env.COVERAGE }}%25-brightgreen.svg"
           curl -o coverage/coverage-badge.svg "$BADGE_URL"
 
-          # Clean up any other unnecessary files in the target folder
+          # Clean up unnecessary files in target folder
           rm -rf target
 
           # Commit and force-push to gh-pages
-          git add coverage/
-          git commit -m "Update gh-pages with latest coverage report and badge"
+          git add index.md coverage/
+          git commit -m "Update gh-pages with latest coverage report, badge, and homepage"
           git push --force origin gh-pages
