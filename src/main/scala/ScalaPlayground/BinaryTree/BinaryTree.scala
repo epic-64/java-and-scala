@@ -113,7 +113,7 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
 }
 
 class TreeFormatter[A] {
-  private val padding = 2 // Minimum number of horizontal spaces between two nodes
+  private val padding = 2 // Minimum number of horizontal spaces between nodes
 
   private def indent(lines: ListBuffer[String], margin: Int): Int = {
     if (margin >= 0) return margin
@@ -141,12 +141,15 @@ class TreeFormatter[A] {
   private def buildLines(node: BinaryTree[A]): ListBuffer[String] = node match {
     case EmptyNode => ListBuffer.empty
     case Tree(value, left, right) =>
-      val lines = merge(buildLines(left), buildLines(right))
+      val leftLines = buildLines(left)
+      val rightLines = buildLines(right)
+      val lines = merge(leftLines, rightLines)
+
       val half = value.toString.length / 2
       var i = half
 
       if (lines.nonEmpty) {
-        i = lines.head.indexOf('*')
+        i = lines.head.indexOf('*') // Marker position
         val line = (left, right) match {
           case (EmptyNode, EmptyNode) =>
             " " * i + "┌─┘"
@@ -155,18 +158,19 @@ class TreeFormatter[A] {
           case (EmptyNode, _) =>
             " " * indent(lines, i - 2) + "└─┐"
           case (_, _) =>
-            val dist = lines.head.length - 1 - i
+            val dist = lines.head.length - 1 - i // Calculate distance between roots
             s"${" " * i}┌${"─" * (dist / 2 - 1)}┴${"─" * ((dist - 1) / 2)}┐"
         }
         lines(0) = line
       }
+
       lines.prepend(" " * indent(lines, i - half) + value.toString)
-      lines.prepend(" " * (i + math.max(0, half - i)) + "*")
+      lines.prepend(" " * (i + math.max(0, half - i)) + "*") // Add marker for alignment reference
       lines
   }
 
   def visualize(root: BinaryTree[A]): String = {
     val lines = buildLines(root)
-    lines.drop(1).mkString("\n") // Drop the marker line
+    lines.drop(1).mkString("\n") // Drop the alignment marker line
   }
 }
