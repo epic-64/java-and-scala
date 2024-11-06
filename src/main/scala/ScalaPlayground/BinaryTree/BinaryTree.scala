@@ -94,7 +94,7 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
     val sharedAncestor = lowestCommonAncestor(from, to)
     val pathFromLocal  = findPathToRoot(from).dropWhile(_ != sharedAncestor).reverse :+ sharedAncestor
     val pathFromTarget = findPathToRoot(to).dropWhile(_ != sharedAncestor)
-    
+
     pathFromLocal.dropRight(1) ++ pathFromTarget.tail
   }
 
@@ -104,13 +104,13 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
     if ord.equiv(target, value) then List(value)
     else if ord.lt(target, value) then
       left match {
-        case EmptyNode        => Nil
-        case subtree: Tree[B] => value :: subtree.findPathToRoot(target)
+        case Tree(leftValue, leftLeft, leftRight) => value :: left.asInstanceOf[Tree[A]].findPathToRoot(target)
+        case EmptyNode                            => Nil
       }
     else
       right match {
-        case EmptyNode        => Nil
-        case subtree: Tree[B] => value :: subtree.findPathToRoot(target)
+        case Tree(rightValue, rightLeft, rightRight) => value :: right.asInstanceOf[Tree[A]].findPathToRoot(target)
+        case EmptyNode                               => Nil
       }
   }
 
