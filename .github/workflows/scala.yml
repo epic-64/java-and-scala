@@ -28,7 +28,7 @@ jobs:
       - name: Parse coverage percentage
         id: coverage
         run: |
-          COVERAGE=$(grep -oP '(?<=statement-rate=")[0-9.]*' target/scala-*/scoverage-report/scoverage.xml | awk '{printf("%.0f", $1 * 100)}')
+          COVERAGE=$(grep -oP '(?<=statement-rate=")[0-9.]+(?=")' target/scala-*/scoverage-report/scoverage.xml | head -1)
           echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
       - name: Deploy coverage report and badge to GitHub Pages
         run: |
