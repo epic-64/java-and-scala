@@ -13,10 +13,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Check out master and run tests
       - uses: actions/checkout@v4
-      - name: Fetch gh-pages branch
-        run: |
-          git fetch origin gh-pages:gh-pages
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -30,13 +28,21 @@ jobs:
         run: |
           COVERAGE=$(grep -oP '(?<=statement-rate=")[0-9.]+(?=")' target/scala-*/scoverage-report/scoverage.xml | head -1)
           echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
-      - name: Deploy coverage report and badge to GitHub Pages
+
+      # Step 2: Check out gh-pages, merge master, and add coverage report
+      - name: Prepare and Deploy Coverage Report
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
+          
+          # Fetch and check out gh-pages branch
+          git fetch origin gh-pages
           git checkout gh-pages
+          
+          # Merge latest changes from master
+          git merge origin/master
 
-          # Copy the coverage report
+          # Add the coverage report
           mkdir -p coverage
           cp -r target/scala-*/scoverage-report/* coverage/
 
@@ -44,7 +50,7 @@ jobs:
           BADGE_URL="https://img.shields.io/badge/coverage-${{ env.COVERAGE }}%25-brightgreen.svg"
           curl -o coverage/coverage-badge.svg "$BADGE_URL"
 
-          # Commit and push the updated report and badge
+          # Commit and push the updated report, badge, and merged content
           git add coverage/
-          git commit -m "Update coverage report and badge"
+          git commit -m "Update coverage report, badge, and source files"
           git push origin gh-pages
