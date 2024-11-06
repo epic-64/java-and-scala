@@ -29,18 +29,15 @@ jobs:
           COVERAGE=$(grep -oP '(?<=statement-rate=")[0-9.]+(?=")' target/scala-*/scoverage-report/scoverage.xml | head -1)
           echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
 
-      # Step 2: Check out gh-pages, merge master, and add coverage report
-      - name: Prepare and Deploy Coverage Report
+      # Step 2: Overwrite gh-pages with master + coverage report
+      - name: Deploy Coverage Report to GitHub Pages
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
           
-          # Fetch and check out gh-pages branch
-          git fetch origin gh-pages
-          git checkout gh-pages
-          
-          # Merge latest changes from master
-          git merge origin/master
+          # Create a fresh gh-pages branch based on the latest master
+          git checkout --orphan gh-pages
+          git reset --hard
 
           # Add the coverage report
           mkdir -p coverage
@@ -50,7 +47,7 @@ jobs:
           BADGE_URL="https://img.shields.io/badge/coverage-${{ env.COVERAGE }}%25-brightgreen.svg"
           curl -o coverage/coverage-badge.svg "$BADGE_URL"
 
-          # Commit and push the updated report, badge, and merged content
-          git add coverage/
-          git commit -m "Update coverage report, badge, and source files"
-          git push origin gh-pages
+          # Commit and force-push to gh-pages
+          git add .
+          git commit -m "Update gh-pages with latest coverage report and badge"
+          git push --force origin gh-pages
