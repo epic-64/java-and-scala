@@ -1,30 +1,45 @@
 package ScalaPlayground.BinaryTree
 
 import scala.annotation.tailrec
+import scala.collection.mutable.ListBuffer
 
 object App {
   def main(args: Array[String]): Unit = {
     val example1: Unit = {
       val tree = Tree(10, EmptyNode, EmptyNode)
+        .insert(20)
+        .insert(6)
+        .insert(25)
+        .insert(4)
+        .insert(8)
         .insert(5)
         .insert(15)
         .insert(3)
         .insert(8)
         .insert(12)
         .insert(18)
+        .insert(19)
+        .insert(7)
 
-      println(tree.visualize)
+      val formatter = TreeFormatter[Int]()
+      println(formatter.visualize(tree))
       println(s"Sorted array: ${tree.toList}")
       println(s"Shortest path between 3 and 18: ${tree.findShortestPath(3, 18)}")
     }
 
     val example2: Unit = {
       val tree = Tree("mango", EmptyNode, EmptyNode)
+        .insert("orange")
+        .insert("grape")
+        .insert("kiwi")
         .insert("apple")
         .insert("banana")
         .insert("pear")
         .insert("cherry")
+        .insert("peach")
 
+      val formatter = TreeFormatter[String]()
+      println(formatter.visualize(tree))
       println(s"Sorted array: ${tree.toList}")
       println(s"Shortest path between apple and cherry: ${tree.findShortestPath("apple", "cherry")}")
     }
@@ -44,8 +59,7 @@ object App {
         .insert(Person("Grace", 19))
         .insert(Person("Helen", 22))
         .insert(Person("Ivy", 27))
-
-      println(tree.visualize)
+      
       println(s"Sorted array: ${tree.toList}")
     }
   }
@@ -55,16 +69,12 @@ sealed trait BinaryTree[+A] {
   def insert[B >: A: Ordering](value: B): BinaryTree[B]
   def toList: List[A]
   def findShortestPath[B >: A: Ordering](from: B, to: B): List[B]
-
-  // Visualize the tree structure with centered root at top
-  def visualize: String
 }
 
 case object EmptyNode extends BinaryTree[Nothing] {
   def insert[B: Ordering](value: B): BinaryTree[B]           = Tree(value, EmptyNode, EmptyNode)
   def toList: List[Nothing]                           = Nil
   def findShortestPath[B: Ordering](from: B, to: B): List[B] = Nil
-  def visualize: String = ""
 }
 
 case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends BinaryTree[A] {
@@ -100,40 +110,63 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
       right.asInstanceOf[Tree[A]].lowestCommonAncestor(node1, node2)
     else value
   }
+}
 
-  // Visualize with centered root
-  def visualize: String = {
-    val lines = buildVisualLines()
-    lines.mkString("\n")
+class TreeFormatter[A] {
+  private val padding = 2 // Minimum number of horizontal spaces between two nodes
+
+  private def indent(lines: ListBuffer[String], margin: Int): Int = {
+    if (margin >= 0) return margin
+    val spaces = " " * -margin
+    for (i <- lines.indices) lines(i) = spaces + lines(i)
+    0
   }
 
-  private def buildVisualLines(level: Int = 0, position: Int = 0): List[String] = {
-    val depth = this.depth
-    val width = math.pow(2, depth).toInt // Approximate width
-    val centerPos = width / 2
-
-    // Generate lines for each level
-    def buildLines(node: BinaryTree[A], depth: Int, offset: Int): List[String] = node match {
-      case EmptyNode =>
-        if (depth == 0) List(" " * width)
-        else List(" " * offset) ++ buildLines(node, depth - 1, offset / 2)
-      case Tree(value, left, right) =>
-        val nodeStr = value.toString
-        val leftLines = buildLines(left, depth - 1, offset / 2)
-        val rightLines = buildLines(right, depth - 1, offset / 2)
-        val currentLine = " " * offset + nodeStr + " " * (width - offset - nodeStr.length)
-        currentLine :: (leftLines.zip(rightLines).map { case (l, r) => l + r })
+  private def merge(left: ListBuffer[String], right: ListBuffer[String]): ListBuffer[String] = {
+    val minSize = math.min(left.size, right.size)
+    var offset = 0
+    for (i <- 0 until minSize) {
+      offset = math.max(offset, left(i).length + padding - right(i).replaceAll("\\S.*", "").length)
     }
-
-    buildLines(this, depth, centerPos)
+    indent(right, -indent(left, offset))
+    for (i <- 0 until minSize) {
+      left(i) = left(i) + right(i).substring(left(i).length)
+    }
+    if (right.size > minSize) {
+      left ++= right.drop(minSize)
+    }
+    left
   }
 
-  private def depth: Int = {
-    def calculateDepth(tree: BinaryTree[A]): Int = tree match {
-      case EmptyNode => 0
-      case Tree(_, left, right) =>
-        1 + math.max(calculateDepth(left), calculateDepth(right))
-    }
-    calculateDepth(this)
+  private def buildLines(node: BinaryTree[A]): ListBuffer[String] = node match {
+    case EmptyNode => ListBuffer.empty
+    case Tree(value, left, right) =>
+      val lines = merge(buildLines(left), buildLines(right))
+      val half = value.toString.length / 2
+      var i = half
+
+      if (lines.nonEmpty) {
+        i = lines.head.indexOf('*')
+        val line = (left, right) match {
+          case (EmptyNode, EmptyNode) =>
+            " " * i + "┌─┘"
+          case (_, EmptyNode) =>
+            " " * i + "┌─┘"
+          case (EmptyNode, _) =>
+            " " * indent(lines, i - 2) + "└─┐"
+          case (_, _) =>
+            val dist = lines.head.length - 1 - i
+            s"${" " * i}┌${"─" * (dist / 2 - 1)}┴${"─" * ((dist - 1) / 2)}┐"
+        }
+        lines(0) = line
+      }
+      lines.prepend(" " * indent(lines, i - half) + value.toString)
+      lines.prepend(" " * (i + math.max(0, half - i)) + "*")
+      lines
+  }
+
+  def visualize(root: BinaryTree[A]): String = {
+    val lines = buildLines(root)
+    lines.drop(1).mkString("\n") // Drop the marker line
   }
 }
