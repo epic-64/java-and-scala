@@ -120,13 +120,13 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
 
     if ord.lt(node1, value) && ord.lt(node2, value) then
       left match {
-        case EmptyNode        => value
-        case subtree: Tree[A] => subtree.lowestCommonAncestor(node1, node2)
+        case EmptyNode                               => value
+        case Tree(rightValue, rightLeft, rightRight) => left.asInstanceOf[Tree[A]].lowestCommonAncestor(node1, node2)
       }
     else if ord.gt(node1, value) && ord.gt(node2, value) then
       right match {
-        case EmptyNode        => value
-        case subtree: Tree[A] => subtree.lowestCommonAncestor(node1, node2)
+        case EmptyNode                               => value
+        case Tree(rightValue, rightLeft, rightRight) => right.asInstanceOf[Tree[A]].lowestCommonAncestor(node1, node2)
       }
     else value
   }
