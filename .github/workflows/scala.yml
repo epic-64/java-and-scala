@@ -27,5 +27,10 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
         cache: 'sbt'
-    - name: Run tests
-      run: sbt test
+    - name: Run tests with coverage
+      run: sbt clean coverage test coverageReport
+    - name: Store coverage report as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: scoverage-report
+        path: target/scala-*/scoverage-report
