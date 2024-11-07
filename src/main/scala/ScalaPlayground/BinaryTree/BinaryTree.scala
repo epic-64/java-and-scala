@@ -6,23 +6,7 @@ import scala.collection.mutable.ListBuffer
 object App {
   def main(args: Array[String]): Unit = {
     val example1: Unit = {
-      val tree = Tree
-        .empty[Int]
-        .insert(10)
-        .insert(20)
-        .insert(6)
-        .insert(25)
-        .insert(4)
-        .insert(8)
-        .insert(5)
-        .insert(15)
-        .insert(3)
-        .insert(8)
-        .insert(12)
-        .insert(18)
-        .insert(19)
-        .insert(7)
-        .insert(32)
+      val tree = Tree.fromList[Int](List(10, 20, 6, 25, 4, 8, 5, 15, 3, 8, 12, 18, 19, 7, 32))
 
       val formatter = TreeFormatter[Int]()
       println(formatter.visualize(tree))
@@ -33,22 +17,13 @@ object App {
     }
 
     val example2: Unit = {
-      val tree = Tree
-        .empty[String]
-        .insert("mango")
-        .insert("orange")
-        .insert("grape")
-        .insert("kiwi")
-        .insert("apple")
-        .insert("banana")
-        .insert("pear")
-        .insert("cherry")
-        .insert("peach")
+      val tree = Tree.fromList(List("mango", "orange", "grape", "kiwi", "apple", "banana", "pear", "cherry", "peach"))
 
       val formatter = TreeFormatter[String]()
       println(formatter.visualize(tree))
       println(s"Sorted array: ${tree.toList}")
       println(s"Shortest path between apple and cherry: ${tree.findShortestPath("apple", "cherry")}")
+      println(s"Shortest path between cherry and apple: ${tree.findShortestPath("cherry", "apple")}")
     }
 
     val example3: Unit = {
@@ -136,6 +111,9 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
 
 object Tree {
   def empty[A]: BinaryTree[A] = EmptyTree
+
+  def fromList[A](list: List[A])(using ord: Ordering[A]): BinaryTree[A] =
+    list.foldLeft(EmptyTree: BinaryTree[A])((tree, value) => tree.insert(value))
 }
 
 class TreeFormatter[A](padding: Int = 4) {
