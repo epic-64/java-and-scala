@@ -6,7 +6,8 @@ import scala.collection.mutable.ListBuffer
 object App {
   def main(args: Array[String]): Unit = {
     val example1: Unit = {
-      val tree = Tree.empty[Int]
+      val tree = Tree
+        .empty[Int]
         .insert(10)
         .insert(20)
         .insert(6)
@@ -32,7 +33,8 @@ object App {
     }
 
     val example2: Unit = {
-      val tree = Tree.empty[String]
+      val tree = Tree
+        .empty[String]
         .insert("mango")
         .insert("orange")
         .insert("grape")
@@ -55,7 +57,8 @@ object App {
       given Ordering[Person] with
         def compare(p1: Person, p2: Person): Int = p1.age.compareTo(p2.age)
 
-      val tree = Tree.empty[Person]
+      val tree = Tree
+        .empty[Person]
         .insert(Person("Alice", 30))
         .insert(Person("Bob", 25))
         .insert(Person("Charlie", 35))
@@ -85,24 +88,23 @@ sealed trait BinaryTree[+A] {
 }
 
 case object EmptyTree extends BinaryTree[Nothing] {
-  def insert[B](value: B)(using ord: Ordering[B]): BinaryTree[B]               = Tree(value, EmptyTree, EmptyTree)
+  def insert[B](value: B)(using ord: Ordering[B]): BinaryTree[B] = Tree(value, EmptyTree, EmptyTree)
   def toList: List[Nothing]                                      = Nil
   def findShortestPath[B: Ordering](from: B, to: B): List[B]     = Nil
   def findPathToRoot[B >: Nothing: Ordering](target: B): List[B] = Nil
 }
 
 case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends BinaryTree[A] {
-  def insert[B >: A](newValue: B)(using ord: Ordering[B]): BinaryTree[B] = {
+  def insert[B >: A](newValue: B)(using ord: Ordering[B]): BinaryTree[B] =
     ord.compare(newValue, value) match {
       case n if n < 0 => Tree(value, left.insert(newValue), right)
       case n if n > 0 => Tree(value, left, right.insert(newValue))
       case _          => this
     }
-  }
 
   def toList: List[A] = left.toList ++ List(value) ++ right.toList
 
-  def findShortestPath[B >: A: Ordering](from: B, to: B): List[B] = {
+  def findShortestPath[B >: A](from: B, to: B)(using ord: Ordering[B]): List[B] = {
     val sharedAncestor = lowestCommonAncestor(from, to)
     val pathFromLocal  = findPathToRoot(from).dropWhile(_ != sharedAncestor).reverse :+ sharedAncestor
     val pathFromTarget = findPathToRoot(to).dropWhile(_ != sharedAncestor)
@@ -110,20 +112,15 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
     pathFromLocal.dropRight(1) ++ pathFromTarget.tail
   }
 
-  def findPathToRoot[B >: A: Ordering](target: B): List[B] = {
-    given ord: Ordering[B] = summon[Ordering[B]]
-
+  def findPathToRoot[B >: A](target: B)(using ord: Ordering[B]): List[B] =
     ord.compare(target, value) match {
       case n if n < 0 => value :: left.findPathToRoot(target)
       case n if n > 0 => value :: right.findPathToRoot(target)
       case _          => List(value)
     }
-  }
 
   @tailrec
-  private def lowestCommonAncestor[B >: A: Ordering](node1: B, node2: B): A = {
-    given ord: Ordering[B] = summon[Ordering[B]]
-
+  private def lowestCommonAncestor[B >: A](node1: B, node2: B)(using ord: Ordering[B]): A =
     if ord.lt(node1, value) && ord.lt(node2, value) then
       left match {
         case EmptyTree                               => value
@@ -135,7 +132,6 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
         case Tree(rightValue, rightLeft, rightRight) => right.asInstanceOf[Tree[A]].lowestCommonAncestor(node1, node2)
       }
     else value
-  }
 }
 
 object Tree {
