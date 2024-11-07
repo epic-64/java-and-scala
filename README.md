@@ -17,6 +17,13 @@ This is my little playground project where I
 2. clone and open the project
 3. In the settings, enable "sbt shell" for **project load** and **builds**
 ![sbt usage](docs/images/sbt-usage.png)
+4. run `sbt compile`
+5. run `sbt test`
+6. to generate coverage reports, run `sbt coverage test coverageReport`
+
+## Troubleshooting
+- run `sbt clean`. This will force a full recompile of the project.
+- remove the project from IntelliJ IDEA and re-import it.
 
 ## Coverage Report
 For the coverage report to work in GitHub, make sure the branch `gh-pages` exists.
