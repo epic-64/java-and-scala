@@ -15,15 +15,7 @@ class BinaryTreeSortTest extends AnyFunSpec {
   describe("Binary Tree") {
     describe("for integers") {
       it("sorts the elements in ascending order") {
-        val tree = Tree.empty[Int]
-          .insert(15)
-          .insert(10)
-          .insert(20)
-          .insert(8)
-          .insert(12)
-          .insert(18)
-          .insert(25)
-          .insert(6)
+        val tree = Tree.fromList(List(15, 10, 20, 8, 12, 18, 25, 6))
 
         assert(tree.toList == List(6, 8, 10, 12, 15, 18, 20, 25))
       }
