@@ -90,10 +90,10 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
   def insert[B >: A: Ordering](newValue: B): BinaryTree[B] = {
     given ord: Ordering[B] = summon[Ordering[B]]
 
-    ord match {
-      case _ if ord.lt(newValue, value) => Tree(value, left.insert(newValue), right)
-      case _ if ord.gt(newValue, value) => Tree(value, left, right.insert(newValue))
-      case _                            => this
+    ord.compare(newValue, value) match {
+      case n if n < 0 => Tree(value, left.insert(newValue), right)
+      case n if n > 0 => Tree(value, left, right.insert(newValue))
+      case _          => this
     }
   }
 
