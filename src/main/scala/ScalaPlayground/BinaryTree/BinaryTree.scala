@@ -64,9 +64,9 @@ sealed trait BinaryTree[+A] {
 
 case object EmptyTree extends BinaryTree[Nothing] {
   def insert[B](value: B)(using ord: Ordering[B]): BinaryTree[B] = Tree(value, EmptyTree, EmptyTree)
-  def toList: List[Nothing]                                      = Nil
   def findShortestPath[B: Ordering](from: B, to: B): List[B]     = Nil
   def findPathToRoot[B >: Nothing: Ordering](target: B): List[B] = Nil
+  def toList: List[Nothing]                                      = Nil
 }
 
 case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends BinaryTree[A] {
@@ -80,7 +80,7 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
   def toList: List[A] = left.toList ++ List(value) ++ right.toList
 
   def findShortestPath[B >: A](from: B, to: B)(using ord: Ordering[B]): List[B] = {
-    val sharedAncestor = lowestCommonAncestor(from, to)
+    val sharedAncestor = lowestCommonAncestor(from, to, this)
     val pathFromLocal  = findPathToRoot(from).dropWhile(_ != sharedAncestor).reverse :+ sharedAncestor
     val pathFromTarget = findPathToRoot(to).dropWhile(_ != sharedAncestor)
 
@@ -95,18 +95,14 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
     }
 
   @tailrec
-  private def lowestCommonAncestor[B >: A](node1: B, node2: B)(using ord: Ordering[B]): A =
-    if ord.lt(node1, value) && ord.lt(node2, value) then
-      left match {
-        case EmptyTree                               => value
-        case Tree(rightValue, rightLeft, rightRight) => left.asInstanceOf[Tree[A]].lowestCommonAncestor(node1, node2)
-      }
-    else if ord.gt(node1, value) && ord.gt(node2, value) then
-      right match {
-        case EmptyTree                               => value
-        case Tree(rightValue, rightLeft, rightRight) => right.asInstanceOf[Tree[A]].lowestCommonAncestor(node1, node2)
-      }
-    else value
+  private def lowestCommonAncestor[B >: A](node1: B, node2: B, current: BinaryTree[A])(using ord: Ordering[B]): A = {
+    current match
+      case Tree(value, left, right) =>
+        if ord.lt(node1, value) && ord.lt(node2, value) then lowestCommonAncestor(node1, node2, left)
+        else if ord.gt(node1, value) && ord.gt(node2, value) then lowestCommonAncestor(node1, node2, right)
+        else value
+      case EmptyTree                => throw new NoSuchElementException("Nodes not found in the tree")
+  }
 }
 
 object Tree {
