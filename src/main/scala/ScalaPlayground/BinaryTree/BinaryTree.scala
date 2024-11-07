@@ -2,11 +2,12 @@ package ScalaPlayground.BinaryTree
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
+import scala.util.Random
 
 object App {
   def main(args: Array[String]): Unit = {
     val example1: Unit = {
-      val tree = Tree.fromList[Int](List(10, 20, 6, 25, 4, 8, 5, 15, 3, 8, 12, 18, 19, 7, 32))
+      val tree = Tree.fromList(Random.shuffle(1 to 50).toList)
 
       val formatter = TreeFormatter[Int]()
       println(formatter.visualize(tree))
