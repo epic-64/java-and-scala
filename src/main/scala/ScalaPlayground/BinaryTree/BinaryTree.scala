@@ -76,14 +76,16 @@ object App {
 
 sealed trait BinaryTree[+A] {
   def insert[B >: A: Ordering](value: B): BinaryTree[B]
-  def toList: List[A]
   def findShortestPath[B >: A: Ordering](from: B, to: B): List[B]
+  def findPathToRoot[B >: A: Ordering](target: B): List[B]
+  def toList: List[A]
 }
 
 case object EmptyNode extends BinaryTree[Nothing] {
-  def insert[B: Ordering](value: B): BinaryTree[B]           = Tree(value, EmptyNode, EmptyNode)
-  def toList: List[Nothing]                                  = Nil
-  def findShortestPath[B: Ordering](from: B, to: B): List[B] = Nil
+  def insert[B: Ordering](value: B): BinaryTree[B]               = Tree(value, EmptyNode, EmptyNode)
+  def toList: List[Nothing]                                      = Nil
+  def findShortestPath[B: Ordering](from: B, to: B): List[B]     = Nil
+  def findPathToRoot[B >: Nothing: Ordering](target: B): List[B] = Nil
 }
 
 case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends BinaryTree[A] {
@@ -107,21 +109,12 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
     pathFromLocal.dropRight(1) ++ pathFromTarget.tail
   }
 
-  private def findPathToRoot[B >: A: Ordering](target: B): List[B] = {
+  def findPathToRoot[B >: A: Ordering](target: B): List[B] = {
     given ord: Ordering[B] = summon[Ordering[B]]
 
-    ord match
-      case _ if ord.equiv(target, value) => List(value)
-      case _ if ord.lt(target, value)    =>
-        left match {
-          case Tree(leftValue, leftLeft, leftRight) => value :: left.asInstanceOf[Tree[A]].findPathToRoot(target)
-          case EmptyNode                            => Nil
-        }
-      case _                             =>
-        right match {
-          case Tree(rightValue, rightLeft, rightRight) => value :: right.asInstanceOf[Tree[A]].findPathToRoot(target)
-          case EmptyNode                               => Nil
-        }
+    if ord.equiv(target, value) then List(value)
+    else if ord.lt(target, value) then value :: left.findPathToRoot(target)
+    else value :: right.findPathToRoot(target)
   }
 
   @tailrec
