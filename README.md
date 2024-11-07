@@ -22,7 +22,7 @@ This is my little playground project where I
 6. to generate coverage reports, run `sbt coverage test coverageReport`
 
 ## Troubleshooting
-- run `sbt clean`. This will force a full recompile of the project.
+- run `sbt clean compile`. This will force a full recompile of the project.
 - remove the project from IntelliJ IDEA and re-import it.
 
 ## Coverage Report

@@ -10,7 +10,5 @@ class App {
 
         ScalaRomansPipeline scalaRomansPipeline = new ScalaRomansPipeline();
         System.out.println(scalaRomansPipeline.toNumeral(1005));
-        
-        System.out.println(ScalaCalculator.add(1, 2));
     }
 }

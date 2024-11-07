@@ -31,6 +31,7 @@ class RomanNumeralFromIntTest extends AnyFunSuite {
       assert(scalaRomansPipeline.toNumeral(input) == expected)
       assert(scalaRomansImperative.toNumeral(input) == expected)
       assert(scalaRomansIdiomatic.toNumeral(input) == expected)
+      assert(input.toRomanNumeral == expected)
     }
   }
 }
