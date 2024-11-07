@@ -6,7 +6,7 @@ import scala.collection.mutable.ListBuffer
 object App {
   def main(args: Array[String]): Unit = {
     val example1: Unit = {
-      val tree = Tree(10, EmptyNode, EmptyNode)
+      val tree = Tree(10, EmptyTree, EmptyTree)
         .insert(20)
         .insert(6)
         .insert(25)
@@ -31,7 +31,7 @@ object App {
     }
 
     val example2: Unit = {
-      val tree = Tree("mango", EmptyNode, EmptyNode)
+      val tree = Tree("mango", EmptyTree, EmptyTree)
         .insert("orange")
         .insert("grape")
         .insert("kiwi")
@@ -53,7 +53,7 @@ object App {
       given Ordering[Person] with
         def compare(p1: Person, p2: Person): Int = p1.age.compareTo(p2.age)
 
-      val tree = Tree(Person("Alice", 30), EmptyNode, EmptyNode)
+      val tree = Tree(Person("Alice", 30), EmptyTree, EmptyTree)
         .insert(Person("Bob", 25))
         .insert(Person("Charlie", 35))
         .insert(Person("Dave", 20))
@@ -81,8 +81,8 @@ sealed trait BinaryTree[+A] {
   def toList: List[A]
 }
 
-case object EmptyNode extends BinaryTree[Nothing] {
-  def insert[B: Ordering](value: B): BinaryTree[B]               = Tree(value, EmptyNode, EmptyNode)
+case object EmptyTree extends BinaryTree[Nothing] {
+  def insert[B: Ordering](value: B): BinaryTree[B]               = Tree(value, EmptyTree, EmptyTree)
   def toList: List[Nothing]                                      = Nil
   def findShortestPath[B: Ordering](from: B, to: B): List[B]     = Nil
   def findPathToRoot[B >: Nothing: Ordering](target: B): List[B] = Nil
@@ -112,9 +112,11 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
   def findPathToRoot[B >: A: Ordering](target: B): List[B] = {
     given ord: Ordering[B] = summon[Ordering[B]]
 
-    if ord.equiv(target, value) then List(value)
-    else if ord.lt(target, value) then value :: left.findPathToRoot(target)
-    else value :: right.findPathToRoot(target)
+    ord.compare(target, value) match {
+      case n if n < 0 => value :: left.findPathToRoot(target)
+      case n if n > 0 => value :: right.findPathToRoot(target)
+      case _          => List(value)
+    }
   }
 
   @tailrec
@@ -123,12 +125,12 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
 
     if ord.lt(node1, value) && ord.lt(node2, value) then
       left match {
-        case EmptyNode                               => value
+        case EmptyTree                               => value
         case Tree(rightValue, rightLeft, rightRight) => left.asInstanceOf[Tree[A]].lowestCommonAncestor(node1, node2)
       }
     else if ord.gt(node1, value) && ord.gt(node2, value) then
       right match {
-        case EmptyNode                               => value
+        case EmptyTree                               => value
         case Tree(rightValue, rightLeft, rightRight) => right.asInstanceOf[Tree[A]].lowestCommonAncestor(node1, node2)
       }
     else value
@@ -162,7 +164,7 @@ class TreeFormatter[A](padding: Int = 4) {
   }
 
   private def buildLines(node: BinaryTree[A]): ListBuffer[String] = node match {
-    case EmptyNode                => ListBuffer.empty
+    case EmptyTree                => ListBuffer.empty
     case Tree(value, left, right) =>
       val leftLines  = buildLines(left)
       val rightLines = buildLines(right)
@@ -174,9 +176,9 @@ class TreeFormatter[A](padding: Int = 4) {
       if (lines.nonEmpty) {
         i = lines.head.indexOf('*') // Marker position
         val line = (left, right) match {
-          case (EmptyNode, EmptyNode) => " " * i + "┌─┘"
-          case (_, EmptyNode)         => " " * i + "┌─┘"
-          case (EmptyNode, _)         => " " * indent(lines, i - 2) + "└─┐"
+          case (EmptyTree, EmptyTree) => " " * i + "┌─┘"
+          case (_, EmptyTree)         => " " * i + "┌─┘"
+          case (EmptyTree, _)         => " " * indent(lines, i - 2) + "└─┐"
           case (_, _)                 =>
             val dist = lines.head.length - 1 - i // Calculate distance between roots
             s"${" " * i}┌${"─" * (dist / 2 - 1)}┴${"─" * ((dist - 1) / 2)}┐"
