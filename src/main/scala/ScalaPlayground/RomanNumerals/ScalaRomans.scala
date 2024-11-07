@@ -1,6 +1,21 @@
 package ScalaPlayground.RomanNumerals
 
+import JavaPlayground.RomanNumerals.JavaRomans
+
 import scala.annotation.tailrec
+
+object App {
+  def main(args: Array[String]): Unit = {
+    val javaRomans = new JavaRomans()
+    val scalaRomans = ScalaRomansPipeline()
+
+    println(javaRomans.toNumeral(1996))
+    println(scalaRomans.toNumeral(1996))
+
+    println(147.toRomanNumeral)
+    println("MMXXIV".toInt)
+  }
+}
 
 extension (n: Int) def toRomanNumeral: String = ScalaRomansImperative().toNumeral(n)
 extension (numeral: String) def toInt: Int    = ScalaRomansImperative().toInt(numeral)

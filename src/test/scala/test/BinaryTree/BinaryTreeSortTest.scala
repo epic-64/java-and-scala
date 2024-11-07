@@ -4,7 +4,7 @@ import ScalaPlayground.BinaryTree.Tree
 import ScalaPlayground.BinaryTree.EmptyTree
 import org.scalatest.funspec.AnyFunSpec
 
-class BinaryTreeTest extends AnyFunSpec {
+class BinaryTreeSortTest extends AnyFunSpec {
   describe("Binary Tree") {
     describe("for integers") {
       it("should sort the elements in ascending order") {
