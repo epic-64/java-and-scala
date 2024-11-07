@@ -6,7 +6,8 @@ import scala.collection.mutable.ListBuffer
 object App {
   def main(args: Array[String]): Unit = {
     val example1: Unit = {
-      val tree = Tree(10, EmptyTree, EmptyTree)
+      val tree = Tree.empty[Int]
+        .insert(10)
         .insert(20)
         .insert(6)
         .insert(25)
@@ -31,7 +32,8 @@ object App {
     }
 
     val example2: Unit = {
-      val tree = Tree("mango", EmptyTree, EmptyTree)
+      val tree = Tree.empty[String]
+        .insert("mango")
         .insert("orange")
         .insert("grape")
         .insert("kiwi")
@@ -53,7 +55,8 @@ object App {
       given Ordering[Person] with
         def compare(p1: Person, p2: Person): Int = p1.age.compareTo(p2.age)
 
-      val tree = Tree(Person("Alice", 30), EmptyTree, EmptyTree)
+      val tree = Tree.empty[Person]
+        .insert(Person("Alice", 30))
         .insert(Person("Bob", 25))
         .insert(Person("Charlie", 35))
         .insert(Person("Dave", 20))
@@ -75,23 +78,21 @@ object App {
 }
 
 sealed trait BinaryTree[+A] {
-  def insert[B >: A: Ordering](value: B): BinaryTree[B]
+  def insert[B >: A](value: B)(using ord: Ordering[B]): BinaryTree[B]
   def findShortestPath[B >: A: Ordering](from: B, to: B): List[B]
   def findPathToRoot[B >: A: Ordering](target: B): List[B]
   def toList: List[A]
 }
 
 case object EmptyTree extends BinaryTree[Nothing] {
-  def insert[B: Ordering](value: B): BinaryTree[B]               = Tree(value, EmptyTree, EmptyTree)
+  def insert[B](value: B)(using ord: Ordering[B]): BinaryTree[B]               = Tree(value, EmptyTree, EmptyTree)
   def toList: List[Nothing]                                      = Nil
   def findShortestPath[B: Ordering](from: B, to: B): List[B]     = Nil
   def findPathToRoot[B >: Nothing: Ordering](target: B): List[B] = Nil
 }
 
 case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends BinaryTree[A] {
-  def insert[B >: A: Ordering](newValue: B): BinaryTree[B] = {
-    given ord: Ordering[B] = summon[Ordering[B]]
-
+  def insert[B >: A](newValue: B)(using ord: Ordering[B]): BinaryTree[B] = {
     ord.compare(newValue, value) match {
       case n if n < 0 => Tree(value, left.insert(newValue), right)
       case n if n > 0 => Tree(value, left, right.insert(newValue))
@@ -135,6 +136,10 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
       }
     else value
   }
+}
+
+object Tree {
+  def empty[A]: BinaryTree[A] = EmptyTree
 }
 
 class TreeFormatter[A](padding: Int = 4) {

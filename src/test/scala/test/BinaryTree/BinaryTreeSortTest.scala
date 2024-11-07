@@ -1,14 +1,22 @@
 package test.BinaryTree
 
 import ScalaPlayground.BinaryTree.Tree
-import ScalaPlayground.BinaryTree.EmptyTree
 import org.scalatest.funspec.AnyFunSpec
 
 class BinaryTreeSortTest extends AnyFunSpec {
+  describe("Empty Tree") {
+    it("returns an empty list") {
+      val tree = Tree.empty[Int]
+      
+      assert(tree.toList == List())
+    }
+  }
+  
   describe("Binary Tree") {
     describe("for integers") {
-      it("should sort the elements in ascending order") {
-        val tree = Tree(15, EmptyTree, EmptyTree)
+      it("sorts the elements in ascending order") {
+        val tree = Tree.empty[Int]
+          .insert(15)
           .insert(10)
           .insert(20)
           .insert(8)
@@ -22,8 +30,9 @@ class BinaryTreeSortTest extends AnyFunSpec {
     }
 
     describe("for strings") {
-      it("should sort the elements in ascending order") {
-        val tree = Tree("banana", EmptyTree, EmptyTree)
+      it("sorts the elements in ascending order") {
+        val tree = Tree.empty[String]
+          .insert("banana")
           .insert("apple")
           .insert("cherry")
           .insert("pear")
@@ -34,13 +43,14 @@ class BinaryTreeSortTest extends AnyFunSpec {
     }
 
     describe("for case classes") {
-      it("should sort the elements in specified order") {
+      it("sorts the elements in specified order") {
         case class Person(name: String, age: Int)
 
         given Ordering[Person] with
           def compare(p1: Person, p2: Person): Int = p1.age.compareTo(p2.age)
 
-        val tree = Tree(Person("Alice", 30), EmptyTree, EmptyTree)
+        val tree = Tree.empty[Person]
+          .insert(Person("Alice", 30))
           .insert(Person("Bob", 25))
           .insert(Person("Charlie", 35))
           .insert(Person("Dave", 20))
