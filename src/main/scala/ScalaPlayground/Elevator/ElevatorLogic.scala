@@ -23,12 +23,12 @@ case class Lift(
     var direction: Direction,
     val capacity: Int
 ) {
-  def isFull: Boolean    = people.size == capacity
-  def hasRoom: Boolean   = !isFull
-  def hasPeople: Boolean = people.nonEmpty
-  def isEmpty: Boolean   = people.isEmpty
+  def isFull: Boolean                  = people.size == capacity
+  def hasRoom: Boolean                 = !isFull
+  def hasPeople: Boolean               = people.nonEmpty
+  def isEmpty: Boolean                 = people.isEmpty
   def accepts(person: Person): Boolean = hasRoom && person.desiredDirection(position) == direction
-  def turn(): Unit       = direction = direction match
+  def turn(): Unit                     = direction = direction match
     case Direction.Up   => Direction.Down
     case Direction.Down => Direction.Up
 }
@@ -60,7 +60,7 @@ object ElevatorLogic {
 
     // get current floor queue
     val queue = building.floors(lift.position)
-    
+
     while lift.hasRoom && queue.exists(lift.accepts) do
       val person = queue.dequeueFirst(lift.accepts).get
       lift.people.enqueue(person)
@@ -83,16 +83,16 @@ object ElevatorLogic {
 
   def getNextPosition(building: Building, lift: Lift): Floor = {
     if building.floors.values.forall(_.isEmpty) && lift.isEmpty then return 0
-    
+
     val destinations = building.floors.keys.toList
-    
+
     val fittingDestinations = destinations.filter {
-        case destination if lift.direction == Direction.Up   => destination > lift.position
-        case destination if lift.direction == Direction.Down => destination < lift.position
+      case destination if lift.direction == Direction.Up   => destination > lift.position
+      case destination if lift.direction == Direction.Down => destination < lift.position
     }
-    
+
     println("fitting destinations: " + fittingDestinations)
-    
+
     fittingDestinations.minByOption(destination => math.abs(destination - lift.position)).getOrElse(0)
   }
 
@@ -106,19 +106,32 @@ object ElevatorLogic {
   }
 }
 
-@main def run(): Unit = {
-  val floors = Map(
-    0 -> mutable.Queue(Person(1), Person(2)),
-    1 -> mutable.Queue(Person(0), Person(2)),
-    2 -> mutable.Queue(Person(0), Person(1), Person(3)),
-    3 -> mutable.Queue(Person(0), Person(1), Person(2))
+object ElevatorKata {
+  def theLift(queues: Array[Array[Int]], capacity: Int): Array[Int] = {
+
+    val floors = queues.zipWithIndex.map { case (queue, index) =>
+      val people = queue.map(Person(_)).to(mutable.Queue)
+      index -> people
+    }.toMap
+
+    val lift         = Lift(position = 0, people = mutable.Queue.empty, Direction.Up, capacity)
+    val building     = Building(floors)
+    val initialState = State(building = building, lift = lift, stops = mutable.ListBuffer.empty)
+    val finalState   = ElevatorLogic.simulate(initialState)
+
+    finalState.stops.toArray
+  }
+}
+
+@main def run(): Unit =
+  val queues: Array[Array[Int]] = Array(
+    Array(1, 2, 3),
+    Array.empty[Int],
+    Array.empty[Int],
+    Array(2, 0, 0),
   )
 
-  val building     = Building(floors)
-  val lift         = Lift(position = 0, people = mutable.Queue.empty, Direction.Up, capacity = 1)
-  val initialState = State(building, lift, mutable.ListBuffer.empty)
-  val finalState   = ElevatorLogic.simulate(initialState)
-  val stops        = finalState.stops.toList
+  val capacity = 5
 
-  println(stops)
-}
+  val stops = ElevatorKata.theLift(queues, capacity)
+  println(stops.mkString(", "))
