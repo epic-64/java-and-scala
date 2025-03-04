@@ -75,25 +75,25 @@ object ElevatorLogic {
     println(stops)
 
     // wait for user input
-    println("Press Enter to continue...")
-    scala.io.StdIn.readLine()
+    // println("Press Enter to continue...")
+    // scala.io.StdIn.readLine()
 
     state
   }
 
   def getNextPosition(building: Building, lift: Lift): Floor = {
     if building.floors.values.forall(_.isEmpty) && lift.isEmpty then return 0
-
-    var next = lift.position + lift.direction.toOrdinal
-
-    def isGoodStop = lift.people.exists(_.destination == next) || building.floors(next).nonEmpty
-
-    while !isGoodStop do
-      next = next + lift.direction.toOrdinal
-      
-    next = next.max(0).min(building.floors.size - 1)
-
-    next
+    
+    val destinations = building.floors.keys.toList
+    
+    val fittingDestinations = destinations.filter {
+        case destination if lift.direction == Direction.Up   => destination > lift.position
+        case destination if lift.direction == Direction.Down => destination < lift.position
+    }
+    
+    println("fitting destinations: " + fittingDestinations)
+    
+    fittingDestinations.minByOption(destination => math.abs(destination - lift.position)).getOrElse(0)
   }
 
   def simulate(state: State): State = {
@@ -115,7 +115,7 @@ object ElevatorLogic {
   )
 
   val building     = Building(floors)
-  val lift         = Lift(position = 0, people = mutable.Queue.empty, Direction.Up, capacity = 2)
+  val lift         = Lift(position = 0, people = mutable.Queue.empty, Direction.Up, capacity = 1)
   val initialState = State(building, lift, mutable.ListBuffer.empty)
   val finalState   = ElevatorLogic.simulate(initialState)
   val stops        = finalState.stops.toList
