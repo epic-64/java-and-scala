@@ -9,7 +9,7 @@ public class ElevatorTest {
     @Test
     public void testUp() {
         final int[][] queues = {
-                new int[0], // G
+                new int[0], // 0
                 new int[0], // 1
                 new int[]{5, 5, 5}, // 2
                 new int[0], // 3
@@ -24,7 +24,7 @@ public class ElevatorTest {
     @Test
     public void testDown() {
         final int[][] queues = {
-                new int[0], // G
+                new int[0], // 0
                 new int[0], // 1
                 new int[]{1, 1}, // 2
                 new int[0], // 3
