@@ -89,7 +89,7 @@ object LiftLogic {
     // Set the new position
     lift.position = nextPosition
 
-    // Register the stop. I added the condition because of a bug
+    // Register the stop. I added the extra condition because of a bug
     // by which the lift sometimes takes two turns for the very last move 🤔
     if oldPosition != nextPosition then stops += nextPosition
     
