@@ -143,33 +143,35 @@ object LiftLogic {
       case Direction.Up   => emptyLiftUp
       case Direction.Down => emptyLiftDown
   }
+  
+  private def nearestPassengerOption(lift: Lift, building: Building): Option[Floor] = {
+    lift.people
+      .filter(_.desiredDirection == lift.direction)
+      .map(_.destination)
+      .minByOption(floor => Math.abs(floor - lift.position))
+  }
+  
+  private def nearestRequestInSameDirectionOption(lift: Lift, building: Building): Option[Floor] = {
+    lift.direction match
+      case Direction.Up   => peopleGoingUp(building).filter(_.isHigherThan(lift)).map(_.position).minOption
+      case Direction.Down => peopleGoingDown(building).filter(_.isLowerThan(lift)).map(_.position).maxOption
+  } 
 
   private def getNextPosition(building: Building, lift: Lift): Floor = {
     if building.isEmpty && lift.isEmpty then
       println("everything is empty, returning to ground floor")
       return 0
 
-    val nearestRequestedPassengerOption = lift.people
-      .filter(_.desiredDirection == lift.direction)
-      .map(_.destination)
-      .minByOption(floor => Math.abs(floor - lift.position))
-
-    val nearestRequestInSameDirectionOption = lift.direction match
-      case Direction.Up   => peopleGoingUp(building).filter(_.isHigherThan(lift)).map(_.position).minOption
-      case Direction.Down => peopleGoingDown(building).filter(_.isLowerThan(lift)).map(_.position).maxOption
-
-    val combinedOption: List[Int] = List(
-      nearestRequestedPassengerOption,
-      nearestRequestInSameDirectionOption
+    val nearestFloorsInCurrentDirection: List[Int] = List(
+      nearestPassengerOption(lift, building),
+      nearestRequestInSameDirectionOption(lift, building)
     ).flatten
 
-    val nearestOption = combinedOption.minByOption(floor => Math.abs(floor - lift.position))
+    val nearestOption = nearestFloorsInCurrentDirection.minByOption(floor => Math.abs(floor - lift.position))
 
     nearestOption match
       case Some(floor) => floor
-      case None        =>
-        lift.turn()
-        emptyLiftNextPosition(building, lift)
+      case None        => emptyLiftNextPosition(building, lift)
   }
 
   def simulate(state: State): State = {
@@ -177,10 +179,10 @@ object LiftLogic {
 
     // register initial position as the first stop
     newState.stops += newState.lift.position
-    
+
     while !newState.building.isEmpty || !newState.lift.isEmpty || newState.lift.position != 0 do
       newState = tick(newState).tap(_.print())
-    
+
     newState
   }
 }
