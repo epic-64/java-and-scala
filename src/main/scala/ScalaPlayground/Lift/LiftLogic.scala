@@ -13,6 +13,8 @@ case class Person(position: Floor, destination: Floor) {
     case _ if destination > position => Direction.Up
     case _ if destination < position => Direction.Down
 
+  def matchesDirection(lift: Lift): Boolean = desiredDirection == lift.direction
+
   def isLowerThan(lift: Lift): Boolean  = position < lift.position
   def isHigherThan(lift: Lift): Boolean = position > lift.position
 }
@@ -46,7 +48,7 @@ case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor
     building.floors.toSeq.reverse.foreach { case (floor, queue) =>
       sb.append(s"| ${floor} | ${queue.reverse.map(_.destination).mkString(", ").padTo(20, ' ')} |")
 
-      // draw the lift if on current level
+      // draw the lift if it is on the current level
       if lift.position == floor
       then sb.append(s" | ${lift.people.map(_.destination).mkString(", ").padTo(15, ' ')} |")
 
@@ -118,7 +120,7 @@ object LiftLogic {
 
   private def nearestPassengerOption(lift: Lift, building: Building): Option[Floor] =
     lift.people
-      .filter(_.desiredDirection == lift.direction)
+      .filter(_.matchesDirection(lift))
       .map(_.destination)
       .minByOption(floor => Math.abs(floor - lift.position))
 
