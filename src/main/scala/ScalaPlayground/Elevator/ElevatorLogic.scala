@@ -94,9 +94,10 @@ object ElevatorLogic {
   // stop in current direction if someone wants to get on in same direction
   // when picking new direction, go to the farthest person who wants to go in the new direction
 
-  private def emptyLiftNextPosition(building: Building, lift: Lift): Floor =
-    if lift.direction == Direction.Up then
+  private def emptyLiftNextPosition(building: Building, lift: Lift): Floor = {
+    def emptyLiftUp: Floor = {
       println("empty lift going up")
+      
       val highestPersonWhoWantsToGoDown = peopleGoingDown(building)
         .filter(_.position > lift.position)
         .map(_.position)
@@ -114,13 +115,22 @@ object ElevatorLogic {
           .map(_.position)
           .minOption
           .getOrElse(0)
-    else
+    }
+    
+    def emptyLiftDown: Floor = {
       println("empty lift going down")
+      
       peopleGoingUp(building)
         .filter(_.isLowerThan(lift))
         .map(_.position)
         .minOption
         .getOrElse(0)
+    }
+    
+    if lift.direction == Direction.Up
+      then emptyLiftUp
+      else emptyLiftDown
+  }
 
   private def getNextPosition(building: Building, lift: Lift): Floor = {
     if building.isEmpty && lift.isEmpty then
@@ -133,7 +143,7 @@ object ElevatorLogic {
       .filter(_.desiredDirection == lift.direction)
       .map(_.destination)
       .minByOption(floor => Math.abs(floor - lift.position))
-    
+
     val nearestRequestInSameDirection = lift.direction match
       case Direction.Up => peopleGoingUp(building).filter(_.isHigherThan(lift)).map(_.position).minOption
       case Direction.Down => peopleGoingDown(building).filter(_.isLowerThan(lift)).map(_.position).maxOption
