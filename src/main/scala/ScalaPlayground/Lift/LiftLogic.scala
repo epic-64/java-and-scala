@@ -141,18 +141,16 @@ object LiftLogic {
       case Direction.Down => emptyLiftDown
   }
   
-  private def nearestPassengerOption(lift: Lift, building: Building): Option[Floor] = {
+  private def nearestPassengerOption(lift: Lift, building: Building): Option[Floor] =
     lift.people
       .filter(_.desiredDirection == lift.direction)
       .map(_.destination)
       .minByOption(floor => Math.abs(floor - lift.position))
-  }
   
-  private def nearestRequestInSameDirectionOption(lift: Lift, building: Building): Option[Floor] = {
+  private def nearestRequestInSameDirectionOption(lift: Lift, building: Building): Option[Floor] =
     lift.direction match
       case Direction.Up   => peopleGoingUp(building).filter(_.isHigherThan(lift)).map(_.position).minOption
-      case Direction.Down => peopleGoingDown(building).filter(_.isLowerThan(lift)).map(_.position).maxOption
-  } 
+      case Direction.Down => peopleGoingDown(building).filter(_.isLowerThan(lift)).map(_.position).maxOption 
 
   private def getNextPosition(building: Building, lift: Lift): Floor = {
     if building.isEmpty && lift.isEmpty then

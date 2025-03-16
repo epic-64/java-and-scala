@@ -86,20 +86,17 @@ public class LiftTest {
 
         assertArrayEquals(new int[]{0, 2, 0}, result);
     }
-
+    
     @Test
     public void MyExample2() {
         final int[][] queues = {
-                new int[0],   // G
-                new int[0],   // 1
-                new int[]{0, 4, 5, 5, 5, 5, 5, 5, 5, 4}, // 2
-                new int[0],   // 3
-                new int[]{1}, // 4
-                new int[0],   // 5
+                new int[]{2, 2, 2, 2, 1, 1, 1, 1},   // G
+                new int[0], // 1
+                new int[0], // 2
         };
 
-        final int[] result = Dinglemouse.theLift(queues, 5);
+        final int[] result = Dinglemouse.theLift(queues, 3);
 
-        // assertArrayEquals(new int[]{0, 2, 4, 5, 4, 2, 1, 0, 2, 4, 5, 0}, result);
+        assertArrayEquals(new int[]{0, 2, 0, 1, 2, 0, 1, 0}, result);
     }
 }
