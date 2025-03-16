@@ -90,14 +90,10 @@ object ElevatorLogic {
     .flatMap(queue => queue.filter(person => person.desiredDirection == Direction.Up))
     .toList
 
-  // stop in current direction if someone wants to get off
-  // stop in current direction if someone wants to get on in same direction
-  // when picking new direction, go to the farthest person who wants to go in the new direction
-
   private def emptyLiftNextPosition(building: Building, lift: Lift): Floor = {
     def emptyLiftUp: Floor = {
       println("empty lift going up")
-      
+
       val highestPersonWhoWantsToGoDown = peopleGoingDown(building)
         .filter(_.position > lift.position)
         .map(_.position)
@@ -116,16 +112,16 @@ object ElevatorLogic {
           .minOption
           .getOrElse(0)
     }
-    
+
     def emptyLiftDown: Floor = {
       println("empty lift going down")
-      
+
       val lowestPersonWhoWantsToGoUp = peopleGoingUp(building)
         .filter(_.isLowerThan(lift))
         .map(_.position)
         .minOption
         .getOrElse(0)
-      
+
       if lowestPersonWhoWantsToGoUp < lift.position then
         println("sending lift to lowest person who wants to go up")
         lift.turn()
@@ -138,10 +134,10 @@ object ElevatorLogic {
           .maxOption
           .getOrElse(0)
     }
-    
+
     if lift.direction == Direction.Up
-      then emptyLiftUp
-      else emptyLiftDown
+    then emptyLiftUp
+    else emptyLiftDown
   }
 
   private def getNextPosition(building: Building, lift: Lift): Floor = {
@@ -157,13 +153,16 @@ object ElevatorLogic {
       .minByOption(floor => Math.abs(floor - lift.position))
 
     val nearestRequestInSameDirection = lift.direction match
-      case Direction.Up => peopleGoingUp(building).filter(_.isHigherThan(lift)).map(_.position).minOption
+      case Direction.Up   => peopleGoingUp(building).filter(_.isHigherThan(lift)).map(_.position).minOption
       case Direction.Down => peopleGoingDown(building).filter(_.isLowerThan(lift)).map(_.position).maxOption
 
-    List(nearestRequestedPassengerOption, nearestRequestInSameDirection)
-      .flatten
+    val combinedOptions = List(
+      nearestRequestedPassengerOption,
+      nearestRequestInSameDirection
+    ).flatten
       .minByOption(floor => Math.abs(floor - lift.position))
-      .getOrElse(0)
+
+    combinedOptions.getOrElse(0)
   }
 
   def simulate(state: State): State = {
