@@ -62,7 +62,7 @@ case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor
 }
 
 object LiftLogic {
-  private def tick(state: State): Unit = {
+  private def tick(state: State): State = {
     // Destructure state into convenient variables
     val State(building, lift, stops) = state
 
@@ -92,6 +92,8 @@ object LiftLogic {
     // Register the stop. I added the condition because of a bug
     // by which the lift sometimes takes two turns for the very last move 🤔
     if oldPosition != nextPosition then stops += nextPosition
+    
+    state
   }
 
   private def peopleGoingDirection(building: Building, direction: Direction): List[Person] =
@@ -142,14 +144,15 @@ object LiftLogic {
         case None        => emptyLiftNextPosition(building, lift) // otherwise start empty lift logic
 
   def simulate(initialState: State): State = {
-    val state: State = initialState
-      .tap(s => s.stops += s.lift.position) // register initial position as the first stop
-      .tap(s => println(s.toPrintable))     // draw the initial state of the lift
+    var state = initialState
+    
+    state.stops += state.lift.position // register initial position as the first stop
+    println(state.toPrintable)         // draw the initial state of the lift
 
     val State(building, lift, _) = state
 
     while building.hasPeople || lift.hasPeople || lift.position > 0 do
-      tick(state) // evil procedural code ¯\_(ツ)_/¯
+      state = tick(state)
       println(state.toPrintable)
 
     state
