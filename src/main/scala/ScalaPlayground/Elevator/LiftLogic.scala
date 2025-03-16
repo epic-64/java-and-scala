@@ -185,7 +185,7 @@ object LiftLogic {
   }
 }
 
-object ElevatorKata {
+object Dinglemouse {
   def theLift(queues: Array[Array[Int]], capacity: Int): Array[Int] = {
     val floors = queues.zipWithIndex
       .map { case (queue: Array[Int], index: Int) =>
@@ -203,16 +203,3 @@ object ElevatorKata {
     finalState.stops.toArray
   }
 }
-
-@main def run(): Unit =
-  val queues: Array[Array[Int]] = Array(
-    Array(1, 2, 3),
-    Array.empty[Int],
-    Array.empty[Int],
-    Array(2, 0, 0),
-  )
-
-  val capacity = 5
-
-  val stops = ElevatorKata.theLift(queues, capacity)
-  println(stops.mkString(", "))
