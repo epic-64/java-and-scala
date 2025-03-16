@@ -34,7 +34,8 @@ case class Lift(
     case Direction.Down => Direction.Up
 }
 
-case class Building(floors: ListMap[Floor, mutable.Queue[Person]])
+case class Building(floors: ListMap[Floor, mutable.Queue[Person]]):
+  def isEmpty: Boolean = floors.values.forall(_.isEmpty)
 
 case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor]):
   def print(): Unit = {
@@ -89,12 +90,30 @@ object ElevatorLogic {
     .flatMap(queue => queue.filter(person => person.desiredDirection == Direction.Up))
     .toList
 
-  private def getNextPosition(building: Building, lift: Lift): Floor = {
-    if building.floors.values.forall(_.isEmpty) && lift.isEmpty then
-      println("everything is empty, returning to ground floor")
-      return 0
+  // stop in current direction if someone wants to get off
+  // stop in current direction if someone wants to get on in same direction
+  // when picking new direction, go to the farthest person who wants to go in the new direction
 
-    if lift.isEmpty && lift.direction == Direction.Up then
+  private def emptyLiftNextPosition(building: Building, lift: Lift): Floor = {
+    def goingUpNextPosition: Floor = {
+      val highestFloorGoingDown = peopleGoingDown(building)
+        .filter(_.position > lift.position)
+        .map(_.position)
+        .maxOption
+        .getOrElse(0)
+
+      val lowestFloorGoingUp = peopleGoingUp(building)
+        .filter(_.position < lift.position)
+        .map(_.position)
+        .minOption
+        .getOrElse(0)
+
+      (highestFloorGoingDown, lift.position) match
+        case _ if highestFloorGoingDown > lift.position => highestFloorGoingDown
+        case _ if lowestFloorGoingUp < lift.position    => lowestFloorGoingUp
+    }
+
+    if lift.direction == Direction.Up then
       println("empty lift going up")
       val highestPersonWhoWantsToGoDown = peopleGoingDown(building)
         .filter(_.position > lift.position)
@@ -105,22 +124,28 @@ object ElevatorLogic {
       if highestPersonWhoWantsToGoDown > lift.position then
         println("sending lift to highest person who wants to go down")
         lift.turn()
-        return highestPersonWhoWantsToGoDown
+        highestPersonWhoWantsToGoDown
       else
         println("sending lift to the lowest person who wants to go up")
-        return peopleGoingUp(building)
+        peopleGoingUp(building)
           .filter(_.isHigherThan(lift))
           .map(_.position)
           .minOption
           .getOrElse(0)
-
-    if lift.isEmpty && lift.direction == Direction.Down then
+    else
       println("empty lift going down")
-      return peopleGoingUp(building)
+      peopleGoingUp(building)
         .filter(_.isLowerThan(lift))
         .map(_.position)
         .minOption
         .getOrElse(0)
+  }
+  private def getNextPosition(building: Building, lift: Lift): Floor       = {
+    if building.isEmpty && lift.isEmpty then
+      println("everything is empty, returning to ground floor")
+      return 0
+
+    if lift.isEmpty then return emptyLiftNextPosition(building, lift)
 
     val nearestRequestedFloor = lift.people
       .filter(_.desiredDirection == lift.direction)
