@@ -1,5 +1,6 @@
 package ScalaPlayground.Elevator
 
+import scala.util.chaining.scalaUtilChainingOps
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
@@ -171,21 +172,14 @@ object ElevatorLogic {
   }
 
   def simulate(state: State): State = {
-    var newState = state
+    var newState: State = state
 
     // register initial position as the first stop
     newState.stops += newState.lift.position
-
-    newState.print()
-
-    while newState.building.floors.values.exists(_.nonEmpty)
-      || newState.lift.hasPeople
-      || newState.lift.position != 0
-    do
-      newState = tick(newState)
-      newState.print()
-      // Thread.sleep(50 * newState.stops.size)
-
+    
+    while !newState.building.isEmpty || !newState.lift.isEmpty || newState.lift.position != 0 do
+      newState = tick(newState).tap(_.print())
+    
     newState
   }
 }
