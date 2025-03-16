@@ -17,7 +17,9 @@ public class ElevatorTest {
                 new int[0], // 5
                 new int[0], // 6
         };
+
         final int[] result = Dinglemouse.theLift(queues, 5);
+
         assertArrayEquals(new int[]{0, 2, 5, 0}, result);
     }
 
@@ -32,9 +34,9 @@ public class ElevatorTest {
                 new int[0], // 5
                 new int[0], // 6
         };
-        
+
         final int[] result = Dinglemouse.theLift(queues, 5);
-        
+
         assertArrayEquals(new int[]{0, 2, 1, 0}, result);
     }
 
@@ -49,9 +51,9 @@ public class ElevatorTest {
                 new int[0], // 5
                 new int[0], // 6
         };
-        
+
         final int[] result = Dinglemouse.theLift(queues, 5);
-        
+
         assertArrayEquals(new int[]{0, 1, 2, 3, 4, 5, 0}, result);
     }
 
@@ -66,9 +68,9 @@ public class ElevatorTest {
                 new int[]{3}, // 5
                 new int[0], // 6
         };
-        
+
         final int[] result = Dinglemouse.theLift(queues, 5);
-        
+
         assertArrayEquals(new int[]{0, 5, 4, 3, 2, 1, 0}, result);
     }
 }
