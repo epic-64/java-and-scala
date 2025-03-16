@@ -4,14 +4,14 @@ import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
 type Floor = Int
-
 enum Direction { case Up, Down }
 
 case class Person(position: Floor, destination: Floor) {
-  def desiredDirection: Direction =
-    if destination > position then Direction.Up
-    else if destination < position then Direction.Down
-    else throw new IllegalArgumentException("source and destination are the same")
+  require(position != destination, "source and destination floor cannot be the same")
+
+  def desiredDirection: Direction = (position, destination) match
+    case _ if destination > position => Direction.Up
+    case _ if destination < position => Direction.Down
 
   def isLowerThan(lift: Lift): Boolean  = position < lift.position
   def isHigherThan(lift: Lift): Boolean = position > lift.position
@@ -127,7 +127,7 @@ object ElevatorLogic {
       .map(_.destination)
       .minByOption(floor => Math.abs(floor - lift.position))
       .getOrElse(0)
-    
+
     nearestRequestedFloor
   }
 
