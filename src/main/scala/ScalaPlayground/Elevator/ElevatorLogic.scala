@@ -188,9 +188,9 @@ object ElevatorLogic {
 object ElevatorKata {
   def theLift(queues: Array[Array[Int]], capacity: Int): Array[Int] = {
     val floors = queues.zipWithIndex
-      .map { case (queue, index) =>
+      .map { case (queue: Array[Int], index: Int) =>
         val people = queue.map(destination => Person(position = index, destination = destination)).to(mutable.Queue)
-        index -> people
+        (index, people)
       }
       .to(ListMap)
 
