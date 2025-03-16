@@ -120,11 +120,23 @@ object ElevatorLogic {
     def emptyLiftDown: Floor = {
       println("empty lift going down")
       
-      peopleGoingUp(building)
+      val lowestPersonWhoWantsToGoUp = peopleGoingUp(building)
         .filter(_.isLowerThan(lift))
         .map(_.position)
         .minOption
         .getOrElse(0)
+      
+      if lowestPersonWhoWantsToGoUp < lift.position then
+        println("sending lift to lowest person who wants to go up")
+        lift.turn()
+        lowestPersonWhoWantsToGoUp
+      else
+        println("sending lift to the highest person who wants to go down")
+        peopleGoingDown(building)
+          .filter(_.isHigherThan(lift))
+          .map(_.position)
+          .maxOption
+          .getOrElse(0)
     }
     
     if lift.direction == Direction.Up
