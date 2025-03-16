@@ -1,5 +1,6 @@
 package ScalaPlayground.Lift
 
+import scala.util.chaining.scalaUtilChainingOps
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
@@ -143,12 +144,8 @@ object LiftLogic {
 
   def simulate(initialState: State): State = {
     var state: State = initialState
-
-    // register initial position as the first stop
-    state.stops += state.lift.position
-
-    // draw the initial state of the lift
-    println(state.toPrintable)
+      .tap(s => s.stops += s.lift.position) // register initial position as the first stop
+      .tap(s => println(s.toPrintable))     // draw the initial state of the lift
 
     while !state.building.isEmpty || !state.lift.isEmpty || state.lift.position != 0 do
       state = tick(state)
