@@ -106,14 +106,22 @@ object LiftLogic {
     peopleGoingDirection(building, Direction.Up)
 
   private def emptyLiftDown(building: Building, lift: Lift): Floor =
-    peopleGoingUp(building).filter(_.isLowerThan(lift)).map(_.position).minOption.match
-      case Some(lowest) => lift.turn(); lowest
-      case None         => peopleGoingDown(building).filter(_.isHigherThan(lift)).map(_.position).maxOption.getOrElse(0)
+    peopleGoingUp(building)
+      .filter(_.isLowerThan(lift))
+      .map(_.position)
+      .minOption
+      .match
+        case Some(lowest) => lift.turn(); lowest
+        case None         => peopleGoingDown(building).filter(_.isHigherThan(lift)).map(_.position).maxOption.getOrElse(0)
 
   private def emptyLiftUp(building: Building, lift: Lift): Floor =
-    peopleGoingDown(building).filter(_.isHigherThan(lift)).map(_.position).maxOption.match
-      case Some(highest) => lift.turn(); highest
-      case None          => peopleGoingUp(building).filter(_.isLowerThan(lift)).map(_.position).minOption.getOrElse(0)
+    peopleGoingDown(building)
+      .filter(_.isHigherThan(lift))
+      .map(_.position)
+      .maxOption
+      .match
+        case Some(highest) => lift.turn(); highest
+        case None          => peopleGoingUp(building).filter(_.isLowerThan(lift)).map(_.position).minOption.getOrElse(0)
 
   private def emptyLiftNextPosition(building: Building, lift: Lift): Floor =
     lift.direction match
@@ -132,12 +140,10 @@ object LiftLogic {
       case Direction.Down => peopleGoingDown(building).filter(_.isLowerThan(lift)).map(_.position).maxOption
 
   private def getNextPosition(building: Building, lift: Lift): Floor =
-    val optionsInCurrentDirection: List[Floor] = List(
+    List(
       nearestPassengerTarget(lift, building),       // request from passenger already on the lift
       nearestRequestInSameDirection(lift, building) // request from people [waiting in and going to] the same direction
     ).flatten // turn list of options into list of Integers
-
-    optionsInCurrentDirection
       .minByOption(floor => Math.abs(floor - lift.position)) // get Some floor with the lowest distance, or None
       .match
         case Some(floor) => floor                                 // return the floor if it exists
