@@ -1,4 +1,4 @@
-package ScalaPlayground.Elevator
+package ScalaPlayground.Lift
 
 import scala.util.chaining.scalaUtilChainingOps
 import scala.collection.immutable.ListMap
@@ -96,8 +96,6 @@ object LiftLogic {
 
   private def emptyLiftNextPosition(building: Building, lift: Lift): Floor = {
     def emptyLiftUp: Floor = {
-      println("empty lift going up")
-
       val highestPersonWhoWantsToGoDown = peopleGoingDown(building)
         .filter(_.position > lift.position)
         .map(_.position)
@@ -105,7 +103,6 @@ object LiftLogic {
         .getOrElse(0)
 
       if highestPersonWhoWantsToGoDown > lift.position then
-        println("sending lift to highest person who wants to go down")
         lift.turn()
         highestPersonWhoWantsToGoDown
       else

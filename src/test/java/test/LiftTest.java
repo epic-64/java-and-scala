@@ -1,11 +1,11 @@
 package test;
 
-import ScalaPlayground.Elevator.Dinglemouse;
+import ScalaPlayground.Lift.Dinglemouse;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class ElevatorTest {
+public class LiftTest {
     @Test
     public void testUp() {
         final int[][] queues = {
