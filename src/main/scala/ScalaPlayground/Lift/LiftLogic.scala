@@ -130,8 +130,6 @@ object LiftLogic {
       case Direction.Down => peopleGoingDown(building).filter(_.isLowerThan(lift)).map(_.position).maxOption
 
   private def getNextPosition(building: Building, lift: Lift): Floor = {
-    if building.isEmpty && lift.isEmpty then return 0
-
     List(
       nearestPassengerOption(lift, building),
       nearestRequestInSameDirectionOption(lift, building)
