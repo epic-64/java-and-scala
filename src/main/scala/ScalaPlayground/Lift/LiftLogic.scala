@@ -1,6 +1,5 @@
 package ScalaPlayground.Lift
 
-import scala.util.chaining.scalaUtilChainingOps
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
@@ -39,33 +38,21 @@ case class Building(floors: ListMap[Floor, mutable.Queue[Person]]):
   def isEmpty: Boolean = floors.values.forall(_.isEmpty)
 
 case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor]):
-  def dirtyPrint(): Unit = {
-    println("Building:")
-    building.floors.foreach { case (floor, queue) =>
-      println(s"Floor $floor: ${queue.mkString(", ")}")
-    }
-
-    println("Lift:")
-    println(s"Position: ${lift.position}")
-    println(s"Direction: ${lift.direction}")
-    println(s"Capacity: ${lift.capacity}")
-    println(s"People: ${lift.people.mkString(", ")}")
-    println("Stops: " + stops.mkString(", "))
-
-    println("")
-  }
-  
-  def prettyPrint(): Unit = {
+  def toPrintable: String = {
+    val sb = new StringBuilder()
+    
+    sb.append(s"${stops.length} stops: ${stops.mkString(", ")}\n")
+    
     building.floors.toSeq.reverse.foreach { case (floor, queue) =>
-      print(s"| ${floor} | ${queue.reverse.map(_.destination).mkString(", ").padTo(20, ' ')} |")
+      sb.append(s"| ${floor} | ${queue.reverse.map(_.destination).mkString(", ").padTo(20, ' ')} |")
       
       if lift.position == floor then
-        print(s"| ${lift.people.map(_.destination).mkString(", ").padTo(15, ' ')} |")
+        sb.append(s" | ${lift.people.map(_.destination).mkString(", ").padTo(15, ' ')} |")
 
-      println
+      sb.append('\n')
     }
 
-    println
+    sb.toString()
   }
 
 object LiftLogic {
@@ -175,19 +162,20 @@ object LiftLogic {
       case None        => emptyLiftNextPosition(building, lift)
   }
 
-  def simulate(state: State): State = {
-    var newState: State = state
+  def simulate(initialState: State): State = {
+    var state: State = initialState
 
     // register initial position as the first stop
-    newState.stops += newState.lift.position
+    state.stops += state.lift.position
 
     // draw the initial state of the lift
-    newState.prettyPrint()
+    println(state.toPrintable)
     
-    while !newState.building.isEmpty || !newState.lift.isEmpty || newState.lift.position != 0 do
-      newState = tick(newState).tap(_.prettyPrint())
+    while !state.building.isEmpty || !state.lift.isEmpty || state.lift.position != 0 do
+      state = tick(state)
+      println(state.toPrintable)
 
-    newState
+    state
   }
 }
 
