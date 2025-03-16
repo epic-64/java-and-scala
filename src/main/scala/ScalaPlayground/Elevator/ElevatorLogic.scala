@@ -18,6 +18,9 @@ case class Person(position: Floor, destination: Floor) {
     if destination > position then Direction.Up
     else if destination < position then Direction.Down
     else throw new IllegalArgumentException("source and destination are the same")
+    
+  def isLowerThan(lift: Lift): Boolean = position < lift.position
+  def isHigherThan(lift: Lift): Boolean = position > lift.position
 }
 
 case class Lift(
@@ -56,25 +59,10 @@ case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor
     println("")
   }
 
-object LiftRules:
-
-  def emptyLiftGoingDownCollectsLowestPassengerWhoWantsToGoUp(lift: Lift, building: Building): Floor = {
-    val peopleWantToGoUp = building.floors.values
-      .flatMap(queue =>
-        queue.filter(person => person.position <= lift.position && person.desiredDirection == Direction.Up)
-      )
-      .toList
-
-    peopleWantToGoUp.map(_.position).minOption.getOrElse(0)
-  }
-
 object ElevatorLogic {
   def tick(state: State): State = {
     // destructure state into variables
     val State(building, lift, stops) = state
-
-    // register current stop
-    stops += lift.position
 
     // off-board people
     val dequeuedPeople = lift.people.dequeueAll(_.destination == lift.position)
@@ -90,14 +78,17 @@ object ElevatorLogic {
 
     val nextPosition = getNextPosition(building, lift)
     println("selected position: " + nextPosition)
-    lift.position = nextPosition
+
+    lift.position = nextPosition // set new position
+    stops += nextPosition        // register new position
 
     state
   }
 
-  private def peopleGoingDown(building: Building): List[Person] = building.floors.values
-    .flatMap(queue => queue.filter(person => person.desiredDirection == Direction.Down))
-    .toList
+  private def peopleGoingDown(building: Building): List[Person] =
+    building.floors.values
+      .flatMap(queue => queue.filter(person => person.desiredDirection == Direction.Down))
+      .toList
 
   private def peopleGoingUp(building: Building): List[Person] = building.floors.values
     .flatMap(queue => queue.filter(person => person.desiredDirection == Direction.Up))
@@ -118,28 +109,36 @@ object ElevatorLogic {
 
       if highestPersonWhoWantsToGoDown > lift.position then
         println("sending lift to highest person who wants to go down")
+        lift.turn()
         return highestPersonWhoWantsToGoDown
       else
         println("sending lift to the lowest person who wants to go up")
         return peopleGoingUp(building)
-          .filter(_.position > lift.position)
+          .filter(_.isHigherThan(lift))
           .map(_.position)
           .minOption
           .getOrElse(0)
 
     if lift.isEmpty && lift.direction == Direction.Down then
-      return LiftRules.emptyLiftGoingDownCollectsLowestPassengerWhoWantsToGoUp(lift, building)
+      println("empty lift going down")
+      return peopleGoingUp(building)
+        .filter(_.isLowerThan(lift))
+        .map(_.position)
+        .minOption
+        .getOrElse(0)
 
-    val peopleInDirection = lift.people.filter(_.desiredDirection == lift.direction)
-
-    peopleInDirection
+    lift.people
+      .filter(_.desiredDirection == lift.direction)
       .map(_.destination)
       .minByOption(floor => Math.abs(floor - lift.position))
-      .get // will never be empty
+      .getOrElse(0)
   }
 
   def simulate(state: State): State = {
     var newState = state
+
+    // register initial position as the first stop
+    newState.stops += newState.lift.position
 
     newState.print()
 
@@ -151,8 +150,6 @@ object ElevatorLogic {
       newState.print()
       // sleep for 1 second
       Thread.sleep(1000)
-      
-    newState.stops += 0
 
     newState
   }
