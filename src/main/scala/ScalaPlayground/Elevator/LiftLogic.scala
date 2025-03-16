@@ -55,7 +55,7 @@ case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor
     println("")
   }
 
-object ElevatorLogic {
+object LiftLogic {
   private def tick(state: State): State = {
     // destructure state into variables
     val State(building, lift, stops) = state
@@ -165,10 +165,11 @@ object ElevatorLogic {
 
     val nearestOption = combinedOption.minByOption(floor => Math.abs(floor - lift.position))
 
-    if nearestOption.isDefined then nearestOption.get
-    else
-      lift.turn()
-      emptyLiftNextPosition(building, lift)
+    nearestOption match
+      case Some(floor) => floor
+      case None        =>
+        lift.turn()
+        emptyLiftNextPosition(building, lift)
   }
 
   def simulate(state: State): State = {
@@ -197,7 +198,7 @@ object ElevatorKata {
     val building = Building(floors)
 
     val initialState = State(building = building, lift = lift, stops = mutable.ListBuffer.empty)
-    val finalState   = ElevatorLogic.simulate(initialState)
+    val finalState   = LiftLogic.simulate(initialState)
 
     finalState.stops.toArray
   }
