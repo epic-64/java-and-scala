@@ -106,12 +106,12 @@ object LiftLogic {
     peopleGoingDirection(building, Direction.Up)
 
   private def emptyLiftDown(building: Building, lift: Lift): Floor =
-    peopleGoingUp(building).filter(_.isLowerThan(lift)).map(_.position).minOption match
+    peopleGoingUp(building).filter(_.isLowerThan(lift)).map(_.position).minOption.match
       case Some(lowest) => lift.turn(); lowest
       case None         => peopleGoingDown(building).filter(_.isHigherThan(lift)).map(_.position).maxOption.getOrElse(0)
 
   private def emptyLiftUp(building: Building, lift: Lift): Floor =
-    peopleGoingDown(building).filter(_.isHigherThan(lift)).map(_.position).maxOption match
+    peopleGoingDown(building).filter(_.isHigherThan(lift)).map(_.position).maxOption.match
       case Some(highest) => lift.turn(); highest
       case None          => peopleGoingUp(building).filter(_.isLowerThan(lift)).map(_.position).minOption.getOrElse(0)
 
