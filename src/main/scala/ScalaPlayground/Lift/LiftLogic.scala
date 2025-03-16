@@ -101,41 +101,15 @@ object LiftLogic {
     .flatMap(queue => queue.filter(person => person.desiredDirection == Direction.Up))
     .toList
 
-  private def emptyLiftDown(building: Building, lift: Lift): Floor = {
-    val lowestPersonWhoWantsToGoUp = peopleGoingUp(building)
-      .filter(_.isLowerThan(lift))
-      .map(_.position)
-      .minOption
-      .getOrElse(0)
+  private def emptyLiftDown(building: Building, lift: Lift): Floor =
+    peopleGoingUp(building).filter(_.isLowerThan(lift)).map(_.position).minOption match
+      case Some(lowest) => lift.turn(); lowest
+      case None         => peopleGoingDown(building).filter(_.isHigherThan(lift)).map(_.position).maxOption.getOrElse(0)
 
-    if lowestPersonWhoWantsToGoUp < lift.position then
-      lift.turn()
-      lowestPersonWhoWantsToGoUp
-    else
-      peopleGoingDown(building)
-        .filter(_.isHigherThan(lift))
-        .map(_.position)
-        .maxOption
-        .getOrElse(0)
-  }
-
-  private def emptyLiftUp(building: Building, lift: Lift): Floor = {
-    val highestPersonWhoWantsToGoDown = peopleGoingDown(building)
-      .filter(_.position > lift.position)
-      .map(_.position)
-      .maxOption
-      .getOrElse(0)
-
-    if highestPersonWhoWantsToGoDown > lift.position then
-      lift.turn()
-      highestPersonWhoWantsToGoDown
-    else
-      peopleGoingUp(building)
-        .filter(_.isHigherThan(lift))
-        .map(_.position)
-        .minOption
-        .getOrElse(0)
-  }
+  private def emptyLiftUp(building: Building, lift: Lift): Floor =
+    peopleGoingDown(building).filter(_.isHigherThan(lift)).map(_.position).maxOption match
+      case Some(highest) => lift.turn(); highest
+      case None          => peopleGoingUp(building).filter(_.isLowerThan(lift)).map(_.position).minOption.getOrElse(0)
 
   private def emptyLiftNextPosition(building: Building, lift: Lift): Floor =
     lift.direction match
