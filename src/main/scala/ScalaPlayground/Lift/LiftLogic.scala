@@ -40,14 +40,13 @@ case class Building(floors: ListMap[Floor, mutable.Queue[Person]]):
 case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor]):
   def toPrintable: String = {
     val sb = new StringBuilder()
-    
+
     sb.append(s"${stops.length} stops: ${stops.mkString(", ")}\n")
-    
+
     building.floors.toSeq.reverse.foreach { case (floor, queue) =>
       sb.append(s"| ${floor} | ${queue.reverse.map(_.destination).mkString(", ").padTo(20, ' ')} |")
-      
-      if lift.position == floor then
-        sb.append(s" | ${lift.people.map(_.destination).mkString(", ").padTo(15, ' ')} |")
+
+      if lift.position == floor then sb.append(s" | ${lift.people.map(_.destination).mkString(", ").padTo(15, ' ')} |")
 
       sb.append('\n')
     }
@@ -65,14 +64,12 @@ object LiftLogic {
 
     // get current floor queue
     val queue = building.floors(lift.position)
-    
+
     // always force lift to go downwards if it's at the top floor
-    if (lift.position == building.floors.size - 1) then
-      lift.direction = Direction.Down
-      
+    if lift.position == building.floors.size - 1 then lift.direction = Direction.Down
+
     // always force lift to go upwards if it's at the ground floor
-    if (lift.position == 0) then
-      lift.direction = Direction.Up
+    if lift.position == 0 then lift.direction = Direction.Up
 
     // transfer people from floor queue into lift
     while lift.hasRoom && queue.exists(lift.accepts) do
@@ -137,37 +134,33 @@ object LiftLogic {
         .getOrElse(0)
   }
 
-  private def emptyLiftNextPosition(building: Building, lift: Lift): Floor = {
+  private def emptyLiftNextPosition(building: Building, lift: Lift): Floor =
     lift.direction match
       case Direction.Up   => emptyLiftUp(building, lift)
       case Direction.Down => emptyLiftDown(building, lift)
-  }
-  
+
   private def nearestPassengerOption(lift: Lift, building: Building): Option[Floor] =
     lift.people
       .filter(_.desiredDirection == lift.direction)
       .map(_.destination)
       .minByOption(floor => Math.abs(floor - lift.position))
-  
+
   private def nearestRequestInSameDirectionOption(lift: Lift, building: Building): Option[Floor] =
     lift.direction match
       case Direction.Up   => peopleGoingUp(building).filter(_.isHigherThan(lift)).map(_.position).minOption
-      case Direction.Down => peopleGoingDown(building).filter(_.isLowerThan(lift)).map(_.position).maxOption 
+      case Direction.Down => peopleGoingDown(building).filter(_.isLowerThan(lift)).map(_.position).maxOption
 
   private def getNextPosition(building: Building, lift: Lift): Floor = {
-    if building.isEmpty && lift.isEmpty then
-      return 0
+    if building.isEmpty && lift.isEmpty then return 0
 
-    val nearestFloorsInCurrentDirection: List[Int] = List(
+    List(
       nearestPassengerOption(lift, building),
       nearestRequestInSameDirectionOption(lift, building)
-    ).flatten
-
-    val nearestOption = nearestFloorsInCurrentDirection.minByOption(floor => Math.abs(floor - lift.position))
-
-    nearestOption match
-      case Some(floor) => floor
-      case None        => emptyLiftNextPosition(building, lift)
+    ).flatten // flatten the list of options to a list of integers
+      .minByOption(floor => Math.abs(floor - lift.position)) // get Some floor with the lowest distance, or None
+      .match
+        case Some(floor) => floor                                 // return the floor if it exists
+        case None        => emptyLiftNextPosition(building, lift) // otherwise start empty lift logic
   }
 
   def simulate(initialState: State): State = {
@@ -178,7 +171,7 @@ object LiftLogic {
 
     // draw the initial state of the lift
     println(state.toPrintable)
-    
+
     while !state.building.isEmpty || !state.lift.isEmpty || state.lift.position != 0 do
       state = tick(state)
       println(state.toPrintable)
