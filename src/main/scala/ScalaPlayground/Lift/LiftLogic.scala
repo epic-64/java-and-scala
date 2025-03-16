@@ -62,24 +62,23 @@ case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor
 }
 
 object LiftLogic {
-  private def tick(state: State): State = {
-    // destructure state into convenient variables
+  private def tick(state: State): Unit = {
+    // Destructure state into convenient variables
     val State(building, lift, stops) = state
 
-    // off-board people
-    val dequeuedPeople = lift.people.dequeueAll(_.destination == lift.position)
+    // Always force the lift into a valid direction
+    lift.direction = lift.position match
+      case 0                                  => Direction.Up
+      case p if p == building.floors.keys.max => Direction.Down
+      case _                                  => lift.direction
+
+    // Off-board people who reached their destination
+    lift.people.dequeueAll(_.destination == lift.position)
 
     // get current floor queue
-    val queue    = building.floors(lift.position)
-    val maxFloor = building.floors.keys.max
+    val queue = building.floors(lift.position) 
 
-    // always force lift into a valid direction
-    lift.direction = lift.position match
-      case 0                  => Direction.Up
-      case p if p == maxFloor => Direction.Down
-      case _                  => lift.direction
-
-    // transfer people from floor queue into lift
+    // Transfer people from floor queue into lift
     while lift.hasRoom && queue.exists(lift.accepts) do
       val person = queue.dequeueFirst(lift.accepts).get
       lift.people.enqueue(person)
@@ -87,14 +86,12 @@ object LiftLogic {
     val oldPosition  = lift.position
     val nextPosition = getNextPosition(building, lift)
 
-    // set and register new position
+    // Set the new position
     lift.position = nextPosition
-    
-    // Register the stop. I added the condition because of a bug
-    // where the lift sometimes takes two turns for the very last move 🤔
-    if oldPosition != nextPosition then stops += nextPosition
 
-    state
+    // Register the stop. I added the condition because of a bug
+    // by which the lift sometimes takes two turns for the very last move 🤔
+    if oldPosition != nextPosition then stops += nextPosition
   }
 
   private def peopleGoingDirection(building: Building, direction: Direction): List[Person] =
