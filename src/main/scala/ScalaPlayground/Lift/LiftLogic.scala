@@ -94,14 +94,16 @@ object LiftLogic {
     state
   }
 
-  private def peopleGoingDown(building: Building): List[Person] =
+  private def peopleGoingDirection(building: Building, direction: Direction): List[Person] =
     building.floors.values
-      .flatMap(queue => queue.filter(person => person.desiredDirection == Direction.Down))
+      .flatMap(queue => queue.filter(person => person.desiredDirection == direction))
       .toList
 
-  private def peopleGoingUp(building: Building): List[Person] = building.floors.values
-    .flatMap(queue => queue.filter(person => person.desiredDirection == Direction.Up))
-    .toList
+  private def peopleGoingDown(building: Building): List[Person] =
+    peopleGoingDirection(building, Direction.Down)
+  
+  private def peopleGoingUp(building: Building): List[Person] =
+    peopleGoingDirection(building, Direction.Up)
 
   private def emptyLiftDown(building: Building, lift: Lift): Floor =
     peopleGoingUp(building).filter(_.isLowerThan(lift)).map(_.position).minOption match
@@ -118,27 +120,28 @@ object LiftLogic {
       case Direction.Up   => emptyLiftUp(building, lift)
       case Direction.Down => emptyLiftDown(building, lift)
 
-  private def nearestPassengerOption(lift: Lift, building: Building): Option[Floor] =
+  private def nearestPassengerTarget(lift: Lift, building: Building): Option[Floor] =
     lift.people
       .filter(_.matchesDirection(lift))
       .map(_.destination)
       .minByOption(floor => Math.abs(floor - lift.position))
 
-  private def nearestRequestInSameDirectionOption(lift: Lift, building: Building): Option[Floor] =
+  private def nearestRequestInSameDirection(lift: Lift, building: Building): Option[Floor] =
     lift.direction match
       case Direction.Up   => peopleGoingUp(building).filter(_.isHigherThan(lift)).map(_.position).minOption
       case Direction.Down => peopleGoingDown(building).filter(_.isLowerThan(lift)).map(_.position).maxOption
 
-  private def getNextPosition(building: Building, lift: Lift): Floor = {
-    List(
-      nearestPassengerOption(lift, building),
-      nearestRequestInSameDirectionOption(lift, building)
-    ).flatten // flatten the list of options to a list of integers
+  private def getNextPosition(building: Building, lift: Lift): Floor =
+    val optionsInCurrentDirection: List[Floor] = List(
+      nearestPassengerTarget(lift, building),       // request from passenger already on the lift
+      nearestRequestInSameDirection(lift, building) // request from people [waiting in and going to] the same direction
+    ).flatten // turn list of options into list of Integers
+
+    optionsInCurrentDirection
       .minByOption(floor => Math.abs(floor - lift.position)) // get Some floor with the lowest distance, or None
       .match
         case Some(floor) => floor                                 // return the floor if it exists
         case None        => emptyLiftNextPosition(building, lift) // otherwise start empty lift logic
-  }
 
   def simulate(initialState: State): State = {
     var state: State = initialState
