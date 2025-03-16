@@ -135,9 +135,9 @@ object ElevatorLogic {
           .getOrElse(0)
     }
 
-    if lift.direction == Direction.Up
-    then emptyLiftUp
-    else emptyLiftDown
+    lift.direction match
+      case Direction.Up   => emptyLiftUp
+      case Direction.Down => emptyLiftDown
   }
 
   private def getNextPosition(building: Building, lift: Lift): Floor = {
@@ -145,7 +145,7 @@ object ElevatorLogic {
       println("everything is empty, returning to ground floor")
       return 0
 
-    if lift.isEmpty then return emptyLiftNextPosition(building, lift)
+    // if lift.isEmpty then return emptyLiftNextPosition(building, lift)
 
     val nearestRequestedPassengerOption = lift.people
       .filter(_.desiredDirection == lift.direction)
@@ -161,8 +161,12 @@ object ElevatorLogic {
       nearestRequestInSameDirection
     ).flatten
       .minByOption(floor => Math.abs(floor - lift.position))
-
-    combinedOptions.getOrElse(0)
+    
+    if combinedOptions.isDefined then
+      combinedOptions.get
+    else
+      lift.turn()
+      emptyLiftNextPosition(building, lift)
   }
 
   def simulate(state: State): State = {
