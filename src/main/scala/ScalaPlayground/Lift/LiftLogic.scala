@@ -65,6 +65,14 @@ object LiftLogic {
 
     // get current floor queue
     val queue = building.floors(lift.position)
+    
+    // always force lift to go downwards if it's at the top floor
+    if (lift.position == building.floors.size - 1) then
+      lift.direction = Direction.Down
+      
+    // always force lift to go upwards if it's at the ground floor
+    if (lift.position == 0) then
+      lift.direction = Direction.Up
 
     // transfer people from floor queue into lift
     while lift.hasRoom && queue.exists(lift.accepts) do
