@@ -55,7 +55,7 @@ case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor
   }
 
 object ElevatorLogic {
-  def tick(state: State): State = {
+  private def tick(state: State): State = {
     // destructure state into variables
     val State(building, lift, stops) = state
 
@@ -67,11 +67,11 @@ object ElevatorLogic {
     val queue = building.floors(lift.position)
 
     while lift.hasRoom && queue.exists(lift.accepts) do
-      println("boarding")
       val person = queue.dequeueFirst(lift.accepts).get
       println(s"person $person is boarding")
       lift.people.enqueue(person)
 
+    println("old position: " + lift.position)
     val nextPosition = getNextPosition(building, lift)
     println("selected position: " + nextPosition)
 
