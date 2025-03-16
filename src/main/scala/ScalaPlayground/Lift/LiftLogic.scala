@@ -38,7 +38,7 @@ case class Lift(
 }
 
 case class Building(floors: ListMap[Floor, mutable.Queue[Person]]):
-  def isEmpty: Boolean = floors.values.forall(_.isEmpty)
+  def isEmpty: Boolean   = floors.values.forall(_.isEmpty)
   def hasPeople: Boolean = !isEmpty
 
 case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor]) {
@@ -70,13 +70,14 @@ object LiftLogic {
     val dequeuedPeople = lift.people.dequeueAll(_.destination == lift.position)
 
     // get current floor queue
-    val queue = building.floors(lift.position)
+    val queue    = building.floors(lift.position)
+    val maxFloor = building.floors.keys.max
 
     // always force lift into a valid direction
     lift.direction = lift.position match
-      case 0                                  => Direction.Up
-      case p if p == building.floors.size - 1 => Direction.Down
-      case _                                  => lift.direction
+      case 0                  => Direction.Up
+      case p if p == maxFloor => Direction.Down
+      case _                  => lift.direction
 
     // transfer people from floor queue into lift
     while lift.hasRoom && queue.exists(lift.accepts) do
@@ -147,9 +148,9 @@ object LiftLogic {
     val state: State = initialState
       .tap(s => s.stops += s.lift.position) // register initial position as the first stop
       .tap(s => println(s.toPrintable))     // draw the initial state of the lift
-    
-    val State(building, lift, _) = state 
-    
+
+    val State(building, lift, _) = state
+
     while building.hasPeople || lift.hasPeople || lift.position > 0 do
       tick(state) // evil procedural code ¯\_(ツ)_/¯
       println(state.toPrintable)
