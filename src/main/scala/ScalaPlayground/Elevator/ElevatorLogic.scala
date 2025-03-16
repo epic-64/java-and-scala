@@ -71,12 +71,15 @@ object ElevatorLogic {
       println(s"person $person is boarding")
       lift.people.enqueue(person)
 
+    val oldPosition  = lift.position
     println("old position: " + lift.position)
     val nextPosition = getNextPosition(building, lift)
     println("selected position: " + nextPosition)
 
     lift.position = nextPosition // set new position
-    stops += nextPosition        // register new position
+
+    if oldPosition != nextPosition
+    then stops += nextPosition // register new position
 
     state
   }
@@ -145,25 +148,23 @@ object ElevatorLogic {
       println("everything is empty, returning to ground floor")
       return 0
 
-    // if lift.isEmpty then return emptyLiftNextPosition(building, lift)
-
     val nearestRequestedPassengerOption = lift.people
       .filter(_.desiredDirection == lift.direction)
       .map(_.destination)
       .minByOption(floor => Math.abs(floor - lift.position))
 
-    val nearestRequestInSameDirection = lift.direction match
+    val nearestRequestInSameDirectionOption = lift.direction match
       case Direction.Up   => peopleGoingUp(building).filter(_.isHigherThan(lift)).map(_.position).minOption
       case Direction.Down => peopleGoingDown(building).filter(_.isLowerThan(lift)).map(_.position).maxOption
 
-    val combinedOptions = List(
+    val combinedOption: List[Int] = List(
       nearestRequestedPassengerOption,
-      nearestRequestInSameDirection
+      nearestRequestInSameDirectionOption
     ).flatten
-      .minByOption(floor => Math.abs(floor - lift.position))
-    
-    if combinedOptions.isDefined then
-      combinedOptions.get
+
+    val nearestOption = combinedOption.minByOption(floor => Math.abs(floor - lift.position))
+
+    if nearestOption.isDefined then nearestOption.get
     else
       lift.turn()
       emptyLiftNextPosition(building, lift)
@@ -183,7 +184,7 @@ object ElevatorLogic {
     do
       newState = tick(newState)
       newState.print()
-      Thread.sleep(50 * newState.stops.size)
+      // Thread.sleep(50 * newState.stops.size)
 
     newState
   }
