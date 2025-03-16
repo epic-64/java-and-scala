@@ -37,7 +37,7 @@ case class Lift(
 case class Building(floors: ListMap[Floor, mutable.Queue[Person]]):
   def isEmpty: Boolean = floors.values.forall(_.isEmpty)
 
-case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor]):
+case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor]) {
   def toPrintable: String = {
     val sb = new StringBuilder()
 
@@ -46,13 +46,16 @@ case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor
     building.floors.toSeq.reverse.foreach { case (floor, queue) =>
       sb.append(s"| ${floor} | ${queue.reverse.map(_.destination).mkString(", ").padTo(20, ' ')} |")
 
-      if lift.position == floor then sb.append(s" | ${lift.people.map(_.destination).mkString(", ").padTo(15, ' ')} |")
+      // draw the lift if on current level
+      if lift.position == floor
+      then sb.append(s" | ${lift.people.map(_.destination).mkString(", ").padTo(15, ' ')} |")
 
       sb.append('\n')
     }
 
     sb.toString()
   }
+}
 
 object LiftLogic {
   private def tick(state: State): State = {
