@@ -39,7 +39,7 @@ case class Building(floors: ListMap[Floor, mutable.Queue[Person]]):
   def isEmpty: Boolean = floors.values.forall(_.isEmpty)
 
 case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor]):
-  def print(): Unit = {
+  def dirtyPrint(): Unit = {
     println("Building:")
     building.floors.foreach { case (floor, queue) =>
       println(s"Floor $floor: ${queue.mkString(", ")}")
@@ -54,6 +54,19 @@ case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor
 
     println("")
   }
+  
+  def prettyPrint(): Unit = {
+    building.floors.toSeq.reverse.foreach { case (floor, queue) =>
+      print(s"| ${floor} | ${queue.reverse.map(_.destination).mkString(", ").padTo(20, ' ')} |")
+      
+      if lift.position == floor then
+        print(s"| ${lift.people.map(_.destination).mkString(", ").padTo(15, ' ')} |")
+
+      println
+    }
+
+    println
+  }
 
 object LiftLogic {
   private def tick(state: State): State = {
@@ -62,25 +75,24 @@ object LiftLogic {
 
     // off-board people
     val dequeuedPeople = lift.people.dequeueAll(_.destination == lift.position)
-    println("dequeued people: " + dequeuedPeople.mkString(", "))
 
     // get current floor queue
     val queue = building.floors(lift.position)
 
+    // transfer people from floor queue into lift
     while lift.hasRoom && queue.exists(lift.accepts) do
       val person = queue.dequeueFirst(lift.accepts).get
-      println(s"person $person is boarding")
       lift.people.enqueue(person)
 
     val oldPosition  = lift.position
-    println("old position: " + lift.position)
     val nextPosition = getNextPosition(building, lift)
-    println("selected position: " + nextPosition)
 
-    lift.position = nextPosition // set new position
+    // set new position
+    lift.position = nextPosition
 
+    // register new position
     if oldPosition != nextPosition
-    then stops += nextPosition // register new position
+    then stops += nextPosition
 
     state
   }
@@ -106,7 +118,6 @@ object LiftLogic {
         lift.turn()
         highestPersonWhoWantsToGoDown
       else
-        println("sending lift to the lowest person who wants to go up")
         peopleGoingUp(building)
           .filter(_.isHigherThan(lift))
           .map(_.position)
@@ -115,8 +126,6 @@ object LiftLogic {
     }
 
     def emptyLiftDown: Floor = {
-      println("empty lift going down")
-
       val lowestPersonWhoWantsToGoUp = peopleGoingUp(building)
         .filter(_.isLowerThan(lift))
         .map(_.position)
@@ -124,11 +133,9 @@ object LiftLogic {
         .getOrElse(0)
 
       if lowestPersonWhoWantsToGoUp < lift.position then
-        println("sending lift to lowest person who wants to go up")
         lift.turn()
         lowestPersonWhoWantsToGoUp
       else
-        println("sending lift to the highest person who wants to go down")
         peopleGoingDown(building)
           .filter(_.isHigherThan(lift))
           .map(_.position)
@@ -154,7 +161,6 @@ object LiftLogic {
 
   private def getNextPosition(building: Building, lift: Lift): Floor = {
     if building.isEmpty && lift.isEmpty then
-      println("everything is empty, returning to ground floor")
       return 0
 
     val nearestFloorsInCurrentDirection: List[Int] = List(
@@ -175,8 +181,11 @@ object LiftLogic {
     // register initial position as the first stop
     newState.stops += newState.lift.position
 
+    // draw the initial state of the lift
+    newState.prettyPrint()
+    
     while !newState.building.isEmpty || !newState.lift.isEmpty || newState.lift.position != 0 do
-      newState = tick(newState).tap(_.print())
+      newState = tick(newState).tap(_.prettyPrint())
 
     newState
   }
