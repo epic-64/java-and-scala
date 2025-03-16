@@ -113,4 +113,18 @@ public class LiftTest {
 
         assertArrayEquals(new int[]{0, 3, 0, 1, 3, 0}, result);
     }
+    
+    @Test
+    public void MyExample4() {
+        final int[][] queues = {
+                new int[0], // 0
+                new int[]{0, 2, 2}, // 1
+                new int[0], // 2
+                new int[]{2}, // 3
+        };
+
+        final int[] result = Dinglemouse.theLift(queues, 1);
+        
+        assertArrayEquals(new int[]{0, 1, 2, 3, 2, 1, 0, 1, 2, 0}, result);
+    }
 }

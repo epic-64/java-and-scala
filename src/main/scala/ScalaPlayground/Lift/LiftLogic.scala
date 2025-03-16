@@ -23,7 +23,7 @@ case class Lift(
     var position: Floor,
     var people: mutable.Queue[Person],
     var direction: Direction,
-    val capacity: Int
+    capacity: Int
 ) {
   private def isFull: Boolean          = people.size == capacity
   def hasRoom: Boolean                 = !isFull
@@ -46,7 +46,7 @@ case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor
     sb.append(s"${stops.length} stops: ${stops.mkString(", ")}\n")
 
     building.floors.toSeq.reverse.foreach { case (floor, queue) =>
-      sb.append(s"| ${floor} | ${queue.reverse.map(_.destination).mkString(", ").padTo(20, ' ')} |")
+      sb.append(s"| $floor | ${queue.reverse.map(_.destination).mkString(", ").padTo(20, ' ')} |")
 
       // draw the lift if it is on the current level
       if lift.position == floor
@@ -61,7 +61,7 @@ case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor
 
 object LiftLogic {
   private def tick(state: State): State = {
-    // destructure state into variables
+    // destructure state into convenient variables
     val State(building, lift, stops) = state
 
     // off-board people
@@ -70,11 +70,11 @@ object LiftLogic {
     // get current floor queue
     val queue = building.floors(lift.position)
 
-    // always force lift to go downwards if it's at the top floor
-    if lift.position == building.floors.size - 1 then lift.direction = Direction.Down
-
-    // always force lift to go upwards if it's at the ground floor
-    if lift.position == 0 then lift.direction = Direction.Up
+    // always force lift into a valid direction
+    lift.direction = lift.position match
+      case 0                                  => Direction.Up
+      case p if p == building.floors.size - 1 => Direction.Down
+      case _                                  => lift.direction
 
     // transfer people from floor queue into lift
     while lift.hasRoom && queue.exists(lift.accepts) do
@@ -101,7 +101,7 @@ object LiftLogic {
 
   private def peopleGoingDown(building: Building): List[Person] =
     peopleGoingDirection(building, Direction.Down)
-  
+
   private def peopleGoingUp(building: Building): List[Person] =
     peopleGoingDirection(building, Direction.Up)
 
@@ -162,12 +162,12 @@ object LiftLogic {
 
 object Dinglemouse {
   def theLift(queues: Array[Array[Int]], capacity: Int): Array[Int] = {
-    val floors = queues.zipWithIndex
-      .map { case (queue: Array[Int], index: Int) =>
-        val people = queue.map(destination => Person(position = index, destination = destination)).to(mutable.Queue)
-        (index, people)
-      }
-      .to(ListMap)
+    val floors: ListMap[Int, mutable.Queue[Person]] =
+      queues.zipWithIndex
+        .map { case (queue, index) =>
+          (index, queue.map(destination => Person(position = index, destination = destination)).to(mutable.Queue))
+        }
+        .to(ListMap)
 
     val lift     = Lift(position = 0, people = mutable.Queue.empty, Direction.Up, capacity)
     val building = Building(floors)
