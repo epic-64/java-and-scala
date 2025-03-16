@@ -39,6 +39,7 @@ case class Lift(
 
 case class Building(floors: ListMap[Floor, mutable.Queue[Person]]):
   def isEmpty: Boolean = floors.values.forall(_.isEmpty)
+  def hasPeople: Boolean = !isEmpty
 
 case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor]) {
   def toPrintable: String = {
@@ -143,12 +144,14 @@ object LiftLogic {
         case None        => emptyLiftNextPosition(building, lift) // otherwise start empty lift logic
 
   def simulate(initialState: State): State = {
-    var state: State = initialState
+    val state: State = initialState
       .tap(s => s.stops += s.lift.position) // register initial position as the first stop
       .tap(s => println(s.toPrintable))     // draw the initial state of the lift
-
-    while !state.building.isEmpty || !state.lift.isEmpty || state.lift.position != 0 do
-      state = tick(state)
+    
+    val State(building, lift, _) = state 
+    
+    while building.hasPeople || lift.hasPeople || lift.position > 0 do
+      tick(state) // evil procedural code ¯\_(ツ)_/¯
       println(state.toPrintable)
 
     state
