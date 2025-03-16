@@ -87,12 +87,12 @@ object LiftLogic {
     val oldPosition  = lift.position
     val nextPosition = getNextPosition(building, lift)
 
-    // set new position
+    // set and register new position
     lift.position = nextPosition
-
-    // register new position
-    if oldPosition != nextPosition
-    then stops += nextPosition
+    
+    // Register the stop. I added the condition because of a bug
+    // where the lift sometimes takes two turns for the very last move 🤔
+    if oldPosition != nextPosition then stops += nextPosition
 
     state
   }
@@ -137,7 +137,7 @@ object LiftLogic {
   private def getNextPosition(building: Building, lift: Lift): Floor =
     List(
       nearestPassengerTarget(lift, building),       // request from passenger already on the lift
-      nearestRequestInSameDirection(lift, building) // request from people [waiting in and going to] the same direction
+      nearestRequestInSameDirection(lift, building) // request from people [waiting in AND going to] the same direction
     ).flatten // turn list of options into list of Integers
       .minByOption(floor => Math.abs(floor - lift.position)) // get Some floor with the lowest distance, or None
       .match
