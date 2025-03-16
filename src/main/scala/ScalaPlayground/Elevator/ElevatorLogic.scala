@@ -5,21 +5,15 @@ import scala.collection.mutable
 
 type Floor = Int
 
-enum Direction {
-  case Up, Down
-
-  def toOrdinal: Int = this match
-    case Up   => 1
-    case Down => -1
-}
+enum Direction { case Up, Down }
 
 case class Person(position: Floor, destination: Floor) {
   def desiredDirection: Direction =
     if destination > position then Direction.Up
     else if destination < position then Direction.Down
     else throw new IllegalArgumentException("source and destination are the same")
-    
-  def isLowerThan(lift: Lift): Boolean = position < lift.position
+
+  def isLowerThan(lift: Lift): Boolean  = position < lift.position
   def isHigherThan(lift: Lift): Boolean = position > lift.position
 }
 
@@ -66,6 +60,7 @@ object ElevatorLogic {
 
     // off-board people
     val dequeuedPeople = lift.people.dequeueAll(_.destination == lift.position)
+    println("dequeued people: " + dequeuedPeople.mkString(", "))
 
     // get current floor queue
     val queue = building.floors(lift.position)
@@ -96,7 +91,7 @@ object ElevatorLogic {
 
   private def getNextPosition(building: Building, lift: Lift): Floor = {
     if building.floors.values.forall(_.isEmpty) && lift.isEmpty then
-      println("everything is empty")
+      println("everything is empty, returning to ground floor")
       return 0
 
     if lift.isEmpty && lift.direction == Direction.Up then
@@ -127,11 +122,13 @@ object ElevatorLogic {
         .minOption
         .getOrElse(0)
 
-    lift.people
+    val nearestRequestedFloor = lift.people
       .filter(_.desiredDirection == lift.direction)
       .map(_.destination)
       .minByOption(floor => Math.abs(floor - lift.position))
       .getOrElse(0)
+    
+    nearestRequestedFloor
   }
 
   def simulate(state: State): State = {
@@ -148,8 +145,7 @@ object ElevatorLogic {
     do
       newState = tick(newState)
       newState.print()
-      // sleep for 1 second
-      Thread.sleep(1000)
+      Thread.sleep(50 * newState.stops.size)
 
     newState
   }
