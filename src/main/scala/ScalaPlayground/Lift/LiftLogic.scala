@@ -93,46 +93,46 @@ object LiftLogic {
     .flatMap(queue => queue.filter(person => person.desiredDirection == Direction.Up))
     .toList
 
-  private def emptyLiftNextPosition(building: Building, lift: Lift): Floor = {
-    def emptyLiftUp: Floor = {
-      val highestPersonWhoWantsToGoDown = peopleGoingDown(building)
-        .filter(_.position > lift.position)
+  private def emptyLiftDown(building: Building, lift: Lift): Floor = {
+    val lowestPersonWhoWantsToGoUp = peopleGoingUp(building)
+      .filter(_.isLowerThan(lift))
+      .map(_.position)
+      .minOption
+      .getOrElse(0)
+
+    if lowestPersonWhoWantsToGoUp < lift.position then
+      lift.turn()
+      lowestPersonWhoWantsToGoUp
+    else
+      peopleGoingDown(building)
+        .filter(_.isHigherThan(lift))
         .map(_.position)
         .maxOption
         .getOrElse(0)
+  }
 
-      if highestPersonWhoWantsToGoDown > lift.position then
-        lift.turn()
-        highestPersonWhoWantsToGoDown
-      else
-        peopleGoingUp(building)
-          .filter(_.isHigherThan(lift))
-          .map(_.position)
-          .minOption
-          .getOrElse(0)
-    }
+  private def emptyLiftUp(building: Building, lift: Lift): Floor = {
+    val highestPersonWhoWantsToGoDown = peopleGoingDown(building)
+      .filter(_.position > lift.position)
+      .map(_.position)
+      .maxOption
+      .getOrElse(0)
 
-    def emptyLiftDown: Floor = {
-      val lowestPersonWhoWantsToGoUp = peopleGoingUp(building)
-        .filter(_.isLowerThan(lift))
+    if highestPersonWhoWantsToGoDown > lift.position then
+      lift.turn()
+      highestPersonWhoWantsToGoDown
+    else
+      peopleGoingUp(building)
+        .filter(_.isHigherThan(lift))
         .map(_.position)
         .minOption
         .getOrElse(0)
+  }
 
-      if lowestPersonWhoWantsToGoUp < lift.position then
-        lift.turn()
-        lowestPersonWhoWantsToGoUp
-      else
-        peopleGoingDown(building)
-          .filter(_.isHigherThan(lift))
-          .map(_.position)
-          .maxOption
-          .getOrElse(0)
-    }
-
+  private def emptyLiftNextPosition(building: Building, lift: Lift): Floor = {
     lift.direction match
-      case Direction.Up   => emptyLiftUp
-      case Direction.Down => emptyLiftDown
+      case Direction.Up   => emptyLiftUp(building, lift)
+      case Direction.Down => emptyLiftDown(building, lift)
   }
   
   private def nearestPassengerOption(lift: Lift, building: Building): Option[Floor] =
