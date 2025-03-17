@@ -43,8 +43,7 @@ case class Lift(
 }
 
 case class Building(floors: ListMap[Floor, mutable.Queue[Person]]) {
-  def isEmpty: Boolean = floors.values.forall(_.isEmpty)
-
+  def isEmpty: Boolean   = floors.values.forall(_.isEmpty)
   def hasPeople: Boolean = !isEmpty
 
   private def peopleGoing(direction: Direction): List[Person] =
@@ -154,9 +153,9 @@ object LiftLogic {
   }
 
   private def getNextPositionAndDirection(building: Building, lift: Lift): (Floor, Direction) =
-    List(                                           // Build a list of primary targets
-      lift.nearestPassengerTarget,                  // request from passenger already on the lift
-      building.nearestRequestInSameDirection(lift)  // request from people [waiting in AND going to] the same direction
+    List(                                          // Build a list of primary targets
+      lift.nearestPassengerTarget,                 // request from passenger already on the lift
+      building.nearestRequestInSameDirection(lift) // request from people [waiting in AND going to] the same direction
     ).flatten // turn list of options into list of Integers
       .minByOption(floor => Math.abs(floor - lift.position)) // get Some floor with the lowest distance, or None
       .match
