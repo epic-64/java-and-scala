@@ -71,7 +71,7 @@ object LiftLogic {
     var state = initialState
 
     state.stops += state.lift.position // register initial position as the first stop
-    println(state.toPrintable) // draw the initial state of the lift
+    println(state.toPrintable)         // draw the initial state of the lift
 
     val State(building, lift, _) = state
 
@@ -81,7 +81,7 @@ object LiftLogic {
 
     state
   }
-  
+
   private def step(state: State): State = {
     // Destructure state into convenient variables
     val State(building, lift, stops) = state
@@ -137,18 +137,18 @@ object LiftLogic {
 
   private def nearestRequestInSameDirection(lift: Lift, building: Building): Option[Floor] =
     lift.direction match
-      case Up => building.peopleGoing(Up).filter(_.isAbove(lift)).map(_.position).minOption
+      case Up   => building.peopleGoing(Up).filter(_.isAbove(lift)).map(_.position).minOption
       case Down => building.peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
-  
+
   private def emptyLiftDown(building: Building, lift: Lift): Floor =
     building.peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption match
       case Some(lowest) => lift.turn(); lowest
-      case None => building.peopleGoing(Down).filter(_.isAbove(lift)).map(_.position).maxOption.getOrElse(0)
+      case None         => building.peopleGoing(Down).filter(_.isAbove(lift)).map(_.position).maxOption.getOrElse(0)
 
   private def emptyLiftUp(building: Building, lift: Lift): Floor =
     building.peopleGoing(Down).filter(_.isAbove(lift)).map(_.position).maxOption match
       case Some(highest) => lift.turn(); highest
-      case None => building.peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption.getOrElse(0)
+      case None          => building.peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption.getOrElse(0)
 }
 
 object Dinglemouse {
