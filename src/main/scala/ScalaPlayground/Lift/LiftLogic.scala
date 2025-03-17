@@ -18,9 +18,8 @@ case class Person(position: Floor, destination: Floor) {
     case _ if destination < position => Down
 
   def matchesDirection(lift: Lift): Boolean = desiredDirection == lift.direction
-
-  def isBelow(lift: Lift): Boolean = position < lift.position
-  def isAbove(lift: Lift): Boolean = position > lift.position
+  def isBelow(lift: Lift): Boolean          = position < lift.position
+  def isAbove(lift: Lift): Boolean          = position > lift.position
 }
 
 case class Lift(
@@ -85,11 +84,11 @@ object Dinglemouse {
         }
         .to(ListMap)
 
-    val lift = Lift(position = 0, Direction.Up, people = mutable.Queue.empty, capacity)
+    val lift     = Lift(position = 0, Direction.Up, people = mutable.Queue.empty, capacity)
     val building = Building(floors)
 
     val initialState = State(building = building, lift = lift, stops = mutable.ListBuffer.empty)
-    val finalState = LiftLogic.simulate(initialState)
+    val finalState   = LiftLogic.simulate(initialState)
 
     finalState.stops.toArray
   }
@@ -132,7 +131,7 @@ object LiftLogic {
       val person = queue.dequeueFirst(lift.accepts).get
       lift.people.enqueue(person)
 
-    val oldPosition  = lift.position
+    val oldPosition                   = lift.position
     val (nextPosition, nextDirection) = getNextPositionAndDirection(building, lift)
 
     // Set the new values
