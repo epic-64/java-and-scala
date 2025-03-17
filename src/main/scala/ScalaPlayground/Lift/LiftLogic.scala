@@ -40,11 +40,20 @@ case class Lift(
     case Down => Up
 }
 
-case class Building(floors: ListMap[Floor, mutable.Queue[Person]]):
-  def isEmpty: Boolean                                = floors.values.forall(_.isEmpty)
-  def hasPeople: Boolean                              = !isEmpty
+case class Building(floors: ListMap[Floor, mutable.Queue[Person]]) {
+  def isEmpty: Boolean = floors.values.forall(_.isEmpty)
+
+  def hasPeople: Boolean = !isEmpty
+
   def peopleGoing(direction: Direction): List[Person] =
     floors.values.flatMap(queue => queue.filter(_.desiredDirection == direction)).toList
+
+  def lowestFloorGoingUp(lift: Lift): Option[Floor] =
+    peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption
+
+  def highestFloorGoingDown(lift: Lift): Option[Floor] =
+    peopleGoing(Down).filter(_.isAbove(lift)).map(_.position).maxOption
+}
 
 case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor]) {
   def toPrintable: String = {
@@ -127,8 +136,8 @@ object LiftLogic {
         case Some(floor) => (floor, lift.direction) // return the floor if it exists (start/stop in same direction)
         case None        =>                         // otherwise choose a new target
           lift.direction match
-            case Up   => emptyLiftUp(building, lift)   // look for people above going downwards
-            case Down => emptyLiftDown(building, lift) // look for people below going upwards
+            case Up   => upwardsNewTarget(building, lift)   // look for people above going downwards
+            case Down => downwardsNewTarget(building, lift) // look for people below going upwards
 
   private def nearestPassengerTarget(lift: Lift, building: Building): Option[Floor] =
     lift.people
@@ -141,17 +150,15 @@ object LiftLogic {
       case Up   => building.peopleGoing(Up).filter(_.isAbove(lift)).map(_.position).minOption
       case Down => building.peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
 
-  private def emptyLiftDown(building: Building, lift: Lift): (Floor, Direction) =
-    building.peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption match
+  private def downwardsNewTarget(building: Building, lift: Lift): (Floor, Direction) =
+    building.lowestFloorGoingUp(lift) match
       case Some(lowest) => (lowest, Up)
-      case None         =>
-        (building.peopleGoing(Down).filter(_.isAbove(lift)).map(_.position).maxOption.getOrElse(0), Down)
+      case None         => (building.highestFloorGoingDown(lift).getOrElse(0), Down)
 
-  private def emptyLiftUp(building: Building, lift: Lift): (Floor, Direction) =
-    building.peopleGoing(Down).filter(_.isAbove(lift)).map(_.position).maxOption match
+  private def upwardsNewTarget(building: Building, lift: Lift): (Floor, Direction) =
+    building.highestFloorGoingDown(lift) match
       case Some(highest) => (highest, Down)
-      case None          =>
-        (building.peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption.getOrElse(0), Up)
+      case None          => (building.lowestFloorGoingUp(lift).getOrElse(0), Up)
 }
 
 object Dinglemouse {
