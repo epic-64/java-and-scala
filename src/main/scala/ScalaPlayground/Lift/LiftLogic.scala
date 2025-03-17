@@ -123,7 +123,7 @@ object LiftLogic {
       case Down => building.peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
 
   private def getNextPosition(building: Building, lift: Lift): Floor =
-    List(
+    List(                                           // Build a list of primary targets
       nearestPassengerTarget(lift, building),       // request from passenger already on the lift
       nearestRequestInSameDirection(lift, building) // request from people [waiting in AND going to] the same direction
     ).flatten // turn list of options into list of Integers
