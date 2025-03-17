@@ -129,10 +129,10 @@ object LiftLogic {
     ).flatten // turn list of options into list of Integers
       .minByOption(floor => Math.abs(floor - lift.position)) // get Some floor with the lowest distance, or None
       .match
-        case Some(floor) => floor                                 // return the floor if it exists
-        case None        => lift.direction match                  // otherwise start empty lift logic
-          case Up   => emptyLiftUp(building, lift)
-          case Down => emptyLiftDown(building, lift) 
+        case Some(floor) => floor                      // return the floor if it exists (start/stop in same direction)
+        case None        => lift.direction match       // otherwise choose a new target
+          case Up   => emptyLiftUp(building, lift)     // look for people above going downwards
+          case Down => emptyLiftDown(building, lift)   // look for people below going upwards
 
   def simulate(initialState: State): State = {
     var state = initialState
