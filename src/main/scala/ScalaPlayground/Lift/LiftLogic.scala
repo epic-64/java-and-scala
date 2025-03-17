@@ -111,11 +111,6 @@ object LiftLogic {
       case Some(highest) => lift.turn(); highest
       case None          => building.peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption.getOrElse(0)
 
-  private def emptyLiftNextPosition(building: Building, lift: Lift): Floor =
-    lift.direction match
-      case Up   => emptyLiftUp(building, lift)
-      case Down => emptyLiftDown(building, lift)
-
   private def nearestPassengerTarget(lift: Lift, building: Building): Option[Floor] =
     lift.people
       .filter(_.matchesDirection(lift))
@@ -135,7 +130,9 @@ object LiftLogic {
       .minByOption(floor => Math.abs(floor - lift.position)) // get Some floor with the lowest distance, or None
       .match
         case Some(floor) => floor                                 // return the floor if it exists
-        case None        => emptyLiftNextPosition(building, lift) // otherwise start empty lift logic
+        case None        => lift.direction match                  // otherwise start empty lift logic
+          case Up   => emptyLiftUp(building, lift)
+          case Down => emptyLiftDown(building, lift) 
 
   def simulate(initialState: State): State = {
     var state = initialState
