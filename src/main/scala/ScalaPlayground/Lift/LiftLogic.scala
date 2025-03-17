@@ -133,7 +133,7 @@ object LiftLogic {
     ).flatten // turn list of options into list of Integers
       .minByOption(floor => Math.abs(floor - lift.position)) // get Some floor with the lowest distance, or None
       .match
-        case Some(floor) => (floor, lift.direction) // return the floor if it exists (start/stop in same direction)
+        case Some(floor) => (floor, lift.direction) // return requested floor, keep direction
         case None        =>                         // otherwise choose a new target
           lift.direction match
             case Up   => upwardsNewTarget(building, lift)   // look for people above going downwards
