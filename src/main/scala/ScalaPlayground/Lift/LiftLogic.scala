@@ -34,6 +34,9 @@ case class Lift(
   def isEmpty: Boolean                 = people.isEmpty
   def accepts(person: Person): Boolean = hasRoom && person.desiredDirection == direction
 
+  def nearestPassengerTarget: Option[Floor] =
+    people.filter(_.matchesDirection(this)).map(_.destination).minByOption(floor => Math.abs(floor - position))
+
   def turn(): Unit = direction = direction match
     case Up   => Down
     case Down => Up
@@ -52,6 +55,11 @@ case class Building(floors: ListMap[Floor, mutable.Queue[Person]]) {
 
   def highestFloorGoingDown(lift: Lift): Option[Floor] =
     peopleGoing(Down).filter(_.isAbove(lift)).map(_.position).maxOption
+
+  def nearestRequestInSameDirection(lift: Lift): Option[Floor] =
+    lift.direction match
+      case Up   => peopleGoing(Up).filter(_.isAbove(lift)).map(_.position).minOption
+      case Down => peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
 }
 
 case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor]) {
@@ -147,8 +155,8 @@ object LiftLogic {
 
   private def getNextPositionAndDirection(building: Building, lift: Lift): (Floor, Direction) =
     List(                                           // Build a list of primary targets
-      nearestPassengerTarget(lift),       // request from passenger already on the lift
-      nearestRequestInSameDirection(lift, building) // request from people [waiting in AND going to] the same direction
+      lift.nearestPassengerTarget,                  // request from passenger already on the lift
+      building.nearestRequestInSameDirection(lift)  // request from people [waiting in AND going to] the same direction
     ).flatten // turn list of options into list of Integers
       .minByOption(floor => Math.abs(floor - lift.position)) // get Some floor with the lowest distance, or None
       .match
@@ -157,17 +165,6 @@ object LiftLogic {
           lift.direction match
             case Up   => upwardsNewTarget(building, lift)   // look for people above going downwards
             case Down => downwardsNewTarget(building, lift) // look for people below going upwards
-
-  private def nearestPassengerTarget(lift: Lift): Option[Floor] =
-    lift.people
-      .filter(_.matchesDirection(lift))
-      .map(_.destination)
-      .minByOption(floor => Math.abs(floor - lift.position))
-
-  private def nearestRequestInSameDirection(lift: Lift, building: Building): Option[Floor] =
-    lift.direction match
-      case Up   => building.peopleGoing(Up).filter(_.isAbove(lift)).map(_.position).minOption
-      case Down => building.peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
 
   private def downwardsNewTarget(building: Building, lift: Lift): (Floor, Direction) =
     building.lowestFloorGoingUp(lift) match
