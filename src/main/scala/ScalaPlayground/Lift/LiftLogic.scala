@@ -104,9 +104,10 @@ object LiftLogic {
       lift.people.enqueue(person)
 
     val oldPosition  = lift.position
-    val nextPosition = getNextPosition(building, lift)
+    val (nextPosition, nextDirection) = getNextPositionAndDirection(building, lift)
 
-    // Set the new position
+    // Set the new values
+    lift.direction = nextDirection
     lift.position = nextPosition
 
     // Register the stop. I added the extra condition because of a bug
@@ -116,15 +117,15 @@ object LiftLogic {
     state
   }
 
-  private def getNextPosition(building: Building, lift: Lift): Floor =
+  private def getNextPositionAndDirection(building: Building, lift: Lift): (Floor, Direction) =
     List(                                           // Build a list of primary targets
       nearestPassengerTarget(lift, building),       // request from passenger already on the lift
       nearestRequestInSameDirection(lift, building) // request from people [waiting in AND going to] the same direction
     ).flatten // turn list of options into list of Integers
       .minByOption(floor => Math.abs(floor - lift.position)) // get Some floor with the lowest distance, or None
       .match
-        case Some(floor) => floor // return the floor if it exists (start/stop in same direction)
-        case None        =>       // otherwise choose a new target
+        case Some(floor) => (floor, lift.direction) // return the floor if it exists (start/stop in same direction)
+        case None        =>                         // otherwise choose a new target
           lift.direction match
             case Up   => emptyLiftUp(building, lift)   // look for people above going downwards
             case Down => emptyLiftDown(building, lift) // look for people below going upwards
@@ -140,15 +141,17 @@ object LiftLogic {
       case Up   => building.peopleGoing(Up).filter(_.isAbove(lift)).map(_.position).minOption
       case Down => building.peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
 
-  private def emptyLiftDown(building: Building, lift: Lift): Floor =
+  private def emptyLiftDown(building: Building, lift: Lift): (Floor, Direction) =
     building.peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption match
-      case Some(lowest) => lift.turn(); lowest
-      case None         => building.peopleGoing(Down).filter(_.isAbove(lift)).map(_.position).maxOption.getOrElse(0)
+      case Some(lowest) => (lowest, Up)
+      case None         =>
+        (building.peopleGoing(Down).filter(_.isAbove(lift)).map(_.position).maxOption.getOrElse(0), Down)
 
-  private def emptyLiftUp(building: Building, lift: Lift): Floor =
+  private def emptyLiftUp(building: Building, lift: Lift): (Floor, Direction) =
     building.peopleGoing(Down).filter(_.isAbove(lift)).map(_.position).maxOption match
-      case Some(highest) => lift.turn(); highest
-      case None          => building.peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption.getOrElse(0)
+      case Some(highest) => (highest, Down)
+      case None          =>
+        (building.peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption.getOrElse(0), Up)
 }
 
 object Dinglemouse {
