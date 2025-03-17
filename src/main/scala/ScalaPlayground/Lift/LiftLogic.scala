@@ -13,7 +13,7 @@ enum Direction { case Up, Down }
 case class Person(position: Floor, destination: Floor) {
   require(position != destination, "source and destination floor cannot be the same")
 
-  def desiredDirection: Direction = (position, destination) match
+  val desiredDirection: Direction = (position, destination) match
     case _ if destination > position => Up
     case _ if destination < position => Down
 
