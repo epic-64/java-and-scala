@@ -1,6 +1,7 @@
 package ScalaPlayground.Lift
 
-import scala.util.chaining.scalaUtilChainingOps
+// https://www.codewars.com/kata/58905bfa1decb981da00009e
+
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
