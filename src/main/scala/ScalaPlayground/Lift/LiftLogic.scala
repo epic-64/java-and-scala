@@ -75,6 +75,26 @@ case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor
   }
 }
 
+// Excuse the name. Dinglemouse.theLift() is how the function is called in the Codewars test suite
+object Dinglemouse {
+  def theLift(queues: Array[Array[Int]], capacity: Int): Array[Int] = {
+    val floors: ListMap[Int, mutable.Queue[Person]] =
+      queues.zipWithIndex
+        .map { case (queue, index) =>
+          (index, queue.map(destination => Person(position = index, destination = destination)).to(mutable.Queue))
+        }
+        .to(ListMap)
+
+    val lift = Lift(position = 0, Direction.Up, people = mutable.Queue.empty, capacity)
+    val building = Building(floors)
+
+    val initialState = State(building = building, lift = lift, stops = mutable.ListBuffer.empty)
+    val finalState = LiftLogic.simulate(initialState)
+
+    finalState.stops.toArray
+  }
+}
+
 object LiftLogic {
   def simulate(initialState: State): State = {
     var state = initialState
@@ -159,23 +179,4 @@ object LiftLogic {
     building.highestFloorGoingDown(lift) match
       case Some(highest) => (highest, Down)
       case None          => (building.lowestFloorGoingUp(lift).getOrElse(0), Up)
-}
-
-object Dinglemouse {
-  def theLift(queues: Array[Array[Int]], capacity: Int): Array[Int] = {
-    val floors: ListMap[Int, mutable.Queue[Person]] =
-      queues.zipWithIndex
-        .map { case (queue, index) =>
-          (index, queue.map(destination => Person(position = index, destination = destination)).to(mutable.Queue))
-        }
-        .to(ListMap)
-
-    val lift     = Lift(position = 0, Direction.Up, people = mutable.Queue.empty, capacity)
-    val building = Building(floors)
-
-    val initialState = State(building = building, lift = lift, stops = mutable.ListBuffer.empty)
-    val finalState   = LiftLogic.simulate(initialState)
-
-    finalState.stops.toArray
-  }
 }
