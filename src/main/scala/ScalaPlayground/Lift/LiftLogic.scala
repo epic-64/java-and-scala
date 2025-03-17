@@ -67,6 +67,21 @@ case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor
 }
 
 object LiftLogic {
+  def simulate(initialState: State): State = {
+    var state = initialState
+
+    state.stops += state.lift.position // register initial position as the first stop
+    println(state.toPrintable) // draw the initial state of the lift
+
+    val State(building, lift, _) = state
+
+    while building.hasPeople || lift.hasPeople || lift.position > 0 do
+      state = step(state)
+      println(state.toPrintable)
+
+    state
+  }
+  
   private def step(state: State): State = {
     // Destructure state into convenient variables
     val State(building, lift, stops) = state
@@ -101,27 +116,6 @@ object LiftLogic {
     state
   }
 
-  private def emptyLiftDown(building: Building, lift: Lift): Floor =
-    building.peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption match
-      case Some(lowest) => lift.turn(); lowest
-      case None         => building.peopleGoing(Down).filter(_.isAbove(lift)).map(_.position).maxOption.getOrElse(0)
-
-  private def emptyLiftUp(building: Building, lift: Lift): Floor =
-    building.peopleGoing(Down).filter(_.isAbove(lift)).map(_.position).maxOption match
-      case Some(highest) => lift.turn(); highest
-      case None          => building.peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption.getOrElse(0)
-
-  private def nearestPassengerTarget(lift: Lift, building: Building): Option[Floor] =
-    lift.people
-      .filter(_.matchesDirection(lift))
-      .map(_.destination)
-      .minByOption(floor => Math.abs(floor - lift.position))
-
-  private def nearestRequestInSameDirection(lift: Lift, building: Building): Option[Floor] =
-    lift.direction match
-      case Up   => building.peopleGoing(Up).filter(_.isAbove(lift)).map(_.position).minOption
-      case Down => building.peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
-
   private def getNextPosition(building: Building, lift: Lift): Floor =
     List(                                           // Build a list of primary targets
       nearestPassengerTarget(lift, building),       // request from passenger already on the lift
@@ -135,20 +129,26 @@ object LiftLogic {
             case Up   => emptyLiftUp(building, lift)   // look for people above going downwards
             case Down => emptyLiftDown(building, lift) // look for people below going upwards
 
-  def simulate(initialState: State): State = {
-    var state = initialState
+  private def nearestPassengerTarget(lift: Lift, building: Building): Option[Floor] =
+    lift.people
+      .filter(_.matchesDirection(lift))
+      .map(_.destination)
+      .minByOption(floor => Math.abs(floor - lift.position))
 
-    state.stops += state.lift.position // register initial position as the first stop
-    println(state.toPrintable)         // draw the initial state of the lift
+  private def nearestRequestInSameDirection(lift: Lift, building: Building): Option[Floor] =
+    lift.direction match
+      case Up => building.peopleGoing(Up).filter(_.isAbove(lift)).map(_.position).minOption
+      case Down => building.peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
+  
+  private def emptyLiftDown(building: Building, lift: Lift): Floor =
+    building.peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption match
+      case Some(lowest) => lift.turn(); lowest
+      case None => building.peopleGoing(Down).filter(_.isAbove(lift)).map(_.position).maxOption.getOrElse(0)
 
-    val State(building, lift, _) = state
-
-    while building.hasPeople || lift.hasPeople || lift.position > 0 do
-      state = step(state)
-      println(state.toPrintable)
-
-    state
-  }
+  private def emptyLiftUp(building: Building, lift: Lift): Floor =
+    building.peopleGoing(Down).filter(_.isAbove(lift)).map(_.position).maxOption match
+      case Some(highest) => lift.turn(); highest
+      case None => building.peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption.getOrElse(0)
 }
 
 object Dinglemouse {
