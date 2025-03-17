@@ -147,7 +147,7 @@ object LiftLogic {
 
   private def getNextPositionAndDirection(building: Building, lift: Lift): (Floor, Direction) =
     List(                                           // Build a list of primary targets
-      nearestPassengerTarget(lift, building),       // request from passenger already on the lift
+      nearestPassengerTarget(lift),       // request from passenger already on the lift
       nearestRequestInSameDirection(lift, building) // request from people [waiting in AND going to] the same direction
     ).flatten // turn list of options into list of Integers
       .minByOption(floor => Math.abs(floor - lift.position)) // get Some floor with the lowest distance, or None
@@ -158,7 +158,7 @@ object LiftLogic {
             case Up   => upwardsNewTarget(building, lift)   // look for people above going downwards
             case Down => downwardsNewTarget(building, lift) // look for people below going upwards
 
-  private def nearestPassengerTarget(lift: Lift, building: Building): Option[Floor] =
+  private def nearestPassengerTarget(lift: Lift): Option[Floor] =
     lift.people
       .filter(_.matchesDirection(lift))
       .map(_.destination)
