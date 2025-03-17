@@ -47,7 +47,7 @@ case class Building(floors: ListMap[Floor, mutable.Queue[Person]]) {
 
   def hasPeople: Boolean = !isEmpty
 
-  def peopleGoing(direction: Direction): List[Person] =
+  private def peopleGoing(direction: Direction): List[Person] =
     floors.values.flatMap(queue => queue.filter(_.desiredDirection == direction)).toList
 
   def lowestFloorGoingUp(lift: Lift): Option[Floor] =
