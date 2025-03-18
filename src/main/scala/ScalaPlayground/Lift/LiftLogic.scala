@@ -2,6 +2,8 @@ package ScalaPlayground.Lift
 
 // https://www.codewars.com/kata/58905bfa1decb981da00009e
 
+import ScalaPlayground.Lift.Direction.{Down, Up}
+
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
@@ -17,13 +19,13 @@ case class Person(position: Floor, destination: Floor) {
 
   def matchesDirection(lift: Lift): Boolean = desiredDirection == lift.direction
 
-  def isLowerThan(lift: Lift): Boolean  = position < lift.position
-  def isHigherThan(lift: Lift): Boolean = position > lift.position
+  def isBelow(lift: Lift): Boolean  = position < lift.position
+  def isAbove(lift: Lift): Boolean = position > lift.position
 }
 
 case class Lift(
     var position: Floor,
-    var people: mutable.Queue[Person],
+    people: mutable.Queue[Person],
     var direction: Direction,
     capacity: Int
 ) {
@@ -41,6 +43,8 @@ case class Lift(
 case class Building(floors: ListMap[Floor, mutable.Queue[Person]]):
   def isEmpty: Boolean   = floors.values.forall(_.isEmpty)
   def hasPeople: Boolean = !isEmpty
+  def peopleGoing(direction: Direction): List[Person] =
+    floors.values.flatMap(queue => queue.filter(_.desiredDirection == direction)).toList
 
 case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor]) {
   def toPrintable: String = {
@@ -97,26 +101,15 @@ object LiftLogic {
     state
   }
 
-  private def peopleGoingDirection(building: Building, direction: Direction): List[Person] =
-    building.floors.values
-      .flatMap(queue => queue.filter(person => person.desiredDirection == direction))
-      .toList
-
-  private def peopleGoingDown(building: Building): List[Person] =
-    peopleGoingDirection(building, Direction.Down)
-
-  private def peopleGoingUp(building: Building): List[Person] =
-    peopleGoingDirection(building, Direction.Up)
-
   private def emptyLiftDown(building: Building, lift: Lift): Floor =
-    peopleGoingUp(building).filter(_.isLowerThan(lift)).map(_.position).minOption match
+    building.peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption match
       case Some(lowest) => lift.turn(); lowest
-      case None         => peopleGoingDown(building).filter(_.isHigherThan(lift)).map(_.position).maxOption.getOrElse(0)
+      case None         => building.peopleGoing(Down).filter(_.isAbove(lift)).map(_.position).maxOption.getOrElse(0)
 
   private def emptyLiftUp(building: Building, lift: Lift): Floor =
-    peopleGoingDown(building).filter(_.isHigherThan(lift)).map(_.position).maxOption match
+    building.peopleGoing(Down).filter(_.isAbove(lift)).map(_.position).maxOption match
       case Some(highest) => lift.turn(); highest
-      case None          => peopleGoingUp(building).filter(_.isLowerThan(lift)).map(_.position).minOption.getOrElse(0)
+      case None          => building.peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption.getOrElse(0)
 
   private def emptyLiftNextPosition(building: Building, lift: Lift): Floor =
     lift.direction match
@@ -131,8 +124,8 @@ object LiftLogic {
 
   private def nearestRequestInSameDirection(lift: Lift, building: Building): Option[Floor] =
     lift.direction match
-      case Direction.Up   => peopleGoingUp(building).filter(_.isHigherThan(lift)).map(_.position).minOption
-      case Direction.Down => peopleGoingDown(building).filter(_.isLowerThan(lift)).map(_.position).maxOption
+      case Direction.Up   => building.peopleGoing(Up).filter(_.isAbove(lift)).map(_.position).minOption
+      case Direction.Down => building.peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
 
   private def getNextPosition(building: Building, lift: Lift): Floor =
     List(
