@@ -14,8 +14,8 @@ case class Person(position: Floor, destination: Floor) {
   require(position != destination, "source and destination floor cannot be the same")
 
   def desiredDirection: Direction = (position, destination) match
-    case _ if destination > position => Direction.Up
-    case _ if destination < position => Direction.Down
+    case _ if destination > position => Up
+    case _ if destination < position => Down
 
   def matchesDirection(lift: Lift): Boolean = desiredDirection == lift.direction
 
@@ -36,8 +36,8 @@ case class Lift(
   def accepts(person: Person): Boolean = hasRoom && person.desiredDirection == direction
 
   def turn(): Unit = direction = direction match
-    case Direction.Up   => Direction.Down
-    case Direction.Down => Direction.Up
+    case Up   => Down
+    case Down => Up
 }
 
 case class Building(floors: ListMap[Floor, mutable.Queue[Person]]):
@@ -73,8 +73,8 @@ object LiftLogic {
 
     // Always force the lift into a valid direction
     lift.direction = lift.position match
-      case 0                                  => Direction.Up
-      case p if p == building.floors.keys.max => Direction.Down
+      case 0                                  => Up
+      case p if p == building.floors.keys.max => Down
       case _                                  => lift.direction
 
     // Off-board people who reached their destination
@@ -113,8 +113,8 @@ object LiftLogic {
 
   private def emptyLiftNextPosition(building: Building, lift: Lift): Floor =
     lift.direction match
-      case Direction.Up   => emptyLiftUp(building, lift)
-      case Direction.Down => emptyLiftDown(building, lift)
+      case Up   => emptyLiftUp(building, lift)
+      case Down => emptyLiftDown(building, lift)
 
   private def nearestPassengerTarget(lift: Lift, building: Building): Option[Floor] =
     lift.people
@@ -124,8 +124,8 @@ object LiftLogic {
 
   private def nearestRequestInSameDirection(lift: Lift, building: Building): Option[Floor] =
     lift.direction match
-      case Direction.Up   => building.peopleGoing(Up).filter(_.isAbove(lift)).map(_.position).minOption
-      case Direction.Down => building.peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
+      case Up   => building.peopleGoing(Up).filter(_.isAbove(lift)).map(_.position).minOption
+      case Down => building.peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
 
   private def getNextPosition(building: Building, lift: Lift): Floor =
     List(
