@@ -67,7 +67,7 @@ case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor
 }
 
 object LiftLogic {
-  private def tick(state: State): State = {
+  private def step(state: State): State = {
     // Destructure state into convenient variables
     val State(building, lift, stops) = state
 
@@ -146,7 +146,7 @@ object LiftLogic {
     val State(building, lift, _) = state
 
     while building.hasPeople || lift.hasPeople || lift.position > 0 do
-      state = tick(state)
+      state = step(state)
       println(state.toPrintable)
 
     state
