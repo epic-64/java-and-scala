@@ -19,14 +19,14 @@ case class Person(position: Floor, destination: Floor) {
 
   def matchesDirection(lift: Lift): Boolean = desiredDirection == lift.direction
 
-  def isBelow(lift: Lift): Boolean  = position < lift.position
+  def isBelow(lift: Lift): Boolean = position < lift.position
   def isAbove(lift: Lift): Boolean = position > lift.position
 }
 
 case class Lift(
     var position: Floor,
-    people: mutable.Queue[Person],
     var direction: Direction,
+    people: mutable.Queue[Person],
     capacity: Int
 ) {
   private def isFull: Boolean          = people.size == capacity
@@ -41,8 +41,8 @@ case class Lift(
 }
 
 case class Building(floors: ListMap[Floor, mutable.Queue[Person]]):
-  def isEmpty: Boolean   = floors.values.forall(_.isEmpty)
-  def hasPeople: Boolean = !isEmpty
+  def isEmpty: Boolean                                = floors.values.forall(_.isEmpty)
+  def hasPeople: Boolean                              = !isEmpty
   def peopleGoing(direction: Direction): List[Person] =
     floors.values.flatMap(queue => queue.filter(_.desiredDirection == direction)).toList
 
@@ -81,7 +81,7 @@ object LiftLogic {
     lift.people.dequeueAll(_.destination == lift.position)
 
     // get current floor queue
-    val queue = building.floors(lift.position) 
+    val queue = building.floors(lift.position)
 
     // Transfer people from floor queue into lift
     while lift.hasRoom && queue.exists(lift.accepts) do
@@ -97,7 +97,7 @@ object LiftLogic {
     // Register the stop. I added the extra condition because of a bug
     // by which the lift sometimes takes two turns for the very last move 🤔
     if oldPosition != nextPosition then stops += nextPosition
-    
+
     state
   }
 
@@ -139,7 +139,7 @@ object LiftLogic {
 
   def simulate(initialState: State): State = {
     var state = initialState
-    
+
     state.stops += state.lift.position // register initial position as the first stop
     println(state.toPrintable)         // draw the initial state of the lift
 
@@ -162,7 +162,7 @@ object Dinglemouse {
         }
         .to(ListMap)
 
-    val lift     = Lift(position = 0, people = mutable.Queue.empty, Direction.Up, capacity)
+    val lift     = Lift(position = 0, Direction.Up, people = mutable.Queue.empty, capacity)
     val building = Building(floors)
 
     val initialState = State(building = building, lift = lift, stops = mutable.ListBuffer.empty)
