@@ -1,0 +1,5303 @@
+<html>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title id="title">
+          ScalaPlayground/BinaryTree/BinaryTree.scala.html
+        </title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/css/theme.default.min.css" type="text/css"/><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/js/jquery.tablesorter.min.js"></script><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"/><script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script><script type="text/javascript">
+        $(document).ready(function() {$(".tablesorter").tablesorter();});
+      </script>
+        <style>
+          table.codegrid { font-family: monospace; font-size: 12px; width: auto!important; }table.statementlist { width: auto!important; font-size: 13px; } table.codegrid td { padding: 0!important; border: 0!important } table td.linenumber { width: 40px!important; } 
+        </style>
+      </head>
+      <body style="font-family: monospace;">
+        <ul class="nav nav-tabs">
+          <li>
+            <a href="#codegrid" data-toggle="tab">Codegrid</a>
+          </li>
+          <li>
+            <a href="#statementlist" data-toggle="tab">Statement List</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane active" id="codegrid">
+            <pre style='font-size: 12pt; font-family: courier, monospace;'>1 <span style=''>package ScalaPlayground.BinaryTree
+</span>2 <span style=''>
+</span>3 <span style=''>import scala.annotation.tailrec
+</span>4 <span style=''>import scala.collection.mutable.ListBuffer
+</span>5 <span style=''>import scala.util.Random
+</span>6 <span style=''>
+</span>7 <span style=''>object App {
+</span>8 <span style=''>  </span><span style='background: #F0ADAD'>def main</span><span style=''>(args: Array[String]): Unit = {
+</span>9 <span style=''>    val example1: Unit = {
+</span>10 <span style=''>      val tree = </span><span style='background: #F0ADAD'>Tree.fromList(Random.shuffle(1 to 50).toList)</span><span style=''>
+</span>11 <span style=''>
+</span>12 <span style=''>      val formatter = </span><span style='background: #F0ADAD'>TreeFormatter[Int]()</span><span style=''>
+</span>13 <span style=''>      </span><span style='background: #F0ADAD'>println(formatter.visualize(tree))</span><span style=''>
+</span>14 <span style=''>      </span><span style='background: #F0ADAD'>println(s&quot;Sorted array: ${tree.toList}&quot;)</span><span style=''>
+</span>15 <span style=''>      </span><span style='background: #F0ADAD'>println(s&quot;Shortest path between 3 and 15: ${tree.findShortestPath(3, 15)}&quot;)</span><span style=''>
+</span>16 <span style=''>      </span><span style='background: #F0ADAD'>println(s&quot;Shortest path between 32 and 19: ${tree.findShortestPath(32, 19)}&quot;)</span><span style=''>
+</span>17 <span style=''>      </span><span style='background: #F0ADAD'>println(s&quot;Shortest path between 7 and 7: ${tree.findShortestPath(7, 7)}&quot;)</span><span style=''>
+</span>18 <span style=''>    }
+</span>19 <span style=''>
+</span>20 <span style=''>    val example2: Unit = {
+</span>21 <span style=''>      val tree = </span><span style='background: #F0ADAD'>Tree.fromList(List(&quot;mango&quot;, &quot;orange&quot;, &quot;grape&quot;, &quot;kiwi&quot;, &quot;apple&quot;, &quot;banana&quot;, &quot;pear&quot;, &quot;cherry&quot;, &quot;peach&quot;))</span><span style=''>
+</span>22 <span style=''>
+</span>23 <span style=''>      val formatter = </span><span style='background: #F0ADAD'>TreeFormatter[String]()</span><span style=''>
+</span>24 <span style=''>      </span><span style='background: #F0ADAD'>println(formatter.visualize(tree))</span><span style=''>
+</span>25 <span style=''>      </span><span style='background: #F0ADAD'>println(s&quot;Sorted array: ${tree.toList}&quot;)</span><span style=''>
+</span>26 <span style=''>      </span><span style='background: #F0ADAD'>println(s&quot;Shortest path between apple and cherry: ${tree.findShortestPath(&quot;apple&quot;, &quot;cherry&quot;)}&quot;)</span><span style=''>
+</span>27 <span style=''>      </span><span style='background: #F0ADAD'>println(s&quot;Shortest path between cherry and apple: ${tree.findShortestPath(&quot;cherry&quot;, &quot;apple&quot;)}&quot;)</span><span style=''>
+</span>28 <span style=''>    }
+</span>29 <span style=''>
+</span>30 <span style=''>    val example3: Unit = {
+</span>31 <span style=''>      case class Person(name: String, age: Int)
+</span>32 <span style=''>
+</span>33 <span style=''>      given Ordering[Person] with
+</span>34 <span style=''>        </span><span style='background: #F0ADAD'>def compare</span><span style=''>(p1: Person, p2: Person): Int = </span><span style='background: #F0ADAD'>p1.age.compareTo(p2.age)</span><span style=''>
+</span>35 <span style=''>
+</span>36 <span style=''>      val tree = </span><span style='background: #F0ADAD'>Tree
+</span>37 <span style=''></span><span style='background: #F0ADAD'>        .empty[Person]
+</span>38 <span style=''></span><span style='background: #F0ADAD'>        .insert(Person(&quot;Alice&quot;, 30))
+</span>39 <span style=''></span><span style='background: #F0ADAD'>        .insert(Person(&quot;Bob&quot;, 25))
+</span>40 <span style=''></span><span style='background: #F0ADAD'>        .insert(Person(&quot;Charlie&quot;, 35))
+</span>41 <span style=''></span><span style='background: #F0ADAD'>        .insert(Person(&quot;Dave&quot;, 20))
+</span>42 <span style=''></span><span style='background: #F0ADAD'>        .insert(Person(&quot;Eve&quot;, 40))
+</span>43 <span style=''></span><span style='background: #F0ADAD'>        .insert(Person(&quot;Frank&quot;, 45))
+</span>44 <span style=''></span><span style='background: #F0ADAD'>        .insert(Person(&quot;Grace&quot;, 19))
+</span>45 <span style=''></span><span style='background: #F0ADAD'>        .insert(Person(&quot;Helen&quot;, 22))
+</span>46 <span style=''></span><span style='background: #F0ADAD'>        .insert(Person(&quot;Ivy&quot;, 27))
+</span>47 <span style=''></span><span style='background: #F0ADAD'>        .insert(Person(&quot;Jack&quot;, 26))</span><span style=''>
+</span>48 <span style=''>
+</span>49 <span style=''>      val formatter = </span><span style='background: #F0ADAD'>TreeFormatter[Person](padding = 2)</span><span style=''>
+</span>50 <span style=''>      </span><span style='background: #F0ADAD'>println(formatter.visualize(tree))</span><span style=''>
+</span>51 <span style=''>      </span><span style='background: #F0ADAD'>println(s&quot;Sorted array: ${tree.toList}&quot;)</span><span style=''>
+</span>52 <span style=''>      </span><span style='background: #F0ADAD'>println(
+</span>53 <span style=''></span><span style='background: #F0ADAD'>        s&quot;Shortest path between Grace and Jack: ${tree.findShortestPath(Person(&quot;Grace&quot;, 19), Person(&quot;Jack&quot;, 26))}&quot;
+</span>54 <span style=''></span><span style='background: #F0ADAD'>      )</span><span style=''>
+</span>55 <span style=''>    }
+</span>56 <span style=''>  }
+</span>57 <span style=''>}
+</span>58 <span style=''>
+</span>59 <span style=''>sealed trait BinaryTree[+A] {
+</span>60 <span style=''>  def insert[B &gt;: A](value: B)(using ord: Ordering[B]): BinaryTree[B]
+</span>61 <span style=''>  def findShortestPath[B &gt;: A: Ordering](from: B, to: B): List[B]
+</span>62 <span style=''>  def findPathToRoot[B &gt;: A: Ordering](target: B): List[B]
+</span>63 <span style=''>  def toList: List[A]
+</span>64 <span style=''>}
+</span>65 <span style=''>
+</span>66 <span style=''>case object EmptyTree extends BinaryTree[Nothing] {
+</span>67 <span style=''>  </span><span style='background: #AEF1AE'>def insert</span><span style=''>[B](value: B)(using ord: Ordering[B]): BinaryTree[B] = Tree(value, EmptyTree, EmptyTree)
+</span>68 <span style=''>  </span><span style='background: #F0ADAD'>def findShortestPath</span><span style=''>[B: Ordering](from: B, to: B): List[B]     = Nil
+</span>69 <span style=''>  </span><span style='background: #F0ADAD'>def findPathToRoot</span><span style=''>[B &gt;: Nothing: Ordering](target: B): List[B] = Nil
+</span>70 <span style=''>  </span><span style='background: #AEF1AE'>def toList</span><span style=''>: List[Nothing]                                      = Nil
+</span>71 <span style=''>}
+</span>72 <span style=''>
+</span>73 <span style=''>case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends BinaryTree[A] {
+</span>74 <span style=''>  </span><span style='background: #AEF1AE'>def insert</span><span style=''>[B &gt;: A](newValue: B)(using ord: Ordering[B]): BinaryTree[B] =
+</span>75 <span style=''>    </span><span style='background: #AEF1AE'>ord.compare(newValue, value)</span><span style=''> match {
+</span>76 <span style=''>      case n if n &lt; 0 </span><span style='background: #AEF1AE'>=&gt; Tree(value, left.insert(newValue), right)</span><span style=''>
+</span>77 <span style=''>      case n if n &gt; 0 </span><span style='background: #AEF1AE'>=&gt; Tree(value, left, right.insert(newValue))</span><span style=''>
+</span>78 <span style=''>      case _          </span><span style='background: #F0ADAD'>=&gt; this</span><span style=''>
+</span>79 <span style=''>    }
+</span>80 <span style=''>
+</span>81 <span style=''>  </span><span style='background: #AEF1AE'>def toList</span><span style=''>: List[A] = </span><span style='background: #AEF1AE'>left.toList ++ List(value) ++ right.toList</span><span style=''>
+</span>82 <span style=''>
+</span>83 <span style=''>  </span><span style='background: #AEF1AE'>def findShortestPath</span><span style=''>[B &gt;: A](from: B, to: B)(using ord: Ordering[B]): List[B] = {
+</span>84 <span style=''>    </span><span style='background: #AEF1AE'>@tailrec
+</span>85 <span style=''></span><span style='background: #AEF1AE'>    def lowestCommonAncestor</span><span style=''>(node1: B, node2: B, current: BinaryTree[A]): A =
+</span>86 <span style=''>      current match
+</span>87 <span style=''>        case Tree(value, left, right) </span><span style='background: #AEF1AE'>=&gt;
+</span>88 <span style=''></span><span style='background: #AEF1AE'>          if ord.lt(node1, value) &amp;&amp; ord.lt(node2, value) then lowestCommonAncestor(node1, node2, left)
+</span>89 <span style=''></span><span style='background: #AEF1AE'>          else if ord.gt(node1, value) &amp;&amp; </span><span style='background: #F0ADAD'>ord.gt(node2, value)</span><span style='background: #AEF1AE'> then </span><span style='background: #F0ADAD'>lowestCommonAncestor(node1, node2, right)</span><span style='background: #AEF1AE'>
+</span>90 <span style=''></span><span style='background: #AEF1AE'>          else value</span><span style=''>
+</span>91 <span style=''>        case EmptyTree                </span><span style='background: #F0ADAD'>=&gt; throw new NoSuchElementException(&quot;Nodes not found in the tree&quot;)</span><span style=''>
+</span>92 <span style=''>
+</span>93 <span style=''>    val sharedAncestor = </span><span style='background: #AEF1AE'>lowestCommonAncestor(from, to, this)</span><span style=''>
+</span>94 <span style=''>    val pathFromLocal  = </span><span style='background: #AEF1AE'>findPathToRoot(from).dropWhile(_ != sharedAncestor).reverse :+ sharedAncestor</span><span style=''>
+</span>95 <span style=''>    val pathFromTarget = </span><span style='background: #AEF1AE'>findPathToRoot(to).dropWhile(_ != sharedAncestor)</span><span style=''>
+</span>96 <span style=''>
+</span>97 <span style=''>    </span><span style='background: #AEF1AE'>pathFromLocal.dropRight(1) ++ pathFromTarget.drop(1)</span><span style=''>
+</span>98 <span style=''>  }
+</span>99 <span style=''>
+</span>100 <span style=''>  </span><span style='background: #AEF1AE'>def findPathToRoot</span><span style=''>[B &gt;: A](target: B)(using ord: Ordering[B]): List[B] =
+</span>101 <span style=''>    </span><span style='background: #AEF1AE'>ord.compare(target, value)</span><span style=''> match {
+</span>102 <span style=''>      case n if n &lt; 0 </span><span style='background: #AEF1AE'>=&gt; value :: left.findPathToRoot(target)</span><span style=''>
+</span>103 <span style=''>      case n if n &gt; 0 </span><span style='background: #AEF1AE'>=&gt; value :: right.findPathToRoot(target)</span><span style=''>
+</span>104 <span style=''>      case _          </span><span style='background: #AEF1AE'>=&gt; List(value)</span><span style=''>
+</span>105 <span style=''>    }
+</span>106 <span style=''>}
+</span>107 <span style=''>
+</span>108 <span style=''>object Tree {
+</span>109 <span style=''>  </span><span style='background: #AEF1AE'>def empty</span><span style=''>[A]: BinaryTree[A] = EmptyTree
+</span>110 <span style=''>
+</span>111 <span style=''>  </span><span style='background: #AEF1AE'>def fromList</span><span style=''>[A](list: List[A])(using ord: Ordering[A]): BinaryTree[A] =
+</span>112 <span style=''>    </span><span style='background: #AEF1AE'>list.foldLeft(EmptyTree: BinaryTree[A])((tree, value) =&gt; tree.insert(value))</span><span style=''>
+</span>113 <span style=''>}
+</span>114 <span style=''>
+</span>115 <span style=''>class TreeFormatter[A](padding: Int = 4) {
+</span>116 <span style=''>  </span><span style='background: #AEF1AE'>private def indent</span><span style=''>(lines: ListBuffer[String], margin: Int): Int = {
+</span>117 <span style=''>    if (margin &gt;= 0) </span><span style='background: #AEF1AE'>return margin</span><span style=''>
+</span>118 <span style=''>    val spaces = </span><span style='background: #AEF1AE'>&quot; &quot; * -margin</span><span style=''>
+</span>119 <span style=''>    </span><span style='background: #AEF1AE'>for (i &lt;- lines.indices) lines(i) = spaces + lines(i)</span><span style=''>
+</span>120 <span style=''>    0
+</span>121 <span style=''>  }
+</span>122 <span style=''>
+</span>123 <span style=''>  </span><span style='background: #AEF1AE'>private def merge</span><span style=''>(left: ListBuffer[String], right: ListBuffer[String]): ListBuffer[String] = {
+</span>124 <span style=''>    val minSize = </span><span style='background: #AEF1AE'>math.min(left.size, right.size)</span><span style=''>
+</span>125 <span style=''>    var offset  = 0
+</span>126 <span style=''>
+</span>127 <span style=''>    </span><span style='background: #AEF1AE'>for (i &lt;- 0 until minSize)
+</span>128 <span style=''></span><span style='background: #AEF1AE'>      offset = math.max(offset, left(i).length + padding - right(i).replaceAll(&quot;\\S.*&quot;, &quot;&quot;).length)</span><span style=''>
+</span>129 <span style=''>
+</span>130 <span style=''>    </span><span style='background: #AEF1AE'>indent(right, -indent(left, offset))</span><span style=''>
+</span>131 <span style=''>
+</span>132 <span style=''>    </span><span style='background: #AEF1AE'>for (i &lt;- 0 until minSize)
+</span>133 <span style=''></span><span style='background: #AEF1AE'>      left(i) = left(i) + right(i).substring(left(i).length)</span><span style=''>
+</span>134 <span style=''>
+</span>135 <span style=''>    if (</span><span style='background: #AEF1AE'>right.size</span><span style=''> &gt; minSize) </span><span style='background: #AEF1AE'>{
+</span>136 <span style=''></span><span style='background: #AEF1AE'>      left ++= right.drop(minSize)
+</span>137 <span style=''></span><span style='background: #AEF1AE'>    }</span><span style=''>
+</span>138 <span style=''>    left
+</span>139 <span style=''>  }
+</span>140 <span style=''>
+</span>141 <span style=''>  </span><span style='background: #AEF1AE'>private def buildLines</span><span style=''>(node: BinaryTree[A]): ListBuffer[String] = node match {
+</span>142 <span style=''>    case EmptyTree                </span><span style='background: #AEF1AE'>=&gt; ListBuffer.empty</span><span style=''>
+</span>143 <span style=''>    case Tree(value, left, right) =&gt;
+</span>144 <span style=''>      </span><span style='background: #AEF1AE'>val leftLines  = buildLines(left)
+</span>145 <span style=''></span><span style='background: #AEF1AE'>      val rightLines = buildLines(right)
+</span>146 <span style=''></span><span style='background: #AEF1AE'>      val lines      = merge(leftLines, rightLines)
+</span>147 <span style=''></span><span style='background: #AEF1AE'>
+</span>148 <span style=''></span><span style='background: #AEF1AE'>      val half = value.toString.length / 2
+</span>149 <span style=''></span><span style='background: #AEF1AE'>      var i    = half
+</span>150 <span style=''></span><span style='background: #AEF1AE'>
+</span>151 <span style=''></span><span style='background: #AEF1AE'>      if (lines.nonEmpty) {
+</span>152 <span style=''></span><span style='background: #AEF1AE'>        i = lines.headOption.getOrElse(&quot;&quot;).indexOf('*') // Marker position
+</span>153 <span style=''></span><span style='background: #AEF1AE'>        val line = (left, right) match {
+</span>154 <span style=''></span><span style='background: #AEF1AE'>          case (EmptyTree, EmptyTree) </span><span style='background: #F0ADAD'>=&gt; &quot; &quot; * i + &quot;┌─┘&quot;</span><span style='background: #AEF1AE'>
+</span>155 <span style=''></span><span style='background: #AEF1AE'>          case (_, EmptyTree)         =&gt; &quot; &quot; * i + &quot;┌─┘&quot;
+</span>156 <span style=''></span><span style='background: #AEF1AE'>          case (EmptyTree, _)         =&gt; &quot; &quot; * indent(lines, i - 2) + &quot;└─┐&quot;
+</span>157 <span style=''></span><span style='background: #AEF1AE'>          case (_, _)                 =&gt;
+</span>158 <span style=''></span><span style='background: #AEF1AE'>            val dist = lines.headOption.getOrElse(&quot;&quot;).length - 1 - i // Calculate distance between roots
+</span>159 <span style=''></span><span style='background: #AEF1AE'>            s&quot;${&quot; &quot; * i}┌${&quot;─&quot; * (dist / 2 - 1)}┴${&quot;─&quot; * ((dist - 1) / 2)}┐&quot;
+</span>160 <span style=''></span><span style='background: #AEF1AE'>        }
+</span>161 <span style=''></span><span style='background: #AEF1AE'>        lines(0) = line
+</span>162 <span style=''></span><span style='background: #AEF1AE'>      }
+</span>163 <span style=''></span><span style='background: #AEF1AE'>
+</span>164 <span style=''></span><span style='background: #AEF1AE'>      lines.prepend(&quot; &quot; * indent(lines, i - half) + value.toString)
+</span>165 <span style=''></span><span style='background: #AEF1AE'>      lines.prepend(&quot; &quot; * (i + math.max(0, half - i)) + &quot;*&quot;) // Add marker for alignment reference
+</span>166 <span style=''></span><span style='background: #AEF1AE'>      lines</span><span style=''>
+</span>167 <span style=''>  }
+</span>168 <span style=''>
+</span>169 <span style=''>  </span><span style='background: #AEF1AE'>def visualize</span><span style=''>(root: BinaryTree[A]): String = {
+</span>170 <span style=''>    val lines = </span><span style='background: #AEF1AE'>buildLines(root)</span><span style=''>
+</span>171 <span style=''>    </span><span style='background: #AEF1AE'>lines.drop(1).mkString(&quot;\n&quot;)</span><span style=''> // Drop the alignment marker line
+</span>172 <span style=''>  }
+</span>173 <span style=''>}
+</span></pre>
+          </div>
+          <div class="tab-pane" id="statementlist">
+            <table cellspacing="0" cellpadding="0" class="table statementlist">
+      <tr>
+        <th>Line</th>
+        <th>Stmt Id</th>
+        <th>Pos</th>
+        <th>Tree</th>
+        <th>Symbol</th>
+        <th>Tests</th>
+        <th>Code</th>
+      </tr><tr>
+        <td>
+          8
+        </td>
+        <td>
+          60
+        </td>
+        <td>
+          152
+          -
+          160
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          main
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          def main
+        </td>
+      </tr><tr>
+        <td>
+          10
+        </td>
+        <td>
+          2
+        </td>
+        <td>
+          265
+          -
+          272
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          to
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          1 to 50
+        </td>
+      </tr><tr>
+        <td>
+          10
+        </td>
+        <td>
+          4
+        </td>
+        <td>
+          250
+          -
+          280
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          toList
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          Random.shuffle(1 to 50).toList
+        </td>
+      </tr><tr>
+        <td>
+          10
+        </td>
+        <td>
+          1
+        </td>
+        <td>
+          250
+          -
+          273
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          shuffle
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          Random.shuffle(1 to 50)
+        </td>
+      </tr><tr>
+        <td>
+          10
+        </td>
+        <td>
+          3
+        </td>
+        <td>
+          265
+          -
+          266
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          intWrapper
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          1
+        </td>
+      </tr><tr>
+        <td>
+          10
+        </td>
+        <td>
+          0
+        </td>
+        <td>
+          236
+          -
+          281
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          fromList
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          Tree.fromList(Random.shuffle(1 to 50).toList)
+        </td>
+      </tr><tr>
+        <td>
+          12
+        </td>
+        <td>
+          5
+        </td>
+        <td>
+          305
+          -
+          325
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          &lt;init&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          TreeFormatter[Int]()
+        </td>
+      </tr><tr>
+        <td>
+          12
+        </td>
+        <td>
+          6
+        </td>
+        <td>
+          305
+          -
+          323
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          $lessinit$greater$default$1
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          TreeFormatter[Int]
+        </td>
+      </tr><tr>
+        <td>
+          13
+        </td>
+        <td>
+          8
+        </td>
+        <td>
+          340
+          -
+          365
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          visualize
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          formatter.visualize(tree)
+        </td>
+      </tr><tr>
+        <td>
+          13
+        </td>
+        <td>
+          7
+        </td>
+        <td>
+          332
+          -
+          366
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          println
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          println(formatter.visualize(tree))
+        </td>
+      </tr><tr>
+        <td>
+          14
+        </td>
+        <td>
+          11
+        </td>
+        <td>
+          399
+          -
+          410
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          toList
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          tree.toList
+        </td>
+      </tr><tr>
+        <td>
+          14
+        </td>
+        <td>
+          10
+        </td>
+        <td>
+          381
+          -
+          412
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          s
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          s&quot;Sorted array: ${tree.toList}&quot;
+        </td>
+      </tr><tr>
+        <td>
+          14
+        </td>
+        <td>
+          9
+        </td>
+        <td>
+          373
+          -
+          413
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          println
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          println(s&quot;Sorted array: ${tree.toList}&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          15
+        </td>
+        <td>
+          14
+        </td>
+        <td>
+          464
+          -
+          492
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          findShortestPath
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          tree.findShortestPath(3, 15)
+        </td>
+      </tr><tr>
+        <td>
+          15
+        </td>
+        <td>
+          13
+        </td>
+        <td>
+          428
+          -
+          494
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          s
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          s&quot;Shortest path between 3 and 15: ${tree.findShortestPath(3, 15)}&quot;
+        </td>
+      </tr><tr>
+        <td>
+          15
+        </td>
+        <td>
+          12
+        </td>
+        <td>
+          420
+          -
+          495
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          println
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          println(s&quot;Shortest path between 3 and 15: ${tree.findShortestPath(3, 15)}&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          16
+        </td>
+        <td>
+          17
+        </td>
+        <td>
+          547
+          -
+          576
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          findShortestPath
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          tree.findShortestPath(32, 19)
+        </td>
+      </tr><tr>
+        <td>
+          16
+        </td>
+        <td>
+          16
+        </td>
+        <td>
+          510
+          -
+          578
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          s
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          s&quot;Shortest path between 32 and 19: ${tree.findShortestPath(32, 19)}&quot;
+        </td>
+      </tr><tr>
+        <td>
+          16
+        </td>
+        <td>
+          15
+        </td>
+        <td>
+          502
+          -
+          579
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          println
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          println(s&quot;Shortest path between 32 and 19: ${tree.findShortestPath(32, 19)}&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          17
+        </td>
+        <td>
+          20
+        </td>
+        <td>
+          629
+          -
+          656
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          findShortestPath
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          tree.findShortestPath(7, 7)
+        </td>
+      </tr><tr>
+        <td>
+          17
+        </td>
+        <td>
+          19
+        </td>
+        <td>
+          594
+          -
+          658
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          s
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          s&quot;Shortest path between 7 and 7: ${tree.findShortestPath(7, 7)}&quot;
+        </td>
+      </tr><tr>
+        <td>
+          17
+        </td>
+        <td>
+          18
+        </td>
+        <td>
+          586
+          -
+          659
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          println
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          println(s&quot;Shortest path between 7 and 7: ${tree.findShortestPath(7, 7)}&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          21
+        </td>
+        <td>
+          22
+        </td>
+        <td>
+          725
+          -
+          811
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          List(&quot;mango&quot;, &quot;orange&quot;, &quot;grape&quot;, &quot;kiwi&quot;, &quot;apple&quot;, &quot;banana&quot;, &quot;pear&quot;, &quot;cherry&quot;, &quot;peach&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          21
+        </td>
+        <td>
+          21
+        </td>
+        <td>
+          711
+          -
+          812
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          fromList
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          Tree.fromList(List(&quot;mango&quot;, &quot;orange&quot;, &quot;grape&quot;, &quot;kiwi&quot;, &quot;apple&quot;, &quot;banana&quot;, &quot;pear&quot;, &quot;cherry&quot;, &quot;peach&quot;))
+        </td>
+      </tr><tr>
+        <td>
+          23
+        </td>
+        <td>
+          23
+        </td>
+        <td>
+          836
+          -
+          859
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          &lt;init&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          TreeFormatter[String]()
+        </td>
+      </tr><tr>
+        <td>
+          23
+        </td>
+        <td>
+          24
+        </td>
+        <td>
+          836
+          -
+          857
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          $lessinit$greater$default$1
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          TreeFormatter[String]
+        </td>
+      </tr><tr>
+        <td>
+          24
+        </td>
+        <td>
+          26
+        </td>
+        <td>
+          874
+          -
+          899
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          visualize
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          formatter.visualize(tree)
+        </td>
+      </tr><tr>
+        <td>
+          24
+        </td>
+        <td>
+          25
+        </td>
+        <td>
+          866
+          -
+          900
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          println
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          println(formatter.visualize(tree))
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          29
+        </td>
+        <td>
+          933
+          -
+          944
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          toList
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          tree.toList
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          28
+        </td>
+        <td>
+          915
+          -
+          946
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          s
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          s&quot;Sorted array: ${tree.toList}&quot;
+        </td>
+      </tr><tr>
+        <td>
+          25
+        </td>
+        <td>
+          27
+        </td>
+        <td>
+          907
+          -
+          947
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          println
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          println(s&quot;Sorted array: ${tree.toList}&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          26
+        </td>
+        <td>
+          32
+        </td>
+        <td>
+          1006
+          -
+          1046
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          findShortestPath
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          tree.findShortestPath(&quot;apple&quot;, &quot;cherry&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          26
+        </td>
+        <td>
+          31
+        </td>
+        <td>
+          962
+          -
+          1048
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          s
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          s&quot;Shortest path between apple and cherry: ${tree.findShortestPath(&quot;apple&quot;, &quot;cherry&quot;)}&quot;
+        </td>
+      </tr><tr>
+        <td>
+          26
+        </td>
+        <td>
+          30
+        </td>
+        <td>
+          954
+          -
+          1049
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          println
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          println(s&quot;Shortest path between apple and cherry: ${tree.findShortestPath(&quot;apple&quot;, &quot;cherry&quot;)}&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          27
+        </td>
+        <td>
+          35
+        </td>
+        <td>
+          1108
+          -
+          1148
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          findShortestPath
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          tree.findShortestPath(&quot;cherry&quot;, &quot;apple&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          27
+        </td>
+        <td>
+          34
+        </td>
+        <td>
+          1064
+          -
+          1150
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          s
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          s&quot;Shortest path between cherry and apple: ${tree.findShortestPath(&quot;cherry&quot;, &quot;apple&quot;)}&quot;
+        </td>
+      </tr><tr>
+        <td>
+          27
+        </td>
+        <td>
+          33
+        </td>
+        <td>
+          1056
+          -
+          1151
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          println
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          println(s&quot;Shortest path between cherry and apple: ${tree.findShortestPath(&quot;cherry&quot;, &quot;apple&quot;)}&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          34
+        </td>
+        <td>
+          38
+        </td>
+        <td>
+          1337
+          -
+          1343
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          int2Integer
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          p2.age
+        </td>
+      </tr><tr>
+        <td>
+          34
+        </td>
+        <td>
+          37
+        </td>
+        <td>
+          1320
+          -
+          1326
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          int2Integer
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          p1.age
+        </td>
+      </tr><tr>
+        <td>
+          34
+        </td>
+        <td>
+          36
+        </td>
+        <td>
+          1320
+          -
+          1344
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          compareTo
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          p1.age.compareTo(p2.age)
+        </td>
+      </tr><tr>
+        <td>
+          34
+        </td>
+        <td>
+          39
+        </td>
+        <td>
+          1277
+          -
+          1288
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          compare
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          def compare
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          41
+        </td>
+        <td>
+          1363
+          -
+          1718
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          insert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          Tree\n        .empty[Person]\n        .insert(Person(&quot;Alice&quot;, 30))\n        .insert(Person(&quot;Bob&quot;, 25))\n        .insert(Person(&quot;Charlie&quot;, 35))\n        .insert(Person(&quot;Dave&quot;, 20))\n        .insert(Person(&quot;Eve&quot;, 40))\n        .insert(Person(&quot;Frank&quot;, 45))\n        .insert(Person(&quot;Grace&quot;, 19))\n        .insert(Person(&quot;Helen&quot;, 22))\n        .insert(Person(&quot;Ivy&quot;, 27))
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          44
+        </td>
+        <td>
+          1363
+          -
+          1609
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          insert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          Tree\n        .empty[Person]\n        .insert(Person(&quot;Alice&quot;, 30))\n        .insert(Person(&quot;Bob&quot;, 25))\n        .insert(Person(&quot;Charlie&quot;, 35))\n        .insert(Person(&quot;Dave&quot;, 20))\n        .insert(Person(&quot;Eve&quot;, 40))\n        .insert(Person(&quot;Frank&quot;, 45))
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          47
+        </td>
+        <td>
+          1363
+          -
+          1501
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          insert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          Tree\n        .empty[Person]\n        .insert(Person(&quot;Alice&quot;, 30))\n        .insert(Person(&quot;Bob&quot;, 25))\n        .insert(Person(&quot;Charlie&quot;, 35))
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          46
+        </td>
+        <td>
+          1363
+          -
+          1537
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          insert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          Tree\n        .empty[Person]\n        .insert(Person(&quot;Alice&quot;, 30))\n        .insert(Person(&quot;Bob&quot;, 25))\n        .insert(Person(&quot;Charlie&quot;, 35))\n        .insert(Person(&quot;Dave&quot;, 20))
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          40
+        </td>
+        <td>
+          1363
+          -
+          1754
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          insert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          Tree\n        .empty[Person]\n        .insert(Person(&quot;Alice&quot;, 30))\n        .insert(Person(&quot;Bob&quot;, 25))\n        .insert(Person(&quot;Charlie&quot;, 35))\n        .insert(Person(&quot;Dave&quot;, 20))\n        .insert(Person(&quot;Eve&quot;, 40))\n        .insert(Person(&quot;Frank&quot;, 45))\n        .insert(Person(&quot;Grace&quot;, 19))\n        .insert(Person(&quot;Helen&quot;, 22))\n        .insert(Person(&quot;Ivy&quot;, 27))\n        .insert(Person(&quot;Jack&quot;, 26))
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          49
+        </td>
+        <td>
+          1363
+          -
+          1427
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          insert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          Tree\n        .empty[Person]\n        .insert(Person(&quot;Alice&quot;, 30))
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          43
+        </td>
+        <td>
+          1363
+          -
+          1646
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          insert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          Tree\n        .empty[Person]\n        .insert(Person(&quot;Alice&quot;, 30))\n        .insert(Person(&quot;Bob&quot;, 25))\n        .insert(Person(&quot;Charlie&quot;, 35))\n        .insert(Person(&quot;Dave&quot;, 20))\n        .insert(Person(&quot;Eve&quot;, 40))\n        .insert(Person(&quot;Frank&quot;, 45))\n        .insert(Person(&quot;Grace&quot;, 19))
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          45
+        </td>
+        <td>
+          1363
+          -
+          1572
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          insert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          Tree\n        .empty[Person]\n        .insert(Person(&quot;Alice&quot;, 30))\n        .insert(Person(&quot;Bob&quot;, 25))\n        .insert(Person(&quot;Charlie&quot;, 35))\n        .insert(Person(&quot;Dave&quot;, 20))\n        .insert(Person(&quot;Eve&quot;, 40))
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          48
+        </td>
+        <td>
+          1363
+          -
+          1462
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          insert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          Tree\n        .empty[Person]\n        .insert(Person(&quot;Alice&quot;, 30))\n        .insert(Person(&quot;Bob&quot;, 25))
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          42
+        </td>
+        <td>
+          1363
+          -
+          1683
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          insert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          Tree\n        .empty[Person]\n        .insert(Person(&quot;Alice&quot;, 30))\n        .insert(Person(&quot;Bob&quot;, 25))\n        .insert(Person(&quot;Charlie&quot;, 35))\n        .insert(Person(&quot;Dave&quot;, 20))\n        .insert(Person(&quot;Eve&quot;, 40))\n        .insert(Person(&quot;Frank&quot;, 45))\n        .insert(Person(&quot;Grace&quot;, 19))\n        .insert(Person(&quot;Helen&quot;, 22))
+        </td>
+      </tr><tr>
+        <td>
+          37
+        </td>
+        <td>
+          50
+        </td>
+        <td>
+          1363
+          -
+          1382
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          empty
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          Tree\n        .empty
+        </td>
+      </tr><tr>
+        <td>
+          49
+        </td>
+        <td>
+          51
+        </td>
+        <td>
+          1778
+          -
+          1812
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          &lt;init&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          TreeFormatter[Person](padding = 2)
+        </td>
+      </tr><tr>
+        <td>
+          50
+        </td>
+        <td>
+          53
+        </td>
+        <td>
+          1827
+          -
+          1852
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          visualize
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          formatter.visualize(tree)
+        </td>
+      </tr><tr>
+        <td>
+          50
+        </td>
+        <td>
+          52
+        </td>
+        <td>
+          1819
+          -
+          1853
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          println
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          println(formatter.visualize(tree))
+        </td>
+      </tr><tr>
+        <td>
+          51
+        </td>
+        <td>
+          56
+        </td>
+        <td>
+          1886
+          -
+          1897
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          toList
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          tree.toList
+        </td>
+      </tr><tr>
+        <td>
+          51
+        </td>
+        <td>
+          55
+        </td>
+        <td>
+          1868
+          -
+          1899
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          s
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          s&quot;Sorted array: ${tree.toList}&quot;
+        </td>
+      </tr><tr>
+        <td>
+          51
+        </td>
+        <td>
+          54
+        </td>
+        <td>
+          1860
+          -
+          1900
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          println
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          println(s&quot;Sorted array: ${tree.toList}&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          52
+        </td>
+        <td>
+          57
+        </td>
+        <td>
+          1907
+          -
+          2038
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          println
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          println(\n        s&quot;Shortest path between Grace and Jack: ${tree.findShortestPath(Person(&quot;Grace&quot;, 19), Person(&quot;Jack&quot;, 26))}&quot;\n      )
+        </td>
+      </tr><tr>
+        <td>
+          53
+        </td>
+        <td>
+          59
+        </td>
+        <td>
+          1966
+          -
+          2028
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          findShortestPath
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          tree.findShortestPath(Person(&quot;Grace&quot;, 19), Person(&quot;Jack&quot;, 26))
+        </td>
+      </tr><tr>
+        <td>
+          53
+        </td>
+        <td>
+          58
+        </td>
+        <td>
+          1924
+          -
+          2030
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          s
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          s&quot;Shortest path between Grace and Jack: ${tree.findShortestPath(Person(&quot;Grace&quot;, 19), Person(&quot;Jack&quot;, 26))}&quot;
+        </td>
+      </tr><tr>
+        <td>
+          67
+        </td>
+        <td>
+          61
+        </td>
+        <td>
+          2356
+          -
+          2366
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          insert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def insert
+        </td>
+      </tr><tr>
+        <td>
+          68
+        </td>
+        <td>
+          62
+        </td>
+        <td>
+          2457
+          -
+          2477
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          findShortestPath
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          def findShortestPath
+        </td>
+      </tr><tr>
+        <td>
+          69
+        </td>
+        <td>
+          63
+        </td>
+        <td>
+          2528
+          -
+          2546
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          findPathToRoot
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          def findPathToRoot
+        </td>
+      </tr><tr>
+        <td>
+          70
+        </td>
+        <td>
+          64
+        </td>
+        <td>
+          2599
+          -
+          2609
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          toList
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def toList
+        </td>
+      </tr><tr>
+        <td>
+          74
+        </td>
+        <td>
+          71
+        </td>
+        <td>
+          2769
+          -
+          2779
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          insert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def insert
+        </td>
+      </tr><tr>
+        <td>
+          75
+        </td>
+        <td>
+          65
+        </td>
+        <td>
+          2846
+          -
+          2874
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          compare
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          ord.compare(newValue, value)
+        </td>
+      </tr><tr>
+        <td>
+          76
+        </td>
+        <td>
+          67
+        </td>
+        <td>
+          2905
+          -
+          2949
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; Tree(value, left.insert(newValue), right)
+        </td>
+      </tr><tr>
+        <td>
+          76
+        </td>
+        <td>
+          66
+        </td>
+        <td>
+          2920
+          -
+          2941
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          insert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          left.insert(newValue)
+        </td>
+      </tr><tr>
+        <td>
+          77
+        </td>
+        <td>
+          68
+        </td>
+        <td>
+          2993
+          -
+          3015
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          insert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          right.insert(newValue)
+        </td>
+      </tr><tr>
+        <td>
+          77
+        </td>
+        <td>
+          69
+        </td>
+        <td>
+          2972
+          -
+          3016
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; Tree(value, left, right.insert(newValue))
+        </td>
+      </tr><tr>
+        <td>
+          78
+        </td>
+        <td>
+          70
+        </td>
+        <td>
+          3039
+          -
+          3046
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          =&gt; this
+        </td>
+      </tr><tr>
+        <td>
+          81
+        </td>
+        <td>
+          77
+        </td>
+        <td>
+          3056
+          -
+          3066
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          toList
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def toList
+        </td>
+      </tr><tr>
+        <td>
+          81
+        </td>
+        <td>
+          74
+        </td>
+        <td>
+          3078
+          -
+          3089
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          toList
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          left.toList
+        </td>
+      </tr><tr>
+        <td>
+          81
+        </td>
+        <td>
+          73
+        </td>
+        <td>
+          3078
+          -
+          3104
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          ++
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          left.toList ++ List(value)
+        </td>
+      </tr><tr>
+        <td>
+          81
+        </td>
+        <td>
+          76
+        </td>
+        <td>
+          3108
+          -
+          3120
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          toList
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          right.toList
+        </td>
+      </tr><tr>
+        <td>
+          81
+        </td>
+        <td>
+          72
+        </td>
+        <td>
+          3078
+          -
+          3120
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          ++
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          left.toList ++ List(value) ++ right.toList
+        </td>
+      </tr><tr>
+        <td>
+          81
+        </td>
+        <td>
+          75
+        </td>
+        <td>
+          3093
+          -
+          3104
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          List(value)
+        </td>
+      </tr><tr>
+        <td>
+          83
+        </td>
+        <td>
+          103
+        </td>
+        <td>
+          3124
+          -
+          3144
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          findShortestPath
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def findShortestPath
+        </td>
+      </tr><tr>
+        <td>
+          85
+        </td>
+        <td>
+          92
+        </td>
+        <td>
+          3210
+          -
+          3247
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          lowestCommonAncestor
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          @tailrec\n    def lowestCommonAncestor
+        </td>
+      </tr><tr>
+        <td>
+          87
+        </td>
+        <td>
+          88
+        </td>
+        <td>
+          3355
+          -
+          3592
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt;\n          if ord.lt(node1, value) &amp;&amp; ord.lt(node2, value) then lowestCommonAncestor(node1, node2, left)\n          else if ord.gt(node1, value) &amp;&amp; ord.gt(node2, value) then lowestCommonAncestor(node1, node2, right)\n          else value
+        </td>
+      </tr><tr>
+        <td>
+          88
+        </td>
+        <td>
+          80
+        </td>
+        <td>
+          3421
+          -
+          3461
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          lowestCommonAncestor
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lowestCommonAncestor(node1, node2, left)
+        </td>
+      </tr><tr>
+        <td>
+          88
+        </td>
+        <td>
+          79
+        </td>
+        <td>
+          3395
+          -
+          3415
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          lt
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          ord.lt(node2, value)
+        </td>
+      </tr><tr>
+        <td>
+          88
+        </td>
+        <td>
+          78
+        </td>
+        <td>
+          3371
+          -
+          3391
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          lt
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          ord.lt(node1, value)
+        </td>
+      </tr><tr>
+        <td>
+          88
+        </td>
+        <td>
+          81
+        </td>
+        <td>
+          3421
+          -
+          3461
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          lowestCommonAncestor
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lowestCommonAncestor(node1, node2, left)
+        </td>
+      </tr><tr>
+        <td>
+          89
+        </td>
+        <td>
+          83
+        </td>
+        <td>
+          3504
+          -
+          3524
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          gt
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          ord.gt(node2, value)
+        </td>
+      </tr><tr>
+        <td>
+          89
+        </td>
+        <td>
+          82
+        </td>
+        <td>
+          3480
+          -
+          3500
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          gt
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          ord.gt(node1, value)
+        </td>
+      </tr><tr>
+        <td>
+          89
+        </td>
+        <td>
+          85
+        </td>
+        <td>
+          3530
+          -
+          3571
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          lowestCommonAncestor
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          lowestCommonAncestor(node1, node2, right)
+        </td>
+      </tr><tr>
+        <td>
+          89
+        </td>
+        <td>
+          87
+        </td>
+        <td>
+          3477
+          -
+          3592
+        </td>
+        <td>
+          If
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          if ord.gt(node1, value) &amp;&amp; ord.gt(node2, value) then lowestCommonAncestor(node1, node2, right)\n          else value
+        </td>
+      </tr><tr>
+        <td>
+          89
+        </td>
+        <td>
+          84
+        </td>
+        <td>
+          3530
+          -
+          3571
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          lowestCommonAncestor
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          lowestCommonAncestor(node1, node2, right)
+        </td>
+      </tr><tr>
+        <td>
+          90
+        </td>
+        <td>
+          86
+        </td>
+        <td>
+          3587
+          -
+          3592
+        </td>
+        <td>
+          TypeApply
+        </td>
+        <td>
+          $asInstanceOf
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          value
+        </td>
+      </tr><tr>
+        <td>
+          91
+        </td>
+        <td>
+          89
+        </td>
+        <td>
+          3634
+          -
+          3697
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          throw
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          throw new NoSuchElementException(&quot;Nodes not found in the tree&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          91
+        </td>
+        <td>
+          91
+        </td>
+        <td>
+          3631
+          -
+          3697
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          =&gt; throw new NoSuchElementException(&quot;Nodes not found in the tree&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          91
+        </td>
+        <td>
+          90
+        </td>
+        <td>
+          3640
+          -
+          3697
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          &lt;init&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          new NoSuchElementException(&quot;Nodes not found in the tree&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          93
+        </td>
+        <td>
+          93
+        </td>
+        <td>
+          3724
+          -
+          3760
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          lowestCommonAncestor
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lowestCommonAncestor(from, to, this)
+        </td>
+      </tr><tr>
+        <td>
+          94
+        </td>
+        <td>
+          95
+        </td>
+        <td>
+          3786
+          -
+          3837
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          dropWhile
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          findPathToRoot(from).dropWhile(_ != sharedAncestor)
+        </td>
+      </tr><tr>
+        <td>
+          94
+        </td>
+        <td>
+          94
+        </td>
+        <td>
+          3786
+          -
+          3863
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          :+
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          findPathToRoot(from).dropWhile(_ != sharedAncestor).reverse :+ sharedAncestor
+        </td>
+      </tr><tr>
+        <td>
+          94
+        </td>
+        <td>
+          97
+        </td>
+        <td>
+          3786
+          -
+          3845
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          reverse
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          findPathToRoot(from).dropWhile(_ != sharedAncestor).reverse
+        </td>
+      </tr><tr>
+        <td>
+          94
+        </td>
+        <td>
+          96
+        </td>
+        <td>
+          3786
+          -
+          3806
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          findPathToRoot
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          findPathToRoot(from)
+        </td>
+      </tr><tr>
+        <td>
+          95
+        </td>
+        <td>
+          98
+        </td>
+        <td>
+          3889
+          -
+          3938
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          dropWhile
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          findPathToRoot(to).dropWhile(_ != sharedAncestor)
+        </td>
+      </tr><tr>
+        <td>
+          95
+        </td>
+        <td>
+          99
+        </td>
+        <td>
+          3889
+          -
+          3907
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          findPathToRoot
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          findPathToRoot(to)
+        </td>
+      </tr><tr>
+        <td>
+          97
+        </td>
+        <td>
+          101
+        </td>
+        <td>
+          3944
+          -
+          3970
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          dropRight
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          pathFromLocal.dropRight(1)
+        </td>
+      </tr><tr>
+        <td>
+          97
+        </td>
+        <td>
+          100
+        </td>
+        <td>
+          3944
+          -
+          3996
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          ++
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          pathFromLocal.dropRight(1) ++ pathFromTarget.drop(1)
+        </td>
+      </tr><tr>
+        <td>
+          97
+        </td>
+        <td>
+          102
+        </td>
+        <td>
+          3974
+          -
+          3996
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          drop
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          pathFromTarget.drop(1)
+        </td>
+      </tr><tr>
+        <td>
+          100
+        </td>
+        <td>
+          113
+        </td>
+        <td>
+          4004
+          -
+          4022
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          findPathToRoot
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def findPathToRoot
+        </td>
+      </tr><tr>
+        <td>
+          101
+        </td>
+        <td>
+          104
+        </td>
+        <td>
+          4081
+          -
+          4107
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          compare
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          ord.compare(target, value)
+        </td>
+      </tr><tr>
+        <td>
+          102
+        </td>
+        <td>
+          107
+        </td>
+        <td>
+          4138
+          -
+          4177
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; value :: left.findPathToRoot(target)
+        </td>
+      </tr><tr>
+        <td>
+          102
+        </td>
+        <td>
+          106
+        </td>
+        <td>
+          4150
+          -
+          4177
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          findPathToRoot
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          left.findPathToRoot(target)
+        </td>
+      </tr><tr>
+        <td>
+          102
+        </td>
+        <td>
+          105
+        </td>
+        <td>
+          4141
+          -
+          4177
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          ::
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          value :: left.findPathToRoot(target)
+        </td>
+      </tr><tr>
+        <td>
+          103
+        </td>
+        <td>
+          110
+        </td>
+        <td>
+          4200
+          -
+          4240
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; value :: right.findPathToRoot(target)
+        </td>
+      </tr><tr>
+        <td>
+          103
+        </td>
+        <td>
+          109
+        </td>
+        <td>
+          4212
+          -
+          4240
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          findPathToRoot
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          right.findPathToRoot(target)
+        </td>
+      </tr><tr>
+        <td>
+          103
+        </td>
+        <td>
+          108
+        </td>
+        <td>
+          4203
+          -
+          4240
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          ::
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          value :: right.findPathToRoot(target)
+        </td>
+      </tr><tr>
+        <td>
+          104
+        </td>
+        <td>
+          112
+        </td>
+        <td>
+          4263
+          -
+          4277
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; List(value)
+        </td>
+      </tr><tr>
+        <td>
+          104
+        </td>
+        <td>
+          111
+        </td>
+        <td>
+          4266
+          -
+          4277
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          List(value)
+        </td>
+      </tr><tr>
+        <td>
+          109
+        </td>
+        <td>
+          114
+        </td>
+        <td>
+          4303
+          -
+          4312
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          empty
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def empty
+        </td>
+      </tr><tr>
+        <td>
+          111
+        </td>
+        <td>
+          117
+        </td>
+        <td>
+          4346
+          -
+          4358
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          fromList
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def fromList
+        </td>
+      </tr><tr>
+        <td>
+          112
+        </td>
+        <td>
+          116
+        </td>
+        <td>
+          4479
+          -
+          4497
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          insert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          tree.insert(value)
+        </td>
+      </tr><tr>
+        <td>
+          112
+        </td>
+        <td>
+          115
+        </td>
+        <td>
+          4422
+          -
+          4498
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          foldLeft
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          list.foldLeft(EmptyTree: BinaryTree[A])((tree, value) =&gt; tree.insert(value))
+        </td>
+      </tr><tr>
+        <td>
+          115
+        </td>
+        <td>
+          211
+        </td>
+        <td>
+          4522
+          -
+          4522
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          $lessinit$greater$default$1
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          
+        </td>
+      </tr><tr>
+        <td>
+          116
+        </td>
+        <td>
+          127
+        </td>
+        <td>
+          4547
+          -
+          4565
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          indent
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          private def indent
+        </td>
+      </tr><tr>
+        <td>
+          117
+        </td>
+        <td>
+          119
+        </td>
+        <td>
+          4649
+          -
+          4649
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          
+        </td>
+      </tr><tr>
+        <td>
+          117
+        </td>
+        <td>
+          118
+        </td>
+        <td>
+          4636
+          -
+          4649
+        </td>
+        <td>
+          Return
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          return margin
+        </td>
+      </tr><tr>
+        <td>
+          118
+        </td>
+        <td>
+          121
+        </td>
+        <td>
+          4667
+          -
+          4670
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          augmentString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot; &quot;
+        </td>
+      </tr><tr>
+        <td>
+          118
+        </td>
+        <td>
+          120
+        </td>
+        <td>
+          4667
+          -
+          4680
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          *
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot; &quot; * -margin
+        </td>
+      </tr><tr>
+        <td>
+          119
+        </td>
+        <td>
+          122
+        </td>
+        <td>
+          4685
+          -
+          4738
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          foreach
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          for (i &lt;- lines.indices) lines(i) = spaces + lines(i)
+        </td>
+      </tr><tr>
+        <td>
+          119
+        </td>
+        <td>
+          125
+        </td>
+        <td>
+          4721
+          -
+          4738
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          +
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          spaces + lines(i)
+        </td>
+      </tr><tr>
+        <td>
+          119
+        </td>
+        <td>
+          124
+        </td>
+        <td>
+          4710
+          -
+          4738
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          update
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lines(i) = spaces + lines(i)
+        </td>
+      </tr><tr>
+        <td>
+          119
+        </td>
+        <td>
+          123
+        </td>
+        <td>
+          4695
+          -
+          4708
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          indices
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lines.indices
+        </td>
+      </tr><tr>
+        <td>
+          119
+        </td>
+        <td>
+          126
+        </td>
+        <td>
+          4730
+          -
+          4738
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lines(i)
+        </td>
+      </tr><tr>
+        <td>
+          123
+        </td>
+        <td>
+          157
+        </td>
+        <td>
+          4752
+          -
+          4769
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          merge
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          private def merge
+        </td>
+      </tr><tr>
+        <td>
+          124
+        </td>
+        <td>
+          128
+        </td>
+        <td>
+          4865
+          -
+          4896
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          min
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          math.min(left.size, right.size)
+        </td>
+      </tr><tr>
+        <td>
+          124
+        </td>
+        <td>
+          130
+        </td>
+        <td>
+          4885
+          -
+          4895
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          size
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          right.size
+        </td>
+      </tr><tr>
+        <td>
+          124
+        </td>
+        <td>
+          129
+        </td>
+        <td>
+          4874
+          -
+          4883
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          size
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          left.size
+        </td>
+      </tr><tr>
+        <td>
+          127
+        </td>
+        <td>
+          131
+        </td>
+        <td>
+          4922
+          -
+          5048
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          foreach
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          for (i &lt;- 0 until minSize)\n      offset = math.max(offset, left(i).length + padding - right(i).replaceAll(&quot;\\\\S.*&quot;, &quot;&quot;).length)
+        </td>
+      </tr><tr>
+        <td>
+          127
+        </td>
+        <td>
+          133
+        </td>
+        <td>
+          4932
+          -
+          4933
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          intWrapper
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          0
+        </td>
+      </tr><tr>
+        <td>
+          127
+        </td>
+        <td>
+          132
+        </td>
+        <td>
+          4932
+          -
+          4947
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          until
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          0 until minSize
+        </td>
+      </tr><tr>
+        <td>
+          128
+        </td>
+        <td>
+          137
+        </td>
+        <td>
+          5008
+          -
+          5047
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          length
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          right(i).replaceAll(&quot;\\\\S.*&quot;, &quot;&quot;).length
+        </td>
+      </tr><tr>
+        <td>
+          128
+        </td>
+        <td>
+          134
+        </td>
+        <td>
+          4964
+          -
+          5048
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          max
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          math.max(offset, left(i).length + padding - right(i).replaceAll(&quot;\\\\S.*&quot;, &quot;&quot;).length)
+        </td>
+      </tr><tr>
+        <td>
+          128
+        </td>
+        <td>
+          136
+        </td>
+        <td>
+          4981
+          -
+          4988
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          left(i)
+        </td>
+      </tr><tr>
+        <td>
+          128
+        </td>
+        <td>
+          139
+        </td>
+        <td>
+          5008
+          -
+          5016
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          right(i)
+        </td>
+      </tr><tr>
+        <td>
+          128
+        </td>
+        <td>
+          138
+        </td>
+        <td>
+          5008
+          -
+          5040
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replaceAll
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          right(i).replaceAll(&quot;\\\\S.*&quot;, &quot;&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          128
+        </td>
+        <td>
+          135
+        </td>
+        <td>
+          4981
+          -
+          4995
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          length
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          left(i).length
+        </td>
+      </tr><tr>
+        <td>
+          130
+        </td>
+        <td>
+          140
+        </td>
+        <td>
+          5054
+          -
+          5090
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          indent
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          indent(right, -indent(left, offset))
+        </td>
+      </tr><tr>
+        <td>
+          130
+        </td>
+        <td>
+          141
+        </td>
+        <td>
+          5069
+          -
+          5089
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          indent
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          indent(left, offset)
+        </td>
+      </tr><tr>
+        <td>
+          132
+        </td>
+        <td>
+          142
+        </td>
+        <td>
+          5096
+          -
+          5183
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          foreach
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          for (i &lt;- 0 until minSize)\n      left(i) = left(i) + right(i).substring(left(i).length)
+        </td>
+      </tr><tr>
+        <td>
+          132
+        </td>
+        <td>
+          144
+        </td>
+        <td>
+          5106
+          -
+          5107
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          intWrapper
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          0
+        </td>
+      </tr><tr>
+        <td>
+          132
+        </td>
+        <td>
+          143
+        </td>
+        <td>
+          5106
+          -
+          5121
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          until
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          0 until minSize
+        </td>
+      </tr><tr>
+        <td>
+          133
+        </td>
+        <td>
+          146
+        </td>
+        <td>
+          5139
+          -
+          5183
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          +
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          left(i) + right(i).substring(left(i).length)
+        </td>
+      </tr><tr>
+        <td>
+          133
+        </td>
+        <td>
+          149
+        </td>
+        <td>
+          5149
+          -
+          5157
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          right(i)
+        </td>
+      </tr><tr>
+        <td>
+          133
+        </td>
+        <td>
+          151
+        </td>
+        <td>
+          5168
+          -
+          5175
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          left(i)
+        </td>
+      </tr><tr>
+        <td>
+          133
+        </td>
+        <td>
+          145
+        </td>
+        <td>
+          5129
+          -
+          5183
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          update
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          left(i) = left(i) + right(i).substring(left(i).length)
+        </td>
+      </tr><tr>
+        <td>
+          133
+        </td>
+        <td>
+          148
+        </td>
+        <td>
+          5149
+          -
+          5183
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          substring
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          right(i).substring(left(i).length)
+        </td>
+      </tr><tr>
+        <td>
+          133
+        </td>
+        <td>
+          147
+        </td>
+        <td>
+          5139
+          -
+          5146
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          left(i)
+        </td>
+      </tr><tr>
+        <td>
+          133
+        </td>
+        <td>
+          150
+        </td>
+        <td>
+          5168
+          -
+          5182
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          length
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          left(i).length
+        </td>
+      </tr><tr>
+        <td>
+          135
+        </td>
+        <td>
+          155
+        </td>
+        <td>
+          5215
+          -
+          5257
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          {\n      left ++= right.drop(minSize)\n    }
+        </td>
+      </tr><tr>
+        <td>
+          135
+        </td>
+        <td>
+          152
+        </td>
+        <td>
+          5193
+          -
+          5203
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          size
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          right.size
+        </td>
+      </tr><tr>
+        <td>
+          136
+        </td>
+        <td>
+          154
+        </td>
+        <td>
+          5232
+          -
+          5251
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          drop
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          right.drop(minSize)
+        </td>
+      </tr><tr>
+        <td>
+          136
+        </td>
+        <td>
+          153
+        </td>
+        <td>
+          5223
+          -
+          5251
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          ++=
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          left ++= right.drop(minSize)
+        </td>
+      </tr><tr>
+        <td>
+          137
+        </td>
+        <td>
+          156
+        </td>
+        <td>
+          5257
+          -
+          5257
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          
+        </td>
+      </tr><tr>
+        <td>
+          141
+        </td>
+        <td>
+          206
+        </td>
+        <td>
+          5274
+          -
+          5296
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          buildLines
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          private def buildLines
+        </td>
+      </tr><tr>
+        <td>
+          142
+        </td>
+        <td>
+          158
+        </td>
+        <td>
+          5390
+          -
+          5406
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          empty
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          ListBuffer.empty
+        </td>
+      </tr><tr>
+        <td>
+          142
+        </td>
+        <td>
+          159
+        </td>
+        <td>
+          5387
+          -
+          5406
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; ListBuffer.empty
+        </td>
+      </tr><tr>
+        <td>
+          144
+        </td>
+        <td>
+          205
+        </td>
+        <td>
+          5450
+          -
+          6422
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          val leftLines  = buildLines(left)\n      val rightLines = buildLines(right)\n      val lines      = merge(leftLines, rightLines)\n\n      val half = value.toString.length / 2\n      var i    = half\n\n      if (lines.nonEmpty) {\n        i = lines.headOption.getOrElse(&quot;&quot;).indexOf('*') // Marker position\n        val line = (left, right) match {\n          case (EmptyTree, EmptyTree) =&gt; &quot; &quot; * i + &quot;┌─┘&quot;\n          case (_, EmptyTree)         =&gt; &quot; &quot; * i + &quot;┌─┘&quot;\n          case (EmptyTree, _)         =&gt; &quot; &quot; * indent(lines, i - 2) + &quot;└─┐&quot;\n          case (_, _)                 =&gt;\n            val dist = lines.headOption.getOrElse(&quot;&quot;).length - 1 - i // Calculate distance between roots\n            s&quot;${&quot; &quot; * i}┌${&quot;─&quot; * (dist / 2 - 1)}┴${&quot;─&quot; * ((dist - 1) / 2)}┐&quot;\n        }\n        lines(0) = line\n      }\n\n      lines.prepend(&quot; &quot; * indent(lines, i - half) + value.toString)\n      lines.prepend(&quot; &quot; * (i + math.max(0, half - i)) + &quot;*&quot;) // Add marker for alignment reference\n      lines
+        </td>
+      </tr><tr>
+        <td>
+          144
+        </td>
+        <td>
+          160
+        </td>
+        <td>
+          5467
+          -
+          5483
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          buildLines
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          buildLines(left)
+        </td>
+      </tr><tr>
+        <td>
+          145
+        </td>
+        <td>
+          161
+        </td>
+        <td>
+          5507
+          -
+          5524
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          buildLines
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          buildLines(right)
+        </td>
+      </tr><tr>
+        <td>
+          146
+        </td>
+        <td>
+          162
+        </td>
+        <td>
+          5548
+          -
+          5576
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          merge
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          merge(leftLines, rightLines)
+        </td>
+      </tr><tr>
+        <td>
+          148
+        </td>
+        <td>
+          163
+        </td>
+        <td>
+          5595
+          -
+          5616
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          length
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          value.toString.length
+        </td>
+      </tr><tr>
+        <td>
+          151
+        </td>
+        <td>
+          164
+        </td>
+        <td>
+          5654
+          -
+          5668
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          nonEmpty
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lines.nonEmpty
+        </td>
+      </tr><tr>
+        <td>
+          151
+        </td>
+        <td>
+          193
+        </td>
+        <td>
+          5670
+          -
+          6242
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          {\n        i = lines.headOption.getOrElse(&quot;&quot;).indexOf('*') // Marker position\n        val line = (left, right) match {\n          case (EmptyTree, EmptyTree) =&gt; &quot; &quot; * i + &quot;┌─┘&quot;\n          case (_, EmptyTree)         =&gt; &quot; &quot; * i + &quot;┌─┘&quot;\n          case (EmptyTree, _)         =&gt; &quot; &quot; * indent(lines, i - 2) + &quot;└─┐&quot;\n          case (_, _)                 =&gt;\n            val dist = lines.headOption.getOrElse(&quot;&quot;).length - 1 - i // Calculate distance between roots\n            s&quot;${&quot; &quot; * i}┌${&quot;─&quot; * (dist / 2 - 1)}┴${&quot;─&quot; * ((dist - 1) / 2)}┐&quot;\n        }\n        lines(0) = line\n      }
+        </td>
+      </tr><tr>
+        <td>
+          152
+        </td>
+        <td>
+          167
+        </td>
+        <td>
+          5684
+          -
+          5700
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          headOption
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lines.headOption
+        </td>
+      </tr><tr>
+        <td>
+          152
+        </td>
+        <td>
+          166
+        </td>
+        <td>
+          5684
+          -
+          5714
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          getOrElse
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lines.headOption.getOrElse(&quot;&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          152
+        </td>
+        <td>
+          165
+        </td>
+        <td>
+          5684
+          -
+          5727
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          indexOf
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lines.headOption.getOrElse(&quot;&quot;).indexOf('*')
+        </td>
+      </tr><tr>
+        <td>
+          154
+        </td>
+        <td>
+          169
+        </td>
+        <td>
+          5829
+          -
+          5836
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          *
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          &quot; &quot; * i
+        </td>
+      </tr><tr>
+        <td>
+          154
+        </td>
+        <td>
+          168
+        </td>
+        <td>
+          5829
+          -
+          5844
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          +
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          &quot; &quot; * i + &quot;┌─┘&quot;
+        </td>
+      </tr><tr>
+        <td>
+          154
+        </td>
+        <td>
+          171
+        </td>
+        <td>
+          5826
+          -
+          5844
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          =&gt; &quot; &quot; * i + &quot;┌─┘&quot;
+        </td>
+      </tr><tr>
+        <td>
+          154
+        </td>
+        <td>
+          170
+        </td>
+        <td>
+          5829
+          -
+          5832
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          augmentString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          &quot; &quot;
+        </td>
+      </tr><tr>
+        <td>
+          155
+        </td>
+        <td>
+          173
+        </td>
+        <td>
+          5886
+          -
+          5893
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          *
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot; &quot; * i
+        </td>
+      </tr><tr>
+        <td>
+          155
+        </td>
+        <td>
+          175
+        </td>
+        <td>
+          5883
+          -
+          5901
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; &quot; &quot; * i + &quot;┌─┘&quot;
+        </td>
+      </tr><tr>
+        <td>
+          155
+        </td>
+        <td>
+          172
+        </td>
+        <td>
+          5886
+          -
+          5901
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          +
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot; &quot; * i + &quot;┌─┘&quot;
+        </td>
+      </tr><tr>
+        <td>
+          155
+        </td>
+        <td>
+          174
+        </td>
+        <td>
+          5886
+          -
+          5889
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          augmentString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot; &quot;
+        </td>
+      </tr><tr>
+        <td>
+          156
+        </td>
+        <td>
+          176
+        </td>
+        <td>
+          5943
+          -
+          5977
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          +
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot; &quot; * indent(lines, i - 2) + &quot;└─┐&quot;
+        </td>
+      </tr><tr>
+        <td>
+          156
+        </td>
+        <td>
+          178
+        </td>
+        <td>
+          5943
+          -
+          5946
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          augmentString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot; &quot;
+        </td>
+      </tr><tr>
+        <td>
+          156
+        </td>
+        <td>
+          180
+        </td>
+        <td>
+          5940
+          -
+          5977
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; &quot; &quot; * indent(lines, i - 2) + &quot;└─┐&quot;
+        </td>
+      </tr><tr>
+        <td>
+          156
+        </td>
+        <td>
+          177
+        </td>
+        <td>
+          5943
+          -
+          5969
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          *
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot; &quot; * indent(lines, i - 2)
+        </td>
+      </tr><tr>
+        <td>
+          156
+        </td>
+        <td>
+          179
+        </td>
+        <td>
+          5949
+          -
+          5969
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          indent
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          indent(lines, i - 2)
+        </td>
+      </tr><tr>
+        <td>
+          158
+        </td>
+        <td>
+          182
+        </td>
+        <td>
+          6042
+          -
+          6072
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          getOrElse
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lines.headOption.getOrElse(&quot;&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          158
+        </td>
+        <td>
+          191
+        </td>
+        <td>
+          6031
+          -
+          6200
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          val dist = lines.headOption.getOrElse(&quot;&quot;).length - 1 - i // Calculate distance between roots\n            s&quot;${&quot; &quot; * i}┌${&quot;─&quot; * (dist / 2 - 1)}┴${&quot;─&quot; * ((dist - 1) / 2)}┐&quot;
+        </td>
+      </tr><tr>
+        <td>
+          158
+        </td>
+        <td>
+          181
+        </td>
+        <td>
+          6042
+          -
+          6079
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          length
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lines.headOption.getOrElse(&quot;&quot;).length
+        </td>
+      </tr><tr>
+        <td>
+          158
+        </td>
+        <td>
+          183
+        </td>
+        <td>
+          6042
+          -
+          6058
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          headOption
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lines.headOption
+        </td>
+      </tr><tr>
+        <td>
+          159
+        </td>
+        <td>
+          185
+        </td>
+        <td>
+          6140
+          -
+          6147
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          *
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot; &quot; * i
+        </td>
+      </tr><tr>
+        <td>
+          159
+        </td>
+        <td>
+          184
+        </td>
+        <td>
+          6136
+          -
+          6200
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          s
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          s&quot;${&quot; &quot; * i}┌${&quot;─&quot; * (dist / 2 - 1)}┴${&quot;─&quot; * ((dist - 1) / 2)}┐&quot;
+        </td>
+      </tr><tr>
+        <td>
+          159
+        </td>
+        <td>
+          187
+        </td>
+        <td>
+          6151
+          -
+          6170
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          *
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot;─&quot; * (dist / 2 - 1
+        </td>
+      </tr><tr>
+        <td>
+          159
+        </td>
+        <td>
+          190
+        </td>
+        <td>
+          6175
+          -
+          6178
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          augmentString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot;─&quot;
+        </td>
+      </tr><tr>
+        <td>
+          159
+        </td>
+        <td>
+          189
+        </td>
+        <td>
+          6175
+          -
+          6196
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          *
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot;─&quot; * ((dist - 1) / 2
+        </td>
+      </tr><tr>
+        <td>
+          159
+        </td>
+        <td>
+          186
+        </td>
+        <td>
+          6140
+          -
+          6143
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          augmentString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot; &quot;
+        </td>
+      </tr><tr>
+        <td>
+          159
+        </td>
+        <td>
+          188
+        </td>
+        <td>
+          6151
+          -
+          6154
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          augmentString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot;─&quot;
+        </td>
+      </tr><tr>
+        <td>
+          161
+        </td>
+        <td>
+          192
+        </td>
+        <td>
+          6219
+          -
+          6234
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          update
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lines(0) = line
+        </td>
+      </tr><tr>
+        <td>
+          162
+        </td>
+        <td>
+          194
+        </td>
+        <td>
+          6242
+          -
+          6242
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          
+        </td>
+      </tr><tr>
+        <td>
+          164
+        </td>
+        <td>
+          196
+        </td>
+        <td>
+          6264
+          -
+          6310
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          +
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot; &quot; * indent(lines, i - half) + value.toString
+        </td>
+      </tr><tr>
+        <td>
+          164
+        </td>
+        <td>
+          199
+        </td>
+        <td>
+          6270
+          -
+          6293
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          indent
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          indent(lines, i - half)
+        </td>
+      </tr><tr>
+        <td>
+          164
+        </td>
+        <td>
+          198
+        </td>
+        <td>
+          6264
+          -
+          6267
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          augmentString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot; &quot;
+        </td>
+      </tr><tr>
+        <td>
+          164
+        </td>
+        <td>
+          195
+        </td>
+        <td>
+          6250
+          -
+          6311
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          prepend
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lines.prepend(&quot; &quot; * indent(lines, i - half) + value.toString)
+        </td>
+      </tr><tr>
+        <td>
+          164
+        </td>
+        <td>
+          197
+        </td>
+        <td>
+          6264
+          -
+          6293
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          *
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot; &quot; * indent(lines, i - half)
+        </td>
+      </tr><tr>
+        <td>
+          165
+        </td>
+        <td>
+          200
+        </td>
+        <td>
+          6318
+          -
+          6372
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          prepend
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lines.prepend(&quot; &quot; * (i + math.max(0, half - i)) + &quot;*&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          165
+        </td>
+        <td>
+          202
+        </td>
+        <td>
+          6332
+          -
+          6364
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          *
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot; &quot; * (i + math.max(0, half - i)
+        </td>
+      </tr><tr>
+        <td>
+          165
+        </td>
+        <td>
+          201
+        </td>
+        <td>
+          6332
+          -
+          6371
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          +
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot; &quot; * (i + math.max(0, half - i)) + &quot;*&quot;
+        </td>
+      </tr><tr>
+        <td>
+          165
+        </td>
+        <td>
+          204
+        </td>
+        <td>
+          6343
+          -
+          6364
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          max
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          math.max(0, half - i)
+        </td>
+      </tr><tr>
+        <td>
+          165
+        </td>
+        <td>
+          203
+        </td>
+        <td>
+          6332
+          -
+          6335
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          augmentString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot; &quot;
+        </td>
+      </tr><tr>
+        <td>
+          169
+        </td>
+        <td>
+          210
+        </td>
+        <td>
+          6430
+          -
+          6443
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          visualize
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def visualize
+        </td>
+      </tr><tr>
+        <td>
+          170
+        </td>
+        <td>
+          207
+        </td>
+        <td>
+          6493
+          -
+          6509
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          buildLines
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          buildLines(root)
+        </td>
+      </tr><tr>
+        <td>
+          171
+        </td>
+        <td>
+          209
+        </td>
+        <td>
+          6514
+          -
+          6527
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          drop
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lines.drop(1)
+        </td>
+      </tr><tr>
+        <td>
+          171
+        </td>
+        <td>
+          208
+        </td>
+        <td>
+          6514
+          -
+          6542
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          mkString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lines.drop(1).mkString(&quot;\\n&quot;)
+        </td>
+      </tr>
+    </table>
+          </div>
+        </div>
+      </body>
+    </html>

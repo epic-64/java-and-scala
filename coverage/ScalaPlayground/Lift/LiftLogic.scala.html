@@ -1,0 +1,4133 @@
+<html>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title id="title">
+          ScalaPlayground/Lift/LiftLogic.scala.html
+        </title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/css/theme.default.min.css" type="text/css"/><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/js/jquery.tablesorter.min.js"></script><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"/><script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script><script type="text/javascript">
+        $(document).ready(function() {$(".tablesorter").tablesorter();});
+      </script>
+        <style>
+          table.codegrid { font-family: monospace; font-size: 12px; width: auto!important; }table.statementlist { width: auto!important; font-size: 13px; } table.codegrid td { padding: 0!important; border: 0!important } table td.linenumber { width: 40px!important; } 
+        </style>
+      </head>
+      <body style="font-family: monospace;">
+        <ul class="nav nav-tabs">
+          <li>
+            <a href="#codegrid" data-toggle="tab">Codegrid</a>
+          </li>
+          <li>
+            <a href="#statementlist" data-toggle="tab">Statement List</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane active" id="codegrid">
+            <pre style='font-size: 12pt; font-family: courier, monospace;'>1 <span style=''>package ScalaPlayground.Lift
+</span>2 <span style=''>
+</span>3 <span style=''>// https://www.codewars.com/kata/58905bfa1decb981da00009e
+</span>4 <span style=''>
+</span>5 <span style=''>import ScalaPlayground.Lift.Direction.{Down, Up}
+</span>6 <span style=''>
+</span>7 <span style=''>import scala.collection.immutable.ListMap
+</span>8 <span style=''>import scala.collection.mutable
+</span>9 <span style=''>
+</span>10 <span style=''>type Floor = Int
+</span>11 <span style=''>enum Direction { case Up, Down }
+</span>12 <span style=''>
+</span>13 <span style=''>case class Person(position: Floor, destination: Floor) {
+</span>14 <span style=''>  </span><span style='background: #AEF1AE'>require(position != destination, &quot;source and destination floor cannot be the same&quot;)</span><span style=''>
+</span>15 <span style=''>
+</span>16 <span style=''>  val desiredDirection: Direction = (position, destination) match
+</span>17 <span style=''>    case _ if destination &gt; position </span><span style='background: #AEF1AE'>=&gt; Up</span><span style=''>
+</span>18 <span style=''>    case _ if destination &lt; position </span><span style='background: #AEF1AE'>=&gt; Down</span><span style=''>
+</span>19 <span style=''>
+</span>20 <span style=''>  </span><span style='background: #AEF1AE'>def matchesDirection</span><span style=''>(lift: Lift): Boolean = desiredDirection == lift.direction
+</span>21 <span style=''>  </span><span style='background: #AEF1AE'>def isBelow</span><span style=''>(lift: Lift): Boolean          = position &lt; lift.position
+</span>22 <span style=''>  </span><span style='background: #AEF1AE'>def isAbove</span><span style=''>(lift: Lift): Boolean          = position &gt; lift.position
+</span>23 <span style=''>}
+</span>24 <span style=''>
+</span>25 <span style=''>case class Lift(
+</span>26 <span style=''>    var position: Floor,
+</span>27 <span style=''>    var direction: Direction,
+</span>28 <span style=''>    people: mutable.Queue[Person],
+</span>29 <span style=''>    capacity: Int
+</span>30 <span style=''>) {
+</span>31 <span style=''>  </span><span style='background: #AEF1AE'>private def isFull</span><span style=''>: Boolean          = </span><span style='background: #AEF1AE'>people.size</span><span style=''> == capacity
+</span>32 <span style=''>  </span><span style='background: #AEF1AE'>def hasRoom</span><span style=''>: Boolean                 = !</span><span style='background: #AEF1AE'>isFull</span><span style=''>
+</span>33 <span style=''>  </span><span style='background: #AEF1AE'>def hasPeople</span><span style=''>: Boolean               = </span><span style='background: #AEF1AE'>people.nonEmpty</span><span style=''>
+</span>34 <span style=''>  </span><span style='background: #F0ADAD'>def isEmpty</span><span style=''>: Boolean                 = </span><span style='background: #F0ADAD'>people.isEmpty</span><span style=''>
+</span>35 <span style=''>  </span><span style='background: #AEF1AE'>def accepts</span><span style=''>(person: Person): Boolean = </span><span style='background: #AEF1AE'>hasRoom</span><span style=''> &amp;&amp; person.desiredDirection == direction
+</span>36 <span style=''>
+</span>37 <span style=''>  </span><span style='background: #AEF1AE'>def nearestPassengerTarget</span><span style=''>: Option[Floor] =
+</span>38 <span style=''>    </span><span style='background: #AEF1AE'>people.filter(_.matchesDirection(this)).map(_.destination).minByOption(floor =&gt; Math.abs(floor - position))</span><span style=''>
+</span>39 <span style=''>
+</span>40 <span style=''>  </span><span style='background: #F0ADAD'>def turn</span><span style=''>(): Unit = direction = direction match
+</span>41 <span style=''>    case Up   </span><span style='background: #F0ADAD'>=&gt; Down</span><span style=''>
+</span>42 <span style=''>    case Down </span><span style='background: #F0ADAD'>=&gt; Up</span><span style=''>
+</span>43 <span style=''>}
+</span>44 <span style=''>
+</span>45 <span style=''>case class Building(floors: ListMap[Floor, mutable.Queue[Person]]) {
+</span>46 <span style=''>  </span><span style='background: #AEF1AE'>def isEmpty</span><span style=''>: Boolean   = </span><span style='background: #AEF1AE'>floors.values.forall(_.isEmpty)</span><span style=''>
+</span>47 <span style=''>  </span><span style='background: #AEF1AE'>def hasPeople</span><span style=''>: Boolean = !</span><span style='background: #AEF1AE'>isEmpty</span><span style=''>
+</span>48 <span style=''>
+</span>49 <span style=''>  </span><span style='background: #AEF1AE'>private def peopleGoing</span><span style=''>(direction: Direction): List[Person] =
+</span>50 <span style=''>    </span><span style='background: #AEF1AE'>floors.values.flatMap(queue =&gt; queue.filter(_.desiredDirection == direction)).toList</span><span style=''>
+</span>51 <span style=''>
+</span>52 <span style=''>  </span><span style='background: #AEF1AE'>def lowestFloorGoingUp</span><span style=''>(lift: Lift): Option[Floor] =
+</span>53 <span style=''>    </span><span style='background: #AEF1AE'>peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption</span><span style=''>
+</span>54 <span style=''>
+</span>55 <span style=''>  </span><span style='background: #AEF1AE'>def highestFloorGoingDown</span><span style=''>(lift: Lift): Option[Floor] =
+</span>56 <span style=''>    </span><span style='background: #AEF1AE'>peopleGoing(Down).filter(_.isAbove(lift)).map(_.position).maxOption</span><span style=''>
+</span>57 <span style=''>
+</span>58 <span style=''>  </span><span style='background: #AEF1AE'>def nearestRequestInSameDirection</span><span style=''>(lift: Lift): Option[Floor] =
+</span>59 <span style=''>    lift.direction match
+</span>60 <span style=''>      case Up   </span><span style='background: #AEF1AE'>=&gt; peopleGoing(Up).filter(_.isAbove(lift)).map(_.position).minOption</span><span style=''>
+</span>61 <span style=''>      case Down </span><span style='background: #AEF1AE'>=&gt; peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption</span><span style=''>
+</span>62 <span style=''>}
+</span>63 <span style=''>
+</span>64 <span style=''>case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor]) {
+</span>65 <span style=''>  </span><span style='background: #AEF1AE'>def toPrintable</span><span style=''>: String = {
+</span>66 <span style=''>    val sb = </span><span style='background: #AEF1AE'>new StringBuilder()</span><span style=''>
+</span>67 <span style=''>
+</span>68 <span style=''>    </span><span style='background: #AEF1AE'>sb.append(s&quot;${stops.length} stops: ${stops.mkString(&quot;, &quot;)}\n&quot;)</span><span style=''>
+</span>69 <span style=''>
+</span>70 <span style=''>    </span><span style='background: #AEF1AE'>building.floors.toSeq.reverse.foreach { case (floor, queue) =&gt;
+</span>71 <span style=''></span><span style='background: #AEF1AE'>      sb.append(s&quot;| $floor | ${queue.reverse.map(_.destination).mkString(&quot;, &quot;).padTo(20, ' ')} |&quot;)
+</span>72 <span style=''></span><span style='background: #AEF1AE'>
+</span>73 <span style=''></span><span style='background: #AEF1AE'>      // draw the lift if it is on the current level
+</span>74 <span style=''></span><span style='background: #AEF1AE'>      if lift.position == floor
+</span>75 <span style=''></span><span style='background: #AEF1AE'>      then sb.append(s&quot; | ${lift.people.map(_.destination).mkString(&quot;, &quot;).padTo(15, ' ')} |&quot;)
+</span>76 <span style=''></span><span style='background: #AEF1AE'>
+</span>77 <span style=''></span><span style='background: #AEF1AE'>      sb.append('\n')
+</span>78 <span style=''></span><span style='background: #AEF1AE'>    }</span><span style=''>
+</span>79 <span style=''>
+</span>80 <span style=''>    </span><span style='background: #AEF1AE'>sb.toString()</span><span style=''>
+</span>81 <span style=''>  }
+</span>82 <span style=''>}
+</span>83 <span style=''>
+</span>84 <span style=''>// Excuse the name. Dinglemouse.theLift() is how the function is called in the Codewars test suite
+</span>85 <span style=''>object Dinglemouse {
+</span>86 <span style=''>  </span><span style='background: #AEF1AE'>def theLift</span><span style=''>(queues: Array[Array[Int]], capacity: Int): Array[Int] = {
+</span>87 <span style=''>    val floors: ListMap[Int, mutable.Queue[Person]] =
+</span>88 <span style=''>      </span><span style='background: #AEF1AE'>queues.zipWithIndex
+</span>89 <span style=''></span><span style='background: #AEF1AE'>        .map { case (queue, index) =&gt;
+</span>90 <span style=''></span><span style='background: #AEF1AE'>          (index, queue.map(destination =&gt; Person(position = index, destination = destination)).to(mutable.Queue))
+</span>91 <span style=''></span><span style='background: #AEF1AE'>        }
+</span>92 <span style=''></span><span style='background: #AEF1AE'>        .to(ListMap)</span><span style=''>
+</span>93 <span style=''>
+</span>94 <span style=''>    val lift     = Lift(position = 0, Direction.Up, people = </span><span style='background: #AEF1AE'>mutable.Queue.empty</span><span style=''>, capacity)
+</span>95 <span style=''>    val building = Building(floors)
+</span>96 <span style=''>
+</span>97 <span style=''>    val initialState = State(building = building, lift = lift, stops = </span><span style='background: #AEF1AE'>mutable.ListBuffer.empty</span><span style=''>)
+</span>98 <span style=''>    val finalState   = </span><span style='background: #AEF1AE'>LiftLogic.simulate(initialState)</span><span style=''>
+</span>99 <span style=''>
+</span>100 <span style=''>    </span><span style='background: #AEF1AE'>finalState.stops.toArray</span><span style=''>
+</span>101 <span style=''>  }
+</span>102 <span style=''>}
+</span>103 <span style=''>
+</span>104 <span style=''>object LiftLogic {
+</span>105 <span style=''>  </span><span style='background: #AEF1AE'>def simulate</span><span style=''>(initialState: State): State = {
+</span>106 <span style=''>    var state = initialState
+</span>107 <span style=''>
+</span>108 <span style=''>    </span><span style='background: #AEF1AE'>state.stops += state.lift.position</span><span style=''> // register initial position as the first stop
+</span>109 <span style=''>    </span><span style='background: #AEF1AE'>println(state.toPrintable)</span><span style=''>         // draw the initial state of the lift
+</span>110 <span style=''>
+</span>111 <span style=''>    val State(building, lift, _) = state
+</span>112 <span style=''>
+</span>113 <span style=''>    while </span><span style='background: #AEF1AE'>building.hasPeople</span><span style=''> || </span><span style='background: #AEF1AE'>lift.hasPeople</span><span style=''> || lift.position &gt; 0 do
+</span>114 <span style=''>      state = </span><span style='background: #AEF1AE'>step(state)</span><span style=''>
+</span>115 <span style=''>      </span><span style='background: #AEF1AE'>println(state.toPrintable)</span><span style=''>
+</span>116 <span style=''>
+</span>117 <span style=''>    state
+</span>118 <span style=''>  }
+</span>119 <span style=''>
+</span>120 <span style=''>  </span><span style='background: #AEF1AE'>private def step</span><span style=''>(state: State): State = {
+</span>121 <span style=''>    // Destructure state into convenient variables
+</span>122 <span style=''>    val State(building, lift, stops) = state
+</span>123 <span style=''>
+</span>124 <span style=''>    val maxFloor = </span><span style='background: #AEF1AE'>building.floors.keys.maxOption.getOrElse(0)</span><span style=''>
+</span>125 <span style=''>
+</span>126 <span style=''>    // Always force the lift into a valid direction
+</span>127 <span style=''>    lift.direction = lift.position match
+</span>128 <span style=''>      case 0                  </span><span style='background: #AEF1AE'>=&gt; Up</span><span style=''>
+</span>129 <span style=''>      case p if p == maxFloor </span><span style='background: #AEF1AE'>=&gt; Down</span><span style=''>
+</span>130 <span style=''>      case _                  </span><span style='background: #AEF1AE'>=&gt; lift.direction</span><span style=''>
+</span>131 <span style=''>
+</span>132 <span style=''>    // Off-board people who reached their destination
+</span>133 <span style=''>    </span><span style='background: #AEF1AE'>lift.people.dequeueAll(_.destination == lift.position)</span><span style=''>
+</span>134 <span style=''>
+</span>135 <span style=''>    // get current floor queue
+</span>136 <span style=''>    val queue = </span><span style='background: #AEF1AE'>building.floors(lift.position)</span><span style=''>
+</span>137 <span style=''>
+</span>138 <span style=''>    // Transfer people from floor queue into lift
+</span>139 <span style=''>    while </span><span style='background: #AEF1AE'>lift.hasRoom</span><span style=''> &amp;&amp; </span><span style='background: #AEF1AE'>queue.exists(lift.accepts)</span><span style=''> do
+</span>140 <span style=''>      val person = </span><span style='background: #AEF1AE'>queue.dequeueFirst(lift.accepts).get</span><span style=''>
+</span>141 <span style=''>      </span><span style='background: #AEF1AE'>lift.people.enqueue(person)</span><span style=''>
+</span>142 <span style=''>
+</span>143 <span style=''>    val oldPosition                   = lift.position
+</span>144 <span style=''>    val (nextPosition, nextDirection) = </span><span style='background: #AEF1AE'>getNextPositionAndDirection(building, lift)</span><span style=''>
+</span>145 <span style=''>
+</span>146 <span style=''>    // Set the new values
+</span>147 <span style=''>    lift.direction = nextDirection
+</span>148 <span style=''>    lift.position = nextPosition
+</span>149 <span style=''>
+</span>150 <span style=''>    // Register the stop. I added the extra condition because of a bug
+</span>151 <span style=''>    // by which the lift sometimes takes two turns for the very last move 🤔
+</span>152 <span style=''>    if oldPosition != nextPosition then </span><span style='background: #AEF1AE'>stops += nextPosition</span><span style=''>
+</span>153 <span style=''>
+</span>154 <span style=''>    state
+</span>155 <span style=''>  }
+</span>156 <span style=''>
+</span>157 <span style=''>  </span><span style='background: #AEF1AE'>private def getNextPositionAndDirection</span><span style=''>(building: Building, lift: Lift): (Floor, Direction) =
+</span>158 <span style=''>    </span><span style='background: #AEF1AE'>List(                                          // Build a list of primary targets
+</span>159 <span style=''></span><span style='background: #AEF1AE'>      lift.nearestPassengerTarget,                 // request from passenger already on the lift
+</span>160 <span style=''></span><span style='background: #AEF1AE'>      building.nearestRequestInSameDirection(lift) // request from people [waiting in AND going to] the same direction
+</span>161 <span style=''></span><span style='background: #AEF1AE'>    ).flatten // turn list of options into list of Integers
+</span>162 <span style=''></span><span style='background: #AEF1AE'>      .minByOption(floor =&gt; Math.abs(floor - lift.position))</span><span style=''> // get Some floor with the lowest distance, or None
+</span>163 <span style=''>      .match
+</span>164 <span style=''>        case Some(floor) </span><span style='background: #AEF1AE'>=&gt; (floor, lift.direction)</span><span style=''> // return requested floor, keep direction
+</span>165 <span style=''>        case None        </span><span style='background: #AEF1AE'>=&gt;                         // otherwise choose a new target
+</span>166 <span style=''></span><span style='background: #AEF1AE'>          lift.direction match
+</span>167 <span style=''></span><span style='background: #AEF1AE'>            case Up   =&gt; upwardsNewTarget(building, lift)   // look for people above going downwards
+</span>168 <span style=''></span><span style='background: #AEF1AE'>            case Down =&gt; downwardsNewTarget(building, lift)</span><span style=''> // look for people below going upwards
+</span>169 <span style=''>
+</span>170 <span style=''>  </span><span style='background: #AEF1AE'>private def downwardsNewTarget</span><span style=''>(building: Building, lift: Lift): (Floor, Direction) =
+</span>171 <span style=''>    </span><span style='background: #AEF1AE'>building.lowestFloorGoingUp(lift)</span><span style=''> match
+</span>172 <span style=''>      case Some(lowest) </span><span style='background: #AEF1AE'>=&gt; (lowest, Up)</span><span style=''>
+</span>173 <span style=''>      case None         </span><span style='background: #AEF1AE'>=&gt; (building.highestFloorGoingDown(lift).getOrElse(0), Down)</span><span style=''>
+</span>174 <span style=''>
+</span>175 <span style=''>  </span><span style='background: #AEF1AE'>private def upwardsNewTarget</span><span style=''>(building: Building, lift: Lift): (Floor, Direction) =
+</span>176 <span style=''>    </span><span style='background: #AEF1AE'>building.highestFloorGoingDown(lift)</span><span style=''> match
+</span>177 <span style=''>      case Some(highest) </span><span style='background: #AEF1AE'>=&gt; (highest, Down)</span><span style=''>
+</span>178 <span style=''>      case None          </span><span style='background: #AEF1AE'>=&gt; (building.lowestFloorGoingUp(lift).getOrElse(0), Up)</span><span style=''>
+</span>179 <span style=''>}
+</span></pre>
+          </div>
+          <div class="tab-pane" id="statementlist">
+            <table cellspacing="0" cellpadding="0" class="table statementlist">
+      <tr>
+        <th>Line</th>
+        <th>Stmt Id</th>
+        <th>Pos</th>
+        <th>Tree</th>
+        <th>Symbol</th>
+        <th>Tests</th>
+        <th>Code</th>
+      </tr><tr>
+        <td>
+          14
+        </td>
+        <td>
+          212
+        </td>
+        <td>
+          324
+          -
+          407
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          require
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          require(position != destination, &quot;source and destination floor cannot be the same&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          17
+        </td>
+        <td>
+          213
+        </td>
+        <td>
+          512
+          -
+          517
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; Up
+        </td>
+      </tr><tr>
+        <td>
+          18
+        </td>
+        <td>
+          214
+        </td>
+        <td>
+          555
+          -
+          562
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; Down
+        </td>
+      </tr><tr>
+        <td>
+          20
+        </td>
+        <td>
+          215
+        </td>
+        <td>
+          566
+          -
+          586
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          matchesDirection
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def matchesDirection
+        </td>
+      </tr><tr>
+        <td>
+          21
+        </td>
+        <td>
+          216
+        </td>
+        <td>
+          647
+          -
+          658
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          isBelow
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def isBelow
+        </td>
+      </tr><tr>
+        <td>
+          22
+        </td>
+        <td>
+          217
+        </td>
+        <td>
+          718
+          -
+          729
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          isAbove
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def isAbove
+        </td>
+      </tr><tr>
+        <td>
+          31
+        </td>
+        <td>
+          218
+        </td>
+        <td>
+          960
+          -
+          971
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          size
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          people.size
+        </td>
+      </tr><tr>
+        <td>
+          31
+        </td>
+        <td>
+          219
+        </td>
+        <td>
+          921
+          -
+          939
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          isFull
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          private def isFull
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          220
+        </td>
+        <td>
+          1026
+          -
+          1032
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          isFull
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          isFull
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          221
+        </td>
+        <td>
+          986
+          -
+          997
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          hasRoom
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def hasRoom
+        </td>
+      </tr><tr>
+        <td>
+          33
+        </td>
+        <td>
+          223
+        </td>
+        <td>
+          1035
+          -
+          1048
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          hasPeople
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def hasPeople
+        </td>
+      </tr><tr>
+        <td>
+          33
+        </td>
+        <td>
+          222
+        </td>
+        <td>
+          1074
+          -
+          1089
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          nonEmpty
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          people.nonEmpty
+        </td>
+      </tr><tr>
+        <td>
+          34
+        </td>
+        <td>
+          225
+        </td>
+        <td>
+          1092
+          -
+          1103
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          isEmpty
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          def isEmpty
+        </td>
+      </tr><tr>
+        <td>
+          34
+        </td>
+        <td>
+          224
+        </td>
+        <td>
+          1131
+          -
+          1145
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          isEmpty
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          people.isEmpty
+        </td>
+      </tr><tr>
+        <td>
+          35
+        </td>
+        <td>
+          227
+        </td>
+        <td>
+          1148
+          -
+          1159
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          accepts
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def accepts
+        </td>
+      </tr><tr>
+        <td>
+          35
+        </td>
+        <td>
+          226
+        </td>
+        <td>
+          1187
+          -
+          1194
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          hasRoom
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          hasRoom
+        </td>
+      </tr><tr>
+        <td>
+          37
+        </td>
+        <td>
+          233
+        </td>
+        <td>
+          1238
+          -
+          1264
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          nearestPassengerTarget
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def nearestPassengerTarget
+        </td>
+      </tr><tr>
+        <td>
+          38
+        </td>
+        <td>
+          229
+        </td>
+        <td>
+          1286
+          -
+          1344
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          people.filter(_.matchesDirection(this)).map(_.destination)
+        </td>
+      </tr><tr>
+        <td>
+          38
+        </td>
+        <td>
+          232
+        </td>
+        <td>
+          1366
+          -
+          1392
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          abs
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          Math.abs(floor - position)
+        </td>
+      </tr><tr>
+        <td>
+          38
+        </td>
+        <td>
+          228
+        </td>
+        <td>
+          1286
+          -
+          1393
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          minByOption
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          people.filter(_.matchesDirection(this)).map(_.destination).minByOption(floor =&gt; Math.abs(floor - position))
+        </td>
+      </tr><tr>
+        <td>
+          38
+        </td>
+        <td>
+          231
+        </td>
+        <td>
+          1300
+          -
+          1324
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          matchesDirection
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          _.matchesDirection(this)
+        </td>
+      </tr><tr>
+        <td>
+          38
+        </td>
+        <td>
+          230
+        </td>
+        <td>
+          1286
+          -
+          1325
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          filter
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          people.filter(_.matchesDirection(this))
+        </td>
+      </tr><tr>
+        <td>
+          40
+        </td>
+        <td>
+          236
+        </td>
+        <td>
+          1397
+          -
+          1405
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          turn
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          def turn
+        </td>
+      </tr><tr>
+        <td>
+          41
+        </td>
+        <td>
+          234
+        </td>
+        <td>
+          1458
+          -
+          1465
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          =&gt; Down
+        </td>
+      </tr><tr>
+        <td>
+          42
+        </td>
+        <td>
+          235
+        </td>
+        <td>
+          1480
+          -
+          1485
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          =&gt; Up
+        </td>
+      </tr><tr>
+        <td>
+          46
+        </td>
+        <td>
+          238
+        </td>
+        <td>
+          1585
+          -
+          1598
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          values
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          floors.values
+        </td>
+      </tr><tr>
+        <td>
+          46
+        </td>
+        <td>
+          240
+        </td>
+        <td>
+          1560
+          -
+          1571
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          isEmpty
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def isEmpty
+        </td>
+      </tr><tr>
+        <td>
+          46
+        </td>
+        <td>
+          237
+        </td>
+        <td>
+          1585
+          -
+          1616
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          forall
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          floors.values.forall(_.isEmpty)
+        </td>
+      </tr><tr>
+        <td>
+          46
+        </td>
+        <td>
+          239
+        </td>
+        <td>
+          1606
+          -
+          1615
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          isEmpty
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          _.isEmpty
+        </td>
+      </tr><tr>
+        <td>
+          47
+        </td>
+        <td>
+          241
+        </td>
+        <td>
+          1645
+          -
+          1652
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          isEmpty
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          isEmpty
+        </td>
+      </tr><tr>
+        <td>
+          47
+        </td>
+        <td>
+          242
+        </td>
+        <td>
+          1619
+          -
+          1632
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          hasPeople
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def hasPeople
+        </td>
+      </tr><tr>
+        <td>
+          49
+        </td>
+        <td>
+          247
+        </td>
+        <td>
+          1656
+          -
+          1679
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          peopleGoing
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          private def peopleGoing
+        </td>
+      </tr><tr>
+        <td>
+          50
+        </td>
+        <td>
+          245
+        </td>
+        <td>
+          1753
+          -
+          1798
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          filter
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          queue.filter(_.desiredDirection == direction)
+        </td>
+      </tr><tr>
+        <td>
+          50
+        </td>
+        <td>
+          244
+        </td>
+        <td>
+          1722
+          -
+          1735
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          values
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          floors.values
+        </td>
+      </tr><tr>
+        <td>
+          50
+        </td>
+        <td>
+          243
+        </td>
+        <td>
+          1722
+          -
+          1799
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          flatMap
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          floors.values.flatMap(queue =&gt; queue.filter(_.desiredDirection == direction))
+        </td>
+      </tr><tr>
+        <td>
+          50
+        </td>
+        <td>
+          246
+        </td>
+        <td>
+          1722
+          -
+          1806
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          toList
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          floors.values.flatMap(queue =&gt; queue.filter(_.desiredDirection == direction)).toList
+        </td>
+      </tr><tr>
+        <td>
+          52
+        </td>
+        <td>
+          253
+        </td>
+        <td>
+          1810
+          -
+          1832
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          lowestFloorGoingUp
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def lowestFloorGoingUp
+        </td>
+      </tr><tr>
+        <td>
+          53
+        </td>
+        <td>
+          250
+        </td>
+        <td>
+          1866
+          -
+          1905
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          filter
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          peopleGoing(Up).filter(_.isBelow(lift))
+        </td>
+      </tr><tr>
+        <td>
+          53
+        </td>
+        <td>
+          249
+        </td>
+        <td>
+          1866
+          -
+          1921
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          peopleGoing(Up).filter(_.isBelow(lift)).map(_.position)
+        </td>
+      </tr><tr>
+        <td>
+          53
+        </td>
+        <td>
+          252
+        </td>
+        <td>
+          1889
+          -
+          1904
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          isBelow
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          _.isBelow(lift)
+        </td>
+      </tr><tr>
+        <td>
+          53
+        </td>
+        <td>
+          248
+        </td>
+        <td>
+          1866
+          -
+          1931
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          minOption
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption
+        </td>
+      </tr><tr>
+        <td>
+          53
+        </td>
+        <td>
+          251
+        </td>
+        <td>
+          1866
+          -
+          1881
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          peopleGoing
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          peopleGoing(Up)
+        </td>
+      </tr><tr>
+        <td>
+          55
+        </td>
+        <td>
+          259
+        </td>
+        <td>
+          1935
+          -
+          1960
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          highestFloorGoingDown
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def highestFloorGoingDown
+        </td>
+      </tr><tr>
+        <td>
+          56
+        </td>
+        <td>
+          254
+        </td>
+        <td>
+          1994
+          -
+          2061
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          maxOption
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          peopleGoing(Down).filter(_.isAbove(lift)).map(_.position).maxOption
+        </td>
+      </tr><tr>
+        <td>
+          56
+        </td>
+        <td>
+          256
+        </td>
+        <td>
+          1994
+          -
+          2035
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          filter
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          peopleGoing(Down).filter(_.isAbove(lift))
+        </td>
+      </tr><tr>
+        <td>
+          56
+        </td>
+        <td>
+          258
+        </td>
+        <td>
+          2019
+          -
+          2034
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          isAbove
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          _.isAbove(lift)
+        </td>
+      </tr><tr>
+        <td>
+          56
+        </td>
+        <td>
+          255
+        </td>
+        <td>
+          1994
+          -
+          2051
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          peopleGoing(Down).filter(_.isAbove(lift)).map(_.position)
+        </td>
+      </tr><tr>
+        <td>
+          56
+        </td>
+        <td>
+          257
+        </td>
+        <td>
+          1994
+          -
+          2011
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          peopleGoing
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          peopleGoing(Down)
+        </td>
+      </tr><tr>
+        <td>
+          58
+        </td>
+        <td>
+          272
+        </td>
+        <td>
+          2065
+          -
+          2098
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          nearestRequestInSameDirection
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def nearestRequestInSameDirection
+        </td>
+      </tr><tr>
+        <td>
+          60
+        </td>
+        <td>
+          262
+        </td>
+        <td>
+          2172
+          -
+          2211
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          filter
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          peopleGoing(Up).filter(_.isAbove(lift))
+        </td>
+      </tr><tr>
+        <td>
+          60
+        </td>
+        <td>
+          265
+        </td>
+        <td>
+          2169
+          -
+          2237
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; peopleGoing(Up).filter(_.isAbove(lift)).map(_.position).minOption
+        </td>
+      </tr><tr>
+        <td>
+          60
+        </td>
+        <td>
+          261
+        </td>
+        <td>
+          2172
+          -
+          2227
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          peopleGoing(Up).filter(_.isAbove(lift)).map(_.position)
+        </td>
+      </tr><tr>
+        <td>
+          60
+        </td>
+        <td>
+          264
+        </td>
+        <td>
+          2195
+          -
+          2210
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          isAbove
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          _.isAbove(lift)
+        </td>
+      </tr><tr>
+        <td>
+          60
+        </td>
+        <td>
+          263
+        </td>
+        <td>
+          2172
+          -
+          2187
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          peopleGoing
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          peopleGoing(Up)
+        </td>
+      </tr><tr>
+        <td>
+          60
+        </td>
+        <td>
+          260
+        </td>
+        <td>
+          2172
+          -
+          2237
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          minOption
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          peopleGoing(Up).filter(_.isAbove(lift)).map(_.position).minOption
+        </td>
+      </tr><tr>
+        <td>
+          61
+        </td>
+        <td>
+          271
+        </td>
+        <td>
+          2254
+          -
+          2324
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
+        </td>
+      </tr><tr>
+        <td>
+          61
+        </td>
+        <td>
+          268
+        </td>
+        <td>
+          2257
+          -
+          2298
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          filter
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          peopleGoing(Down).filter(_.isBelow(lift))
+        </td>
+      </tr><tr>
+        <td>
+          61
+        </td>
+        <td>
+          267
+        </td>
+        <td>
+          2257
+          -
+          2314
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          peopleGoing(Down).filter(_.isBelow(lift)).map(_.position)
+        </td>
+      </tr><tr>
+        <td>
+          61
+        </td>
+        <td>
+          270
+        </td>
+        <td>
+          2282
+          -
+          2297
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          isBelow
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          _.isBelow(lift)
+        </td>
+      </tr><tr>
+        <td>
+          61
+        </td>
+        <td>
+          266
+        </td>
+        <td>
+          2257
+          -
+          2324
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          maxOption
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
+        </td>
+      </tr><tr>
+        <td>
+          61
+        </td>
+        <td>
+          269
+        </td>
+        <td>
+          2257
+          -
+          2274
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          peopleGoing
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          peopleGoing(Down)
+        </td>
+      </tr><tr>
+        <td>
+          65
+        </td>
+        <td>
+          299
+        </td>
+        <td>
+          2415
+          -
+          2430
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          toPrintable
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def toPrintable
+        </td>
+      </tr><tr>
+        <td>
+          66
+        </td>
+        <td>
+          273
+        </td>
+        <td>
+          2456
+          -
+          2475
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          &lt;init&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          new StringBuilder()
+        </td>
+      </tr><tr>
+        <td>
+          68
+        </td>
+        <td>
+          274
+        </td>
+        <td>
+          2481
+          -
+          2543
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          append
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sb.append(s&quot;${stops.length} stops: ${stops.mkString(&quot;, &quot;)}\\n&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          68
+        </td>
+        <td>
+          277
+        </td>
+        <td>
+          2518
+          -
+          2538
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          mkString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          stops.mkString(&quot;, &quot;)
+        </td>
+      </tr><tr>
+        <td>
+          68
+        </td>
+        <td>
+          276
+        </td>
+        <td>
+          2495
+          -
+          2507
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          length
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          stops.length
+        </td>
+      </tr><tr>
+        <td>
+          68
+        </td>
+        <td>
+          275
+        </td>
+        <td>
+          2491
+          -
+          2542
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          s
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          s&quot;${stops.length} stops: ${stops.mkString(&quot;, &quot;)}\\n&quot;
+        </td>
+      </tr><tr>
+        <td>
+          70
+        </td>
+        <td>
+          280
+        </td>
+        <td>
+          2549
+          -
+          2578
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          reverse
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          building.floors.toSeq.reverse
+        </td>
+      </tr><tr>
+        <td>
+          70
+        </td>
+        <td>
+          297
+        </td>
+        <td>
+          2609
+          -
+          2913
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt;\n      sb.append(s&quot;| $floor | ${queue.reverse.map(_.destination).mkString(&quot;, &quot;).padTo(20, ' ')} |&quot;)\n\n      // draw the lift if it is on the current level\n      if lift.position == floor\n      then sb.append(s&quot; | ${lift.people.map(_.destination).mkString(&quot;, &quot;).padTo(15, ' ')} |&quot;)\n\n      sb.append('\\n')
+        </td>
+      </tr><tr>
+        <td>
+          70
+        </td>
+        <td>
+          279
+        </td>
+        <td>
+          2549
+          -
+          2570
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          toSeq
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          building.floors.toSeq
+        </td>
+      </tr><tr>
+        <td>
+          70
+        </td>
+        <td>
+          278
+        </td>
+        <td>
+          2549
+          -
+          2919
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          foreach
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          building.floors.toSeq.reverse.foreach { case (floor, queue) =&gt;\n      sb.append(s&quot;| $floor | ${queue.reverse.map(_.destination).mkString(&quot;, &quot;).padTo(20, ' ')} |&quot;)\n\n      // draw the lift if it is on the current level\n      if lift.position == floor\n      then sb.append(s&quot; | ${lift.people.map(_.destination).mkString(&quot;, &quot;).padTo(15, ' ')} |&quot;)\n\n      sb.append('\\n')\n    }
+        </td>
+      </tr><tr>
+        <td>
+          71
+        </td>
+        <td>
+          286
+        </td>
+        <td>
+          2643
+          -
+          2675
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          queue.reverse.map(_.destination)
+        </td>
+      </tr><tr>
+        <td>
+          71
+        </td>
+        <td>
+          283
+        </td>
+        <td>
+          2643
+          -
+          2705
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          padTo
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          queue.reverse.map(_.destination).mkString(&quot;, &quot;).padTo(20, ' ')
+        </td>
+      </tr><tr>
+        <td>
+          71
+        </td>
+        <td>
+          285
+        </td>
+        <td>
+          2643
+          -
+          2690
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          mkString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          queue.reverse.map(_.destination).mkString(&quot;, &quot;)
+        </td>
+      </tr><tr>
+        <td>
+          71
+        </td>
+        <td>
+          282
+        </td>
+        <td>
+          2628
+          -
+          2709
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          s
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          s&quot;| $floor | ${queue.reverse.map(_.destination).mkString(&quot;, &quot;).padTo(20, ' ')} |&quot;
+        </td>
+      </tr><tr>
+        <td>
+          71
+        </td>
+        <td>
+          281
+        </td>
+        <td>
+          2618
+          -
+          2710
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          append
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sb.append(s&quot;| $floor | ${queue.reverse.map(_.destination).mkString(&quot;, &quot;).padTo(20, ' ')} |&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          71
+        </td>
+        <td>
+          284
+        </td>
+        <td>
+          2643
+          -
+          2690
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          augmentString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          queue.reverse.map(_.destination).mkString(&quot;, &quot;)
+        </td>
+      </tr><tr>
+        <td>
+          71
+        </td>
+        <td>
+          287
+        </td>
+        <td>
+          2643
+          -
+          2656
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          reverse
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          queue.reverse
+        </td>
+      </tr><tr>
+        <td>
+          75
+        </td>
+        <td>
+          295
+        </td>
+        <td>
+          2890
+          -
+          2890
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          
+        </td>
+      </tr><tr>
+        <td>
+          75
+        </td>
+        <td>
+          289
+        </td>
+        <td>
+          2818
+          -
+          2889
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          s
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          s&quot; | ${lift.people.map(_.destination).mkString(&quot;, &quot;).padTo(15, ' ')} |&quot;
+        </td>
+      </tr><tr>
+        <td>
+          75
+        </td>
+        <td>
+          292
+        </td>
+        <td>
+          2825
+          -
+          2870
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          mkString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lift.people.map(_.destination).mkString(&quot;, &quot;)
+        </td>
+      </tr><tr>
+        <td>
+          75
+        </td>
+        <td>
+          294
+        </td>
+        <td>
+          2808
+          -
+          2890
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sb.append(s&quot; | ${lift.people.map(_.destination).mkString(&quot;, &quot;).padTo(15, ' ')} |&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          75
+        </td>
+        <td>
+          288
+        </td>
+        <td>
+          2808
+          -
+          2890
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          append
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sb.append(s&quot; | ${lift.people.map(_.destination).mkString(&quot;, &quot;).padTo(15, ' ')} |&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          75
+        </td>
+        <td>
+          291
+        </td>
+        <td>
+          2825
+          -
+          2870
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          augmentString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lift.people.map(_.destination).mkString(&quot;, &quot;)
+        </td>
+      </tr><tr>
+        <td>
+          75
+        </td>
+        <td>
+          290
+        </td>
+        <td>
+          2825
+          -
+          2885
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          padTo
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lift.people.map(_.destination).mkString(&quot;, &quot;).padTo(15, ' ')
+        </td>
+      </tr><tr>
+        <td>
+          75
+        </td>
+        <td>
+          293
+        </td>
+        <td>
+          2825
+          -
+          2855
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lift.people.map(_.destination)
+        </td>
+      </tr><tr>
+        <td>
+          77
+        </td>
+        <td>
+          296
+        </td>
+        <td>
+          2898
+          -
+          2913
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          append
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sb.append('\\n')
+        </td>
+      </tr><tr>
+        <td>
+          80
+        </td>
+        <td>
+          298
+        </td>
+        <td>
+          2925
+          -
+          2938
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          toString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sb.toString()
+        </td>
+      </tr><tr>
+        <td>
+          86
+        </td>
+        <td>
+          317
+        </td>
+        <td>
+          3068
+          -
+          3079
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          theLift
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def theLift
+        </td>
+      </tr><tr>
+        <td>
+          88
+        </td>
+        <td>
+          304
+        </td>
+        <td>
+          3198
+          -
+          3204
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          refArrayOps
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          queues
+        </td>
+      </tr><tr>
+        <td>
+          88
+        </td>
+        <td>
+          301
+        </td>
+        <td>
+          3198
+          -
+          3380
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          wrapRefArray
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          queues.zipWithIndex\n        .map { case (queue, index) =&gt;\n          (index, queue.map(destination =&gt; Person(position = index, destination = destination)).to(mutable.Queue))\n        }
+        </td>
+      </tr><tr>
+        <td>
+          88
+        </td>
+        <td>
+          303
+        </td>
+        <td>
+          3198
+          -
+          3217
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          refArrayOps
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          queues.zipWithIndex
+        </td>
+      </tr><tr>
+        <td>
+          88
+        </td>
+        <td>
+          302
+        </td>
+        <td>
+          3198
+          -
+          3380
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          queues.zipWithIndex\n        .map { case (queue, index) =&gt;\n          (index, queue.map(destination =&gt; Person(position = index, destination = destination)).to(mutable.Queue))\n        }
+        </td>
+      </tr><tr>
+        <td>
+          88
+        </td>
+        <td>
+          305
+        </td>
+        <td>
+          3198
+          -
+          3217
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          zipWithIndex
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          queues.zipWithIndex
+        </td>
+      </tr><tr>
+        <td>
+          89
+        </td>
+        <td>
+          311
+        </td>
+        <td>
+          3253
+          -
+          3370
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt;\n          (index, queue.map(destination =&gt; Person(position = index, destination = destination)).to(mutable.Queue))
+        </td>
+      </tr><tr>
+        <td>
+          90
+        </td>
+        <td>
+          307
+        </td>
+        <td>
+          3274
+          -
+          3351
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          wrapRefArray
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          queue.map(destination =&gt; Person(position = index, destination = destination))
+        </td>
+      </tr><tr>
+        <td>
+          90
+        </td>
+        <td>
+          310
+        </td>
+        <td>
+          3355
+          -
+          3368
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          toFactory
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          mutable.Queue
+        </td>
+      </tr><tr>
+        <td>
+          90
+        </td>
+        <td>
+          309
+        </td>
+        <td>
+          3274
+          -
+          3279
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          intArrayOps
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          queue
+        </td>
+      </tr><tr>
+        <td>
+          90
+        </td>
+        <td>
+          306
+        </td>
+        <td>
+          3274
+          -
+          3369
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          to
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          queue.map(destination =&gt; Person(position = index, destination = destination)).to(mutable.Queue)
+        </td>
+      </tr><tr>
+        <td>
+          90
+        </td>
+        <td>
+          308
+        </td>
+        <td>
+          3274
+          -
+          3351
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          queue.map(destination =&gt; Person(position = index, destination = destination))
+        </td>
+      </tr><tr>
+        <td>
+          92
+        </td>
+        <td>
+          300
+        </td>
+        <td>
+          3198
+          -
+          3401
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          to
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          queues.zipWithIndex\n        .map { case (queue, index) =&gt;\n          (index, queue.map(destination =&gt; Person(position = index, destination = destination)).to(mutable.Queue))\n        }\n        .to(ListMap)
+        </td>
+      </tr><tr>
+        <td>
+          92
+        </td>
+        <td>
+          312
+        </td>
+        <td>
+          3393
+          -
+          3400
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          toFactory
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          ListMap
+        </td>
+      </tr><tr>
+        <td>
+          94
+        </td>
+        <td>
+          313
+        </td>
+        <td>
+          3464
+          -
+          3483
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          empty
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          mutable.Queue.empty
+        </td>
+      </tr><tr>
+        <td>
+          97
+        </td>
+        <td>
+          314
+        </td>
+        <td>
+          3603
+          -
+          3627
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          empty
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          mutable.ListBuffer.empty
+        </td>
+      </tr><tr>
+        <td>
+          98
+        </td>
+        <td>
+          315
+        </td>
+        <td>
+          3652
+          -
+          3684
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          simulate
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          LiftLogic.simulate(initialState)
+        </td>
+      </tr><tr>
+        <td>
+          100
+        </td>
+        <td>
+          316
+        </td>
+        <td>
+          3690
+          -
+          3714
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          toArray
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          finalState.stops.toArray
+        </td>
+      </tr><tr>
+        <td>
+          105
+        </td>
+        <td>
+          327
+        </td>
+        <td>
+          3743
+          -
+          3755
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          simulate
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def simulate
+        </td>
+      </tr><tr>
+        <td>
+          108
+        </td>
+        <td>
+          318
+        </td>
+        <td>
+          3822
+          -
+          3856
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          +=
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          state.stops += state.lift.position
+        </td>
+      </tr><tr>
+        <td>
+          109
+        </td>
+        <td>
+          319
+        </td>
+        <td>
+          3908
+          -
+          3934
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          println
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          println(state.toPrintable)
+        </td>
+      </tr><tr>
+        <td>
+          109
+        </td>
+        <td>
+          320
+        </td>
+        <td>
+          3916
+          -
+          3933
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          toPrintable
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          state.toPrintable
+        </td>
+      </tr><tr>
+        <td>
+          111
+        </td>
+        <td>
+          321
+        </td>
+        <td>
+          4014
+          -
+          4014
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          
+        </td>
+      </tr><tr>
+        <td>
+          113
+        </td>
+        <td>
+          322
+        </td>
+        <td>
+          4034
+          -
+          4052
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          hasPeople
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          building.hasPeople
+        </td>
+      </tr><tr>
+        <td>
+          113
+        </td>
+        <td>
+          323
+        </td>
+        <td>
+          4056
+          -
+          4070
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          hasPeople
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lift.hasPeople
+        </td>
+      </tr><tr>
+        <td>
+          114
+        </td>
+        <td>
+          324
+        </td>
+        <td>
+          4109
+          -
+          4120
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          step
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          step(state)
+        </td>
+      </tr><tr>
+        <td>
+          115
+        </td>
+        <td>
+          325
+        </td>
+        <td>
+          4127
+          -
+          4153
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          println
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          println(state.toPrintable)
+        </td>
+      </tr><tr>
+        <td>
+          115
+        </td>
+        <td>
+          326
+        </td>
+        <td>
+          4135
+          -
+          4152
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          toPrintable
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          state.toPrintable
+        </td>
+      </tr><tr>
+        <td>
+          120
+        </td>
+        <td>
+          349
+        </td>
+        <td>
+          4172
+          -
+          4188
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          step
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          private def step
+        </td>
+      </tr><tr>
+        <td>
+          122
+        </td>
+        <td>
+          328
+        </td>
+        <td>
+          4301
+          -
+          4301
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          
+        </td>
+      </tr><tr>
+        <td>
+          124
+        </td>
+        <td>
+          331
+        </td>
+        <td>
+          4330
+          -
+          4350
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          keys
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          building.floors.keys
+        </td>
+      </tr><tr>
+        <td>
+          124
+        </td>
+        <td>
+          330
+        </td>
+        <td>
+          4330
+          -
+          4360
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          maxOption
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          building.floors.keys.maxOption
+        </td>
+      </tr><tr>
+        <td>
+          124
+        </td>
+        <td>
+          329
+        </td>
+        <td>
+          4330
+          -
+          4373
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          getOrElse
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          building.floors.keys.maxOption.getOrElse(0)
+        </td>
+      </tr><tr>
+        <td>
+          128
+        </td>
+        <td>
+          332
+        </td>
+        <td>
+          4498
+          -
+          4503
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; Up
+        </td>
+      </tr><tr>
+        <td>
+          129
+        </td>
+        <td>
+          333
+        </td>
+        <td>
+          4534
+          -
+          4541
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; Down
+        </td>
+      </tr><tr>
+        <td>
+          130
+        </td>
+        <td>
+          334
+        </td>
+        <td>
+          4572
+          -
+          4589
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; lift.direction
+        </td>
+      </tr><tr>
+        <td>
+          133
+        </td>
+        <td>
+          335
+        </td>
+        <td>
+          4649
+          -
+          4703
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          dequeueAll
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lift.people.dequeueAll(_.destination == lift.position)
+        </td>
+      </tr><tr>
+        <td>
+          136
+        </td>
+        <td>
+          336
+        </td>
+        <td>
+          4752
+          -
+          4782
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          building.floors(lift.position)
+        </td>
+      </tr><tr>
+        <td>
+          139
+        </td>
+        <td>
+          337
+        </td>
+        <td>
+          4844
+          -
+          4856
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          hasRoom
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lift.hasRoom
+        </td>
+      </tr><tr>
+        <td>
+          139
+        </td>
+        <td>
+          339
+        </td>
+        <td>
+          4873
+          -
+          4885
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          accepts
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lift.accepts
+        </td>
+      </tr><tr>
+        <td>
+          139
+        </td>
+        <td>
+          338
+        </td>
+        <td>
+          4860
+          -
+          4886
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          exists
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          queue.exists(lift.accepts)
+        </td>
+      </tr><tr>
+        <td>
+          140
+        </td>
+        <td>
+          340
+        </td>
+        <td>
+          4909
+          -
+          4941
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          dequeueFirst
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          queue.dequeueFirst(lift.accepts)
+        </td>
+      </tr><tr>
+        <td>
+          140
+        </td>
+        <td>
+          342
+        </td>
+        <td>
+          4909
+          -
+          4945
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          get
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          queue.dequeueFirst(lift.accepts).get
+        </td>
+      </tr><tr>
+        <td>
+          140
+        </td>
+        <td>
+          341
+        </td>
+        <td>
+          4928
+          -
+          4940
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          accepts
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lift.accepts
+        </td>
+      </tr><tr>
+        <td>
+          141
+        </td>
+        <td>
+          343
+        </td>
+        <td>
+          4952
+          -
+          4979
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          enqueue
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lift.people.enqueue(person)
+        </td>
+      </tr><tr>
+        <td>
+          144
+        </td>
+        <td>
+          345
+        </td>
+        <td>
+          5072
+          -
+          5072
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          
+        </td>
+      </tr><tr>
+        <td>
+          144
+        </td>
+        <td>
+          344
+        </td>
+        <td>
+          5075
+          -
+          5118
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          getNextPositionAndDirection
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          getNextPositionAndDirection(building, lift)
+        </td>
+      </tr><tr>
+        <td>
+          152
+        </td>
+        <td>
+          346
+        </td>
+        <td>
+          5403
+          -
+          5424
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          +=
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          stops += nextPosition
+        </td>
+      </tr><tr>
+        <td>
+          152
+        </td>
+        <td>
+          348
+        </td>
+        <td>
+          5424
+          -
+          5424
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          
+        </td>
+      </tr><tr>
+        <td>
+          152
+        </td>
+        <td>
+          347
+        </td>
+        <td>
+          5403
+          -
+          5424
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          stops += nextPosition
+        </td>
+      </tr><tr>
+        <td>
+          157
+        </td>
+        <td>
+          362
+        </td>
+        <td>
+          5443
+          -
+          5482
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          getNextPositionAndDirection
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          private def getNextPositionAndDirection
+        </td>
+      </tr><tr>
+        <td>
+          158
+        </td>
+        <td>
+          352
+        </td>
+        <td>
+          5541
+          -
+          5844
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          List(                                          // Build a list of primary targets\n      lift.nearestPassengerTarget,                 // request from passenger already on the lift\n      building.nearestRequestInSameDirection(lift) // request from people [waiting in AND going to] the same direction\n    )
+        </td>
+      </tr><tr>
+        <td>
+          158
+        </td>
+        <td>
+          351
+        </td>
+        <td>
+          5541
+          -
+          5852
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          flatten
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          List(                                          // Build a list of primary targets\n      lift.nearestPassengerTarget,                 // request from passenger already on the lift\n      building.nearestRequestInSameDirection(lift) // request from people [waiting in AND going to] the same direction\n    ).flatten
+        </td>
+      </tr><tr>
+        <td>
+          158
+        </td>
+        <td>
+          350
+        </td>
+        <td>
+          5541
+          -
+          5959
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          minByOption
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          List(                                          // Build a list of primary targets\n      lift.nearestPassengerTarget,                 // request from passenger already on the lift\n      building.nearestRequestInSameDirection(lift) // request from people [waiting in AND going to] the same direction\n    ).flatten // turn list of options into list of Integers\n      .minByOption(floor =&gt; Math.abs(floor - lift.position))
+        </td>
+      </tr><tr>
+        <td>
+          159
+        </td>
+        <td>
+          353
+        </td>
+        <td>
+          5629
+          -
+          5656
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          nearestPassengerTarget
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          lift.nearestPassengerTarget
+        </td>
+      </tr><tr>
+        <td>
+          160
+        </td>
+        <td>
+          354
+        </td>
+        <td>
+          5726
+          -
+          5770
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          nearestRequestInSameDirection
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          building.nearestRequestInSameDirection(lift)
+        </td>
+      </tr><tr>
+        <td>
+          162
+        </td>
+        <td>
+          355
+        </td>
+        <td>
+          5927
+          -
+          5958
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          abs
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          Math.abs(floor - lift.position)
+        </td>
+      </tr><tr>
+        <td>
+          164
+        </td>
+        <td>
+          356
+        </td>
+        <td>
+          6050
+          -
+          6076
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; (floor, lift.direction)
+        </td>
+      </tr><tr>
+        <td>
+          165
+        </td>
+        <td>
+          361
+        </td>
+        <td>
+          6144
+          -
+          6395
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt;                         // otherwise choose a new target\n          lift.direction match\n            case Up   =&gt; upwardsNewTarget(building, lift)   // look for people above going downwards\n            case Down =&gt; downwardsNewTarget(building, lift)
+        </td>
+      </tr><tr>
+        <td>
+          167
+        </td>
+        <td>
+          358
+        </td>
+        <td>
+          6257
+          -
+          6292
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; upwardsNewTarget(building, lift)
+        </td>
+      </tr><tr>
+        <td>
+          167
+        </td>
+        <td>
+          357
+        </td>
+        <td>
+          6260
+          -
+          6292
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          upwardsNewTarget
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          upwardsNewTarget(building, lift)
+        </td>
+      </tr><tr>
+        <td>
+          168
+        </td>
+        <td>
+          360
+        </td>
+        <td>
+          6358
+          -
+          6395
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; downwardsNewTarget(building, lift)
+        </td>
+      </tr><tr>
+        <td>
+          168
+        </td>
+        <td>
+          359
+        </td>
+        <td>
+          6361
+          -
+          6395
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          downwardsNewTarget
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          downwardsNewTarget(building, lift)
+        </td>
+      </tr><tr>
+        <td>
+          170
+        </td>
+        <td>
+          368
+        </td>
+        <td>
+          6438
+          -
+          6468
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          downwardsNewTarget
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          private def downwardsNewTarget
+        </td>
+      </tr><tr>
+        <td>
+          171
+        </td>
+        <td>
+          363
+        </td>
+        <td>
+          6527
+          -
+          6560
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          lowestFloorGoingUp
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          building.lowestFloorGoingUp(lift)
+        </td>
+      </tr><tr>
+        <td>
+          172
+        </td>
+        <td>
+          364
+        </td>
+        <td>
+          6591
+          -
+          6606
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; (lowest, Up)
+        </td>
+      </tr><tr>
+        <td>
+          173
+        </td>
+        <td>
+          367
+        </td>
+        <td>
+          6631
+          -
+          6691
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; (building.highestFloorGoingDown(lift).getOrElse(0), Down)
+        </td>
+      </tr><tr>
+        <td>
+          173
+        </td>
+        <td>
+          366
+        </td>
+        <td>
+          6635
+          -
+          6671
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          highestFloorGoingDown
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          building.highestFloorGoingDown(lift)
+        </td>
+      </tr><tr>
+        <td>
+          173
+        </td>
+        <td>
+          365
+        </td>
+        <td>
+          6635
+          -
+          6684
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          getOrElse
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          building.highestFloorGoingDown(lift).getOrElse(0)
+        </td>
+      </tr><tr>
+        <td>
+          175
+        </td>
+        <td>
+          374
+        </td>
+        <td>
+          6695
+          -
+          6723
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          upwardsNewTarget
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          private def upwardsNewTarget
+        </td>
+      </tr><tr>
+        <td>
+          176
+        </td>
+        <td>
+          369
+        </td>
+        <td>
+          6782
+          -
+          6818
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          highestFloorGoingDown
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          building.highestFloorGoingDown(lift)
+        </td>
+      </tr><tr>
+        <td>
+          177
+        </td>
+        <td>
+          370
+        </td>
+        <td>
+          6850
+          -
+          6868
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; (highest, Down)
+        </td>
+      </tr><tr>
+        <td>
+          178
+        </td>
+        <td>
+          373
+        </td>
+        <td>
+          6894
+          -
+          6949
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; (building.lowestFloorGoingUp(lift).getOrElse(0), Up)
+        </td>
+      </tr><tr>
+        <td>
+          178
+        </td>
+        <td>
+          372
+        </td>
+        <td>
+          6898
+          -
+          6931
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          lowestFloorGoingUp
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          building.lowestFloorGoingUp(lift)
+        </td>
+      </tr><tr>
+        <td>
+          178
+        </td>
+        <td>
+          371
+        </td>
+        <td>
+          6898
+          -
+          6944
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          getOrElse
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          building.lowestFloorGoingUp(lift).getOrElse(0)
+        </td>
+      </tr>
+    </table>
+          </div>
+        </div>
+      </body>
+    </html>
