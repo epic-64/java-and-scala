@@ -1,9 +1,6 @@
 package ScalaPlayground.HigherKindedTypes.HktSolution
 
-import scala.util.chaining.*
-
 case class User(name: String, age: Int)
-
 case class Box[A](value: A)
 case class Collection[A](value: Seq[A])
 
