@@ -9,29 +9,35 @@ trait PinchEnabler[F[_]]:
     def transform[B](f: A => B): F[B]
     def pinch(f: A => Unit): F[A]
 
-object MyBox:
+object PinchEnablerInstances:
   given PinchEnabler[MyBox] with
     extension [A](container: MyBox[A])
       def transform[B](f: A => B): MyBox[B] = MyBox(f(container.value))
-      def pinch(f: A => Unit): MyBox[A] = { f(container.value); container }
+      def pinch(f: A => Unit): MyBox[A]     = { f(container.value); container }
 
-object MyCollection:
   given PinchEnabler[MyCollection] with
     extension [A](container: MyCollection[A])
       def transform[B](f: A => B): MyCollection[B] = MyCollection(container.value.map(f))
-      def pinch(f: A => Unit): MyCollection[A] = { container.value.foreach(f); container }
+      def pinch(f: A => Unit): MyCollection[A]     = { container.value.foreach(f); container }
+
+  given PinchEnabler[Seq] with
+    extension [A](container: Seq[A])
+      def transform[B](f: A => B): Seq[B] = container.map(f)
+      def pinch(f: A => Unit): Seq[A]     = { container.foreach(f); container }
 
 object MagicLibrary:
-  def doIt[F[_] : PinchEnabler, A, B](container: F[A])(f: A => B): F[B] =
+  def doIt[F[_]: PinchEnabler, A, B](container: F[A])(f: A => B): F[B] =
     container.transform(f).pinch(a => println(s"Pinched: $a"))
 
 @main def run(): Unit =
-  val m = MagicLibrary
-  
-  m.doIt(MyBox(42))(_ + 1)
-  m.doIt(MyBox("Hello"))(_ + " World")
-  m.doIt(MyBox(User("Alice", 42)))(user => user.copy(name = user.name.toUpperCase))
-  
-  m.doIt(MyCollection(Seq(1, 2, 3)))(_ + 1)
-  m.doIt(MyCollection(Seq("World", "Mars", "Jupiter")))("Hello " + _)
-  m.doIt(MyCollection(Seq(User("Alice", 42), User("Bob", 24))))(user => user.copy(name = user.name.toUpperCase))
+  import MagicLibrary.doIt
+  import PinchEnablerInstances.given
+
+  doIt(MyBox(42))(_ + 1)
+  doIt(MyBox("Hello"))(_ + " World")
+  doIt(MyBox(User("Alice", 42)))(user => user.copy(name = user.name.toUpperCase))
+
+  doIt(MyCollection(Seq(1, 2, 3)))(_ + 1)
+  doIt(MyCollection(Seq("World", "Mars", "Jupiter")))("Hello " + _)
+
+  doIt(Seq(User("Alice", 42), User("Bob", 24)))(user => user.copy(name = user.name.toUpperCase))
