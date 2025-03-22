@@ -9,6 +9,10 @@ trait PinchEnabler[F[_]]:
     def transform[B](f: A => B): F[B]
     def pinch(f: A => Unit): F[A]
 
+object MagicLibrary:
+  def doIt[F[_]: PinchEnabler, A, B](container: F[A])(f: A => B): F[B] =
+    container.transform(f).pinch(a => println(s"Pinched: $a"))
+
 object OfficialPinchEnablers:
   given PinchEnabler[MyBox] with
     extension [A](container: MyBox[A])
@@ -19,10 +23,6 @@ object OfficialPinchEnablers:
     extension [A](container: MyCollection[A])
       def transform[B](f: A => B): MyCollection[B] = MyCollection(container.value.map(f))
       def pinch(f: A => Unit): MyCollection[A]     = { container.value.foreach(f); container }
-
-object MagicLibrary:
-  def doIt[F[_]: PinchEnabler, A, B](container: F[A])(f: A => B): F[B] =
-    container.transform(f).pinch(a => println(s"Pinched: $a"))
 
 @main def run(): Unit =
   import MagicLibrary.doIt
@@ -38,6 +38,6 @@ object MagicLibrary:
   given PinchEnabler[Seq] with
     extension [A](container: Seq[A])
       def transform[B](f: A => B): Seq[B] = container.map(f)
-      def pinch(f: A => Unit): Seq[A] = { container.foreach(f); container }
+      def pinch(f: A => Unit): Seq[A]     = { container.foreach(f); container }
 
   doIt(Seq(User("Alice", 42), User("Bob", 24)))(user => user.copy(name = user.name.toUpperCase))
