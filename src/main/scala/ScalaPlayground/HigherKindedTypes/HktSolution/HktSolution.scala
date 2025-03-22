@@ -20,12 +20,6 @@ object OfficialPinchEnablers:
       def transform[B](f: A => B): MyCollection[B] = MyCollection(container.value.map(f))
       def pinch(f: A => Unit): MyCollection[A]     = { container.value.foreach(f); container }
 
-object MyPinchEnablerInstances:
-  given PinchEnabler[Seq] with
-    extension [A](container: Seq[A])
-      def transform[B](f: A => B): Seq[B] = container.map(f)
-      def pinch(f: A => Unit): Seq[A]     = { container.foreach(f); container }
-
 object MagicLibrary:
   def doIt[F[_]: PinchEnabler, A, B](container: F[A])(f: A => B): F[B] =
     container.transform(f).pinch(a => println(s"Pinched: $a"))
@@ -33,7 +27,6 @@ object MagicLibrary:
 @main def run(): Unit =
   import MagicLibrary.doIt
   import OfficialPinchEnablers.given
-  import MyPinchEnablerInstances.given
 
   doIt(MyBox(42))(_ + 1)
   doIt(MyBox("Hello"))(_ + " World")
@@ -41,5 +34,10 @@ object MagicLibrary:
 
   doIt(MyCollection(Seq(1, 2, 3)))(_ + 1)
   doIt(MyCollection(Seq("World", "Mars", "Jupiter")))("Hello " + _)
+
+  given PinchEnabler[Seq] with
+    extension [A](container: Seq[A])
+      def transform[B](f: A => B): Seq[B] = container.map(f)
+      def pinch(f: A => Unit): Seq[A] = { container.foreach(f); container }
 
   doIt(Seq(User("Alice", 42), User("Bob", 24)))(user => user.copy(name = user.name.toUpperCase))
