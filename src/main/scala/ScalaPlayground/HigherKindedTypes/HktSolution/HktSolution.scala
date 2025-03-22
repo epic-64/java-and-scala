@@ -9,7 +9,7 @@ trait PinchEnabler[F[_]]:
     def transform[B](f: A => B): F[B]
     def pinch(f: A => Unit): F[A]
 
-object PinchEnablerInstances:
+object OfficialPinchEnablers:
   given PinchEnabler[MyBox] with
     extension [A](container: MyBox[A])
       def transform[B](f: A => B): MyBox[B] = MyBox(f(container.value))
@@ -20,6 +20,7 @@ object PinchEnablerInstances:
       def transform[B](f: A => B): MyCollection[B] = MyCollection(container.value.map(f))
       def pinch(f: A => Unit): MyCollection[A]     = { container.value.foreach(f); container }
 
+object MyPinchEnablerInstances:
   given PinchEnabler[Seq] with
     extension [A](container: Seq[A])
       def transform[B](f: A => B): Seq[B] = container.map(f)
@@ -31,7 +32,8 @@ object MagicLibrary:
 
 @main def run(): Unit =
   import MagicLibrary.doIt
-  import PinchEnablerInstances.given
+  import OfficialPinchEnablers.given
+  import MyPinchEnablerInstances.given
 
   doIt(MyBox(42))(_ + 1)
   doIt(MyBox("Hello"))(_ + " World")

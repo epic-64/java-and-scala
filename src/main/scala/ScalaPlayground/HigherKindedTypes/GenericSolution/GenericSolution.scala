@@ -29,4 +29,5 @@ object MagicLibrary:
   
   doItMyCollection(MyCollection(Seq(1, 2, 3)))(_ + 1)
   doItMyCollection(MyCollection(Seq("World", "Mars", "Jupiter")))("Hello " + _)
+  
   doItSeq(Seq(User("Alice", 42), User("Bob", 24)))(user => user.copy(name = user.name.toUpperCase))
