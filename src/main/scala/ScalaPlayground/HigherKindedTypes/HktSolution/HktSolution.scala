@@ -10,7 +10,7 @@ trait PinchEnabler[F[_]]:
     def pinch(f: A => Unit): F[A]
 
 object MagicLibrary:
-  def doIt[F[_]: PinchEnabler, A, B](container: F[A])(f: A => B): F[B] =
+  def doIt[F[_], A, B](container: F[A])(f: A => B)(using enabler: PinchEnabler[F]): F[B] =
     container.transform(f).pinch(a => println(s"Pinched: $a"))
 
 object OfficialPinchEnablers:
