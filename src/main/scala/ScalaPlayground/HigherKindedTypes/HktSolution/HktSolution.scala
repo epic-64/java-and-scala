@@ -13,20 +13,20 @@ object MagicLibrary:
   def doIt[F[_], A, B](container: F[A])(f: A => B)(using enabler: PinchEnabler[F]): F[B] =
     container.transform(f).pinch(a => println(s"Pinched: $a"))
 
-object OfficialPinchEnablers:
-  given PinchEnabler[MyBox] with
-    extension [A](container: MyBox[A])
-      def transform[B](f: A => B): MyBox[B] = MyBox(f(container.value))
-      def pinch(f: A => Unit): MyBox[A]     = { f(container.value); container }
+  object OfficialPinchEnablers:
+    given PinchEnabler[MyBox] with
+      extension [A](container: MyBox[A])
+        def transform[B](f: A => B): MyBox[B] = MyBox(f(container.value))
+        def pinch(f: A => Unit): MyBox[A] = { f(container.value); container }
 
-  given PinchEnabler[MyCollection] with
-    extension [A](container: MyCollection[A])
-      def transform[B](f: A => B): MyCollection[B] = MyCollection(container.value.map(f))
-      def pinch(f: A => Unit): MyCollection[A]     = { container.value.foreach(f); container }
+    given PinchEnabler[MyCollection] with
+      extension [A](container: MyCollection[A])
+        def transform[B](f: A => B): MyCollection[B] = MyCollection(container.value.map(f))
+        def pinch(f: A => Unit): MyCollection[A] = { container.value.foreach(f); container }
 
 @main def run(): Unit =
   import MagicLibrary.doIt
-  import OfficialPinchEnablers.given
+  import MagicLibrary.OfficialPinchEnablers.given
 
   doIt(MyBox(42))(_ + 1)
   doIt(MyBox("Hello"))(_ + " World")
