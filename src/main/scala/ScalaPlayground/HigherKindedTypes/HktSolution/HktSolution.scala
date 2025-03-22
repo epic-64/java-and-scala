@@ -5,24 +5,22 @@ case class MyBox[A](value: A)
 case class MyCollection[A](value: List[A])
 
 trait PinchEnabler[F[_]]:
-  extension [A](container: F[A])
-    def transform[B](f: A => B): F[B]
-    def pinch(f: A => Unit): F[A]
+  def transform[A, B](container: F[A], f: A => B): F[B]
+  def pinch[A](container: F[A], f: A => Unit): F[A]
 
 object MagicLibrary:
   def doIt[F[_], A, B](container: F[A])(f: A => B)(using enabler: PinchEnabler[F]): F[B] =
-    container.transform(f).pinch(a => println(s"Pinched: $a"))
+    val transformed = enabler.transform(container, f)
+    enabler.pinch(transformed, a => println(s"Pinched: $a"))
 
   object OfficialPinchEnablers:
     given PinchEnabler[MyBox] with
-      extension [A](container: MyBox[A])
-        def transform[B](f: A => B): MyBox[B] = MyBox(f(container.value))
-        def pinch(f: A => Unit): MyBox[A] = { f(container.value); container }
-
+      def transform[A, B](box: MyBox[A], f: A => B): MyBox[B] = MyBox(f(box.value))
+      def pinch[A](box: MyBox[A], f: A => Unit): MyBox[A] = { f(box.value); box}
+  
     given PinchEnabler[MyCollection] with
-      extension [A](container: MyCollection[A])
-        def transform[B](f: A => B): MyCollection[B] = MyCollection(container.value.map(f))
-        def pinch(f: A => Unit): MyCollection[A] = { container.value.foreach(f); container }
+      def transform[A, B](c: MyCollection[A], f: A => B): MyCollection[B] = MyCollection(c.value.map(f))
+      def pinch[A](c: MyCollection[A], f: A => Unit): MyCollection[A] = {c.value.foreach(f); c}
 
 @main def run(): Unit =
   import MagicLibrary.doIt
@@ -36,8 +34,7 @@ object MagicLibrary:
   doIt(MyCollection(List("World", "Mars", "Jupiter")))("Hello " + _)
 
   given PinchEnabler[Seq] with
-    extension [A](container: Seq[A])
-      def transform[B](f: A => B): Seq[B] = container.map(f)
-      def pinch(f: A => Unit): Seq[A]     = { container.foreach(f); container }
+    def transform[A, B](s: Seq[A], f: A => B): Seq[B] = s.map(f)
+    def pinch[A](s: Seq[A], f: A => Unit): Seq[A] = { s.foreach(f); s }
 
   doIt(Seq(User("Alice", 42), User("Bob", 24)))(user => user.copy(name = user.name.toUpperCase))
