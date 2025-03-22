@@ -26,9 +26,6 @@ object MagicLibrary:
     container.transform(f).pinch(a => println(s"Pinched: $a"))
 
 @main def run(): Unit =
-  import MyBox.given
-  import MyCollection.given
-  
   val m = MagicLibrary
   
   m.doIt(MyBox(42))(_ + 1)
