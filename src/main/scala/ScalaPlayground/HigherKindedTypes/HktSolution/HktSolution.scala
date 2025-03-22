@@ -2,7 +2,7 @@ package ScalaPlayground.HigherKindedTypes.HktSolution
 
 case class User(name: String, age: Int)
 case class MyBox[A](value: A)
-case class MyCollection[A](value: Seq[A])
+case class MyCollection[A](value: List[A])
 
 trait PinchEnabler[F[_]]:
   extension [A](container: F[A])
@@ -32,8 +32,8 @@ object MagicLibrary:
   doIt(MyBox("Hello"))(_ + " World")
   doIt(MyBox(User("Alice", 42)))(user => user.copy(name = user.name.toUpperCase))
 
-  doIt(MyCollection(Seq(1, 2, 3)))(_ + 1)
-  doIt(MyCollection(Seq("World", "Mars", "Jupiter")))("Hello " + _)
+  doIt(MyCollection(List(1, 2, 3)))(_ + 1)
+  doIt(MyCollection(List("World", "Mars", "Jupiter")))("Hello " + _)
 
   given PinchEnabler[Seq] with
     extension [A](container: Seq[A])
