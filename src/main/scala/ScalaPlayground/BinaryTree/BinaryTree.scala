@@ -94,7 +94,7 @@ case class Tree[A](value: A, left: BinaryTree[A], right: BinaryTree[A]) extends 
     val pathFromLocal  = findPathToRoot(from).dropWhile(_ != sharedAncestor).reverse :+ sharedAncestor
     val pathFromTarget = findPathToRoot(to).dropWhile(_ != sharedAncestor)
 
-    pathFromLocal.dropRight(1) ++ pathFromTarget.tail
+    pathFromLocal.dropRight(1) ++ pathFromTarget.drop(1)
   }
 
   def findPathToRoot[B >: A](target: B)(using ord: Ordering[B]): List[B] =
@@ -149,13 +149,13 @@ class TreeFormatter[A](padding: Int = 4) {
       var i    = half
 
       if (lines.nonEmpty) {
-        i = lines.head.indexOf('*') // Marker position
+        i = lines.headOption.getOrElse("").indexOf('*') // Marker position
         val line = (left, right) match {
           case (EmptyTree, EmptyTree) => " " * i + "┌─┘"
           case (_, EmptyTree)         => " " * i + "┌─┘"
           case (EmptyTree, _)         => " " * indent(lines, i - 2) + "└─┐"
           case (_, _)                 =>
-            val dist = lines.head.length - 1 - i // Calculate distance between roots
+            val dist = lines.headOption.getOrElse("").length - 1 - i // Calculate distance between roots
             s"${" " * i}┌${"─" * (dist / 2 - 1)}┴${"─" * ((dist - 1) / 2)}┐"
         }
         lines(0) = line

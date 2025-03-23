@@ -14,3 +14,12 @@ libraryDependencies ++= Seq(
 )
 
 coverageEnabled := true
+
+wartremoverWarnings ++= Seq(
+  // Wart.Any
+  // Wart.Null,
+)
+
+wartremoverErrors ++= Seq(
+  // Wart.IterableOps,
+)
