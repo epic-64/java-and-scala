@@ -108,15 +108,11 @@ object LiftLogic {
     val state = initialState.copy(stops = initialState.stops :+ initialState.lift.position)
 
     @tailrec
-    def resolve(state: State): State = {
-      println(state.toPrintable)
+    def resolve(state: State): State =
       val newState = step(state)
-      println(newState.toPrintable)
-
       val State(building, lift, _) = newState
       if building.isEmpty && lift.isEmpty && lift.position == 0 then newState
       else resolve(step(newState))
-    }
 
     resolve(state)
   }
