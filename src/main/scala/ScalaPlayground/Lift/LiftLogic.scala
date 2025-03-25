@@ -25,7 +25,7 @@ case class Person(position: Floor, destination: Floor) {
 
 case class Lift(
     position: Floor,
-    var direction: Direction,
+    direction: Direction,
     people: mutable.Queue[Person],
     capacity: Int
 ) {
@@ -100,10 +100,10 @@ object Dinglemouse {
 
 object LiftLogic {
   def simulate(initialState: State): State = {
-    var state = initialState
-
+    val state = initialState
+    
     state.stops += state.lift.position // register initial position as the first stop
-    // println(state.toPrintable)         // draw the initial state of the lift
+    // println(state.toPrintable)      // draw the initial state of the lift
 
     @tailrec
     def doStep(state: State): State = {
@@ -123,30 +123,32 @@ object LiftLogic {
     val maxFloor = building.floors.keys.maxOption.getOrElse(0)
 
     // Always force the lift into a valid direction
-    lift.direction = lift.position match
+    val correctedDirection = lift.position match
       case 0                  => Up
       case p if p == maxFloor => Down
       case _                  => lift.direction
+      
+    val newLift = lift.copy(direction = correctedDirection)
 
     // Off-board people who reached their destination
-    lift.people.dequeueAll(_.destination == lift.position)
+    newLift.people.dequeueAll(_.destination == lift.position)
 
     // get current floor queue
-    val queue = building.floors(lift.position)
+    val queue = building.floors(newLift.position)
 
     // Transfer people from floor queue into lift
-    while lift.hasRoom && queue.exists(lift.accepts) do
-      val person = queue.dequeueFirst(lift.accepts).get
-      lift.people.enqueue(person)
+    while newLift.hasRoom && queue.exists(newLift.accepts) do
+      val person = queue.dequeueFirst(newLift.accepts).get
+      newLift.people.enqueue(person)
 
-    val oldPosition                   = lift.position
-    val (nextPosition, nextDirection) = getNextPositionAndDirection(building, lift)
+    val oldPosition                   = newLift.position
+    val (nextPosition, nextDirection) = getNextPositionAndDirection(building, newLift)
 
     // Register the stop. I added the extra condition because of a bug
     // by which the lift sometimes takes two turns for the very last move 🤔
     if oldPosition != nextPosition then stops += nextPosition
 
-    state.copy(building, lift.copy(nextPosition, nextDirection))
+    state.copy(building, newLift.copy(nextPosition, nextDirection))
   }
 
   private def getNextPositionAndDirection(building: Building, lift: Lift): (Floor, Direction) =
