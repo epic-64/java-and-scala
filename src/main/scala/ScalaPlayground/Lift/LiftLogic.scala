@@ -5,7 +5,7 @@ package ScalaPlayground.Lift
 import ScalaPlayground.Lift.Direction.{Down, Up}
 
 import scala.annotation.tailrec
-import scala.collection.immutable.ListMap
+import scala.collection.immutable.{ListMap, Queue}
 import scala.collection.mutable
 
 type Floor = Int
@@ -26,7 +26,7 @@ case class Person(position: Floor, destination: Floor) {
 case class Lift(
     position: Floor,
     direction: Direction,
-    people: mutable.Queue[Person],
+    people: Queue[Person],
     capacity: Int
 ) {
   def isFull: Boolean    = people.size == capacity
@@ -93,7 +93,7 @@ object Dinglemouse {
         }
         .to(ListMap)
 
-    val lift     = Lift(position = 0, Direction.Up, people = mutable.Queue.empty, capacity)
+    val lift     = Lift(position = 0, Direction.Up, people = Queue.empty, capacity)
     val building = Building(floors)
 
     val initialState = State(building = building, lift = lift, stops = List.empty)
@@ -130,21 +130,21 @@ object LiftLogic {
     )
 
     // Off-board people who reached their destination
-    lift2.people.dequeueAll(_.destination == lift.position)
+    val lift3 = lift2.copy(people = lift2.people.filter(_.destination != lift.position))
 
     @tailrec
     def pickup(lift: Lift, queue: mutable.Queue[Person]): Lift =
       queue.dequeueFirst(lift.accepts) match
         case None         => lift
         case Some(person) =>
-          lift.people.enqueue(person)
-          pickup(lift, queue)
+          val liftWithMorePeople = lift.copy(people = lift.people.enqueue(person))
+          pickup(liftWithMorePeople, queue)
 
-    val queue = building.floors(lift2.position)
-    val lift3 = pickup(lift2, queue)
+    val queue = building.floors(lift3.position)
+    val lift4 = pickup(lift3, queue)
 
-    val oldPosition                   = lift3.position
-    val (nextPosition, nextDirection) = getNextPositionAndDirection(building, lift3)
+    val oldPosition                   = lift4.position
+    val (nextPosition, nextDirection) = getNextPositionAndDirection(building, lift4)
 
     // Register the stop. I added the extra condition because of a bug
     // by which the lift sometimes takes two turns for the very last move 🤔
@@ -152,7 +152,7 @@ object LiftLogic {
       case _ if oldPosition != nextPosition => stops :+ nextPosition
       case _                                => stops
 
-    state.copy(building, lift3.copy(nextPosition, nextDirection), newStops)
+    state.copy(building, lift4.copy(nextPosition, nextDirection), newStops)
   }
 
   private def getNextPositionAndDirection(building: Building, lift: Lift): (Floor, Direction) =
