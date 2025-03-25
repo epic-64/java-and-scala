@@ -143,7 +143,7 @@ object LiftLogic {
 
     val queue           = building.floors(lift2.position)
     val (lift3, queue2) = pickup(lift2, queue)
-    val floors2         = building.floors.updated(lift2.position, queue2)
+    val floors2         = building.floors.updated(lift3.position, queue2)
     val building2       = building.copy(floors2)
 
     val (nextPosition, nextDirection) = getNextPositionAndDirection(building2, lift3)
