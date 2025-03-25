@@ -119,18 +119,14 @@ object LiftLogic {
   }
 
   private def step(state: State): State = {
-    // Destructure state into convenient variables
-    val State(building, lift, stops) = state
-
-    val maxFloor = building.floors.keys.maxOption.getOrElse(0)
+    import state.{building, lift, stops}
 
     // Always force the lift into a valid direction
-    val correctedDirection = lift.position match
-      case 0                  => Up
-      case p if p == maxFloor => Down
-      case _                  => lift.direction
-
-    val lift2 = lift.copy(direction = correctedDirection)
+    val lift2 = lift.copy(direction = lift.position match
+      case 0                                  => Up
+      case p if p == building.floors.size - 1 => Down
+      case _                                  => lift.direction
+    )
 
     // Off-board people who reached their destination
     lift2.people.dequeueAll(_.destination == lift.position)
