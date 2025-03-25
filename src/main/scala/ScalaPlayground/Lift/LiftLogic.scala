@@ -101,7 +101,7 @@ object Dinglemouse {
 object LiftLogic {
   def simulate(initialState: State): State = {
     val state = initialState
-    
+
     state.stops += state.lift.position // register initial position as the first stop
     // println(state.toPrintable)      // draw the initial state of the lift
 
@@ -127,28 +127,31 @@ object LiftLogic {
       case 0                  => Up
       case p if p == maxFloor => Down
       case _                  => lift.direction
-      
-    val newLift = lift.copy(direction = correctedDirection)
+
+    val lift2 = lift.copy(direction = correctedDirection)
 
     // Off-board people who reached their destination
-    newLift.people.dequeueAll(_.destination == lift.position)
+    lift2.people.dequeueAll(_.destination == lift.position)
+    
+    @tailrec
+    def transferPeople(lift: Lift, queue: mutable.Queue[Person]): Lift =
+      queue.dequeueFirst(lift.accepts) match
+        case None => lift
+        case Some(person) =>
+          lift.people.enqueue(person)
+          transferPeople(lift, queue)
 
-    // get current floor queue
-    val queue = building.floors(newLift.position)
+    val queue = building.floors(lift2.position)
+    val lift3 = transferPeople(lift2, queue)
 
-    // Transfer people from floor queue into lift
-    while newLift.hasRoom && queue.exists(newLift.accepts) do
-      val person = queue.dequeueFirst(newLift.accepts).get
-      newLift.people.enqueue(person)
-
-    val oldPosition                   = newLift.position
-    val (nextPosition, nextDirection) = getNextPositionAndDirection(building, newLift)
+    val oldPosition                   = lift3.position
+    val (nextPosition, nextDirection) = getNextPositionAndDirection(building, lift3)
 
     // Register the stop. I added the extra condition because of a bug
     // by which the lift sometimes takes two turns for the very last move 🤔
     if oldPosition != nextPosition then stops += nextPosition
 
-    state.copy(building, newLift.copy(nextPosition, nextDirection))
+    state.copy(building, lift3.copy(nextPosition, nextDirection))
   }
 
   private def getNextPositionAndDirection(building: Building, lift: Lift): (Floor, Direction) =
