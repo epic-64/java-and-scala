@@ -109,11 +109,13 @@ object LiftLogic {
 
     @tailrec
     def resolve(state: State): State = {
-      import state.{building, lift}
+      println(state.toPrintable)
+      val newState = step(state)
+      println(newState.toPrintable)
 
-      if building.isEmpty && lift.isEmpty && lift.position == 0
-      then state
-      else resolve(step(state))
+      val State(building, lift, _) = newState
+      if building.isEmpty && lift.isEmpty && lift.position == 0 then newState
+      else resolve(step(newState))
     }
 
     resolve(state)
@@ -136,9 +138,11 @@ object LiftLogic {
     @tailrec
     def pickup(lift: Lift, queue: Queue[Person]): (Lift, Queue[Person]) =
       queue.filter(lift.accepts).dequeueOption match
-        case None                       => (lift, queue)
-        case Some(person, smallerQueue) =>
-          pickup(lift.copy(people = lift.people.enqueue(person)), queue = smallerQueue)
+        case None            => (lift, queue)
+        case Some(person, _) =>
+          val fullerLift   = lift.copy(people = lift.people.enqueue(person))
+          val emptierQueue = queue.diff(Seq(person))
+          pickup(fullerLift, emptierQueue)
 
     // pick up people from the current floor
     val (lift3, floorQueue) = pickup(lift = lift2, queue = building.floors(lift2.position))
