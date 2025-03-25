@@ -60,25 +60,7 @@ case class Building(floors: ListMap[Floor, mutable.Queue[Person]]) {
       case Down => peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
 }
 
-case class State(building: Building, lift: Lift, stops: List[Floor]) {
-  def toPrintable: String = {
-    val sb = new StringBuilder()
-
-    sb.append(s"${stops.length} stops: ${stops.mkString(", ")}\n")
-
-    building.floors.toSeq.reverse.foreach { case (floor, queue) =>
-      sb.append(s"| $floor | ${queue.reverse.map(_.destination).mkString(", ").padTo(20, ' ')} |")
-
-      // draw the lift if it is on the current level
-      if lift.position == floor
-      then sb.append(s" | ${lift.people.map(_.destination).mkString(", ").padTo(15, ' ')} |")
-
-      sb.append('\n')
-    }
-
-    sb.toString()
-  }
-}
+case class State(building: Building, lift: Lift, stops: List[Floor])
 
 // Excuse the name. Dinglemouse.theLift() is how the function is called in the Codewars test suite
 object Dinglemouse {
@@ -97,6 +79,27 @@ object Dinglemouse {
     val finalState   = LiftLogic.simulate(initialState)
 
     finalState.stops.toArray
+  }
+}
+
+extension (state: State) {
+  def toPrintable: String = {
+    import state.{building, stops, lift}
+    
+    val sb = new StringBuilder()
+    sb.append(s"${stops.length} stops: ${stops.mkString(", ")}\n")
+
+    state.building.floors.toSeq.reverse.foreach { case (floor, queue) =>
+      sb.append(s"| $floor | ${queue.reverse.map(_.destination).mkString(", ").padTo(20, ' ')} |")
+
+      // draw the lift if it is on the current level
+      if lift.position == floor
+      then sb.append(s" | ${lift.people.map(_.destination).mkString(", ").padTo(15, ' ')} |")
+
+      sb.append('\n')
+    }
+
+    sb.toString()
   }
 }
 
