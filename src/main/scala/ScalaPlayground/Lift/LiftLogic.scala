@@ -136,18 +136,21 @@ object LiftLogic {
     @tailrec
     def pickup(lift: Lift, queue: Queue[Person]): (Lift, Queue[Person]) =
       queue.filter(lift.accepts).dequeueOption match
-        case None                   => (lift, queue)
-        case Some(person, newQueue) =>
-          val liftWithMorePeople = lift.copy(people = lift.people.enqueue(person))
-          pickup(liftWithMorePeople, newQueue)
+        case None                       => (lift, queue)
+        case Some(person, smallerQueue) =>
+          pickup(lift.copy(people = lift.people.enqueue(person)), queue = smallerQueue)
 
-    val queue           = building.floors(lift2.position)
-    val (lift3, queue2) = pickup(lift2, queue)
-    val floors2         = building.floors.updated(lift3.position, queue2)
-    val building2       = building.copy(floors2)
+    // pick up people from the current floor
+    val (lift3, floorQueue) = pickup(lift = lift2, queue = building.floors(lift2.position))
 
+    // update the building to reflect the updated floor
+    val building2 = building.copy(floors = building.floors.updated(lift3.position, floorQueue))
+
+    // core task: find the new target and direction
     val (nextPosition, nextDirection) = getNextPositionAndDirection(building2, lift3)
-    val lift4                         = lift3.copy(nextPosition, nextDirection)
+
+    // update lift parameters
+    val lift4 = lift3.copy(nextPosition, nextDirection)
 
     // Register the stop. I added the extra condition because of a bug
     // by which the lift sometimes takes two turns for the very last move 🤔
