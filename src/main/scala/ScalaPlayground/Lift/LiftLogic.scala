@@ -62,6 +62,27 @@ case class Building(floors: ListMap[Floor, mutable.Queue[Person]]) {
 
 case class State(building: Building, lift: Lift, stops: List[Floor])
 
+extension (state: State) {
+  def toPrintable: String = {
+    import state.{building, stops, lift}
+
+    val sb = new StringBuilder()
+    sb.append(s"${stops.length} stops: ${stops.mkString(", ")}\n")
+
+    state.building.floors.toSeq.reverse.foreach { case (floor, queue) =>
+      sb.append(s"| $floor | ${queue.reverse.map(_.destination).mkString(", ").padTo(20, ' ')} |")
+
+      // draw the lift if it is on the current level
+      if lift.position == floor
+      then sb.append(s" | ${lift.people.map(_.destination).mkString(", ").padTo(15, ' ')} |")
+
+      sb.append('\n')
+    }
+
+    sb.toString()
+  }
+}
+
 // Excuse the name. Dinglemouse.theLift() is how the function is called in the Codewars test suite
 object Dinglemouse {
   def theLift(queues: Array[Array[Int]], capacity: Int): Array[Int] = {
@@ -82,40 +103,20 @@ object Dinglemouse {
   }
 }
 
-extension (state: State) {
-  def toPrintable: String = {
-    import state.{building, stops, lift}
-    
-    val sb = new StringBuilder()
-    sb.append(s"${stops.length} stops: ${stops.mkString(", ")}\n")
-
-    state.building.floors.toSeq.reverse.foreach { case (floor, queue) =>
-      sb.append(s"| $floor | ${queue.reverse.map(_.destination).mkString(", ").padTo(20, ' ')} |")
-
-      // draw the lift if it is on the current level
-      if lift.position == floor
-      then sb.append(s" | ${lift.people.map(_.destination).mkString(", ").padTo(15, ' ')} |")
-
-      sb.append('\n')
-    }
-
-    sb.toString()
-  }
-}
-
 object LiftLogic {
   def simulate(initialState: State): State = {
     val state = initialState.copy(stops = initialState.stops :+ initialState.lift.position)
 
     @tailrec
-    def doStep(state: State): State = {
+    def resolve(state: State): State = {
       import state.{building, lift}
+      
       if building.isEmpty && lift.isEmpty && lift.position == 0
       then state
-      else doStep(step(state))
+      else resolve(step(state))
     }
 
-    doStep(state)
+    resolve(state)
   }
 
   private def step(state: State): State = {
@@ -149,7 +150,7 @@ object LiftLogic {
     // by which the lift sometimes takes two turns for the very last move 🤔
     val newStops = (oldPosition, nextPosition) match
       case _ if oldPosition != nextPosition => stops :+ nextPosition
-      case _ => stops
+      case _                                => stops
 
     state.copy(building, lift3.copy(nextPosition, nextDirection), newStops)
   }
