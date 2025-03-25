@@ -110,7 +110,7 @@ object LiftLogic {
     @tailrec
     def resolve(state: State): State = {
       import state.{building, lift}
-      
+
       if building.isEmpty && lift.isEmpty && lift.position == 0
       then state
       else resolve(step(state))
