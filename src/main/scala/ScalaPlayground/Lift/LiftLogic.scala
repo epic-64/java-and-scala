@@ -134,15 +134,15 @@ object LiftLogic {
     lift2.people.dequeueAll(_.destination == lift.position)
     
     @tailrec
-    def transferPeople(lift: Lift, queue: mutable.Queue[Person]): Lift =
+    def pickup(lift: Lift, queue: mutable.Queue[Person]): Lift =
       queue.dequeueFirst(lift.accepts) match
         case None => lift
         case Some(person) =>
           lift.people.enqueue(person)
-          transferPeople(lift, queue)
+          pickup(lift, queue)
 
     val queue = building.floors(lift2.position)
-    val lift3 = transferPeople(lift2, queue)
+    val lift3 = pickup(lift2, queue)
 
     val oldPosition                   = lift3.position
     val (nextPosition, nextDirection) = getNextPositionAndDirection(building, lift3)
