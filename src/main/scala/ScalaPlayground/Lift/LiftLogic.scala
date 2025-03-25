@@ -23,7 +23,7 @@ case class Person(position: Floor, destination: Floor) {
 }
 
 case class Lift(
-    var position: Floor,
+    position: Floor,
     var direction: Direction,
     people: mutable.Queue[Person],
     capacity: Int
@@ -36,10 +36,6 @@ case class Lift(
 
   def nearestPassengerTarget: Option[Floor] =
     people.filter(_.matchesDirection(this)).map(_.destination).minByOption(floor => Math.abs(floor - position))
-
-  def turn(): Unit = direction = direction match
-    case Up   => Down
-    case Down => Up
 }
 
 case class Building(floors: ListMap[Floor, mutable.Queue[Person]]) {
@@ -143,15 +139,11 @@ object LiftLogic {
     val oldPosition                   = lift.position
     val (nextPosition, nextDirection) = getNextPositionAndDirection(building, lift)
 
-    // Set the new values
-    lift.direction = nextDirection
-    lift.position = nextPosition
-
     // Register the stop. I added the extra condition because of a bug
     // by which the lift sometimes takes two turns for the very last move 🤔
     if oldPosition != nextPosition then stops += nextPosition
 
-    state
+    state.copy(building, lift.copy(nextPosition, nextDirection))
   }
 
   private def getNextPositionAndDirection(building: Building, lift: Lift): (Floor, Direction) =
