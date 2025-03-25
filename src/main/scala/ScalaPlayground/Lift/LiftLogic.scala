@@ -60,7 +60,7 @@ case class Building(floors: ListMap[Floor, mutable.Queue[Person]]) {
       case Down => peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
 }
 
-case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor]) {
+case class State(building: Building, lift: Lift, stops: List[Floor]) {
   def toPrintable: String = {
     val sb = new StringBuilder()
 
@@ -93,7 +93,7 @@ object Dinglemouse {
     val lift     = Lift(position = 0, Direction.Up, people = mutable.Queue.empty, capacity)
     val building = Building(floors)
 
-    val initialState = State(building = building, lift = lift, stops = mutable.ListBuffer.empty)
+    val initialState = State(building = building, lift = lift, stops = List.empty)
     val finalState   = LiftLogic.simulate(initialState)
 
     finalState.stops.toArray
@@ -102,10 +102,7 @@ object Dinglemouse {
 
 object LiftLogic {
   def simulate(initialState: State): State = {
-    val state = initialState
-
-    state.stops += state.lift.position // register initial position as the first stop
-    // println(state.toPrintable)      // draw the initial state of the lift
+    val state = initialState.copy(stops = initialState.stops :+ initialState.lift.position)
 
     @tailrec
     def doStep(state: State): State = {
@@ -147,9 +144,11 @@ object LiftLogic {
 
     // Register the stop. I added the extra condition because of a bug
     // by which the lift sometimes takes two turns for the very last move 🤔
-    if oldPosition != nextPosition then stops += nextPosition
+    val newStops = (oldPosition, nextPosition) match
+      case _ if oldPosition != nextPosition => stops :+ nextPosition
+      case _ => stops
 
-    state.copy(building, lift3.copy(nextPosition, nextDirection))
+    state.copy(building, lift3.copy(nextPosition, nextDirection), newStops)
   }
 
   private def getNextPositionAndDirection(building: Building, lift: Lift): (Floor, Direction) =
