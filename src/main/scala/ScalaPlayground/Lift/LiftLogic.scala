@@ -41,7 +41,7 @@ case class Lift(
     people.filter(_.matchesDirection(this)).map(_.destination).minByOption(floor => Math.abs(floor - position))
 }
 
-case class Building(floors: ListMap[Floor, mutable.Queue[Person]]) {
+case class Building(floors: ListMap[Floor, Queue[Person]]) {
   def isEmpty: Boolean   = floors.values.forall(_.isEmpty)
   def hasPeople: Boolean = !isEmpty
 
@@ -69,7 +69,7 @@ extension (state: State) {
     val sb = new StringBuilder()
     sb.append(s"${stops.length} stops: ${stops.mkString(", ")}\n")
 
-    state.building.floors.toSeq.reverse.foreach { case (floor, queue) =>
+    building.floors.toSeq.reverse.foreach { case (floor, queue) =>
       sb.append(s"| $floor | ${queue.reverse.map(_.destination).mkString(", ").padTo(20, ' ')} |")
 
       // draw the lift if it is on the current level
@@ -86,10 +86,10 @@ extension (state: State) {
 // Excuse the name. Dinglemouse.theLift() is how the function is called in the Codewars test suite
 object Dinglemouse {
   def theLift(queues: Array[Array[Int]], capacity: Int): Array[Int] = {
-    val floors: ListMap[Int, mutable.Queue[Person]] =
+    val floors: ListMap[Int, Queue[Person]] =
       queues.zipWithIndex
         .map { case (queue, index) =>
-          (index, queue.map(destination => Person(position = index, destination = destination)).to(mutable.Queue))
+          (index, queue.map(destination => Person(position = index, destination = destination)).to(Queue))
         }
         .to(ListMap)
 
@@ -122,37 +122,40 @@ object LiftLogic {
   private def step(state: State): State = {
     import state.{building, lift, stops}
 
-    // Always force the lift into a valid direction
-    val lift2 = lift.copy(direction = lift.position match
+    val validDirection = lift.position match
       case 0                                  => Up
       case p if p == building.floors.size - 1 => Down
       case _                                  => lift.direction
-    )
 
     // Off-board people who reached their destination
-    val lift3 = lift2.copy(people = lift2.people.filter(_.destination != lift.position))
+    val lift3 = lift.copy(
+      direction = validDirection,
+      people = lift.people.filter(_.destination != lift.position)
+    )
 
     @tailrec
-    def pickup(lift: Lift, queue: mutable.Queue[Person]): Lift =
-      queue.dequeueFirst(lift.accepts) match
-        case None         => lift
-        case Some(person) =>
+    def pickup(lift: Lift, queue: Queue[Person]): (Lift, Queue[Person]) =
+      queue.filter(lift.accepts).dequeueOption match
+        case None                   => (lift, queue)
+        case Some(person, newQueue) =>
           val liftWithMorePeople = lift.copy(people = lift.people.enqueue(person))
-          pickup(liftWithMorePeople, queue)
+          pickup(liftWithMorePeople, newQueue)
 
-    val queue = building.floors(lift3.position)
-    val lift4 = pickup(lift3, queue)
+    val queue           = building.floors(lift3.position)
+    val (lift4, queue2) = pickup(lift3, queue)
+    val floors2         = building.floors.updated(lift3.position, queue2)
+    val building2       = building.copy(floors2)
 
-    val oldPosition                   = lift4.position
-    val (nextPosition, nextDirection) = getNextPositionAndDirection(building, lift4)
+    val (nextPosition, nextDirection) = getNextPositionAndDirection(building2, lift4)
+    val lift5                         = lift4.copy(nextPosition, nextDirection)
 
     // Register the stop. I added the extra condition because of a bug
     // by which the lift sometimes takes two turns for the very last move 🤔
-    val newStops = (oldPosition, nextPosition) match
-      case _ if oldPosition != nextPosition => stops :+ nextPosition
-      case _                                => stops
+    val stops2 = true match
+      case _ if lift4.position != lift5.position => stops :+ lift5.position
+      case _                                     => stops
 
-    state.copy(building, lift4.copy(nextPosition, nextDirection), newStops)
+    state.copy(building2, lift5, stops2)
   }
 
   private def getNextPositionAndDirection(building: Building, lift: Lift): (Floor, Direction) =
