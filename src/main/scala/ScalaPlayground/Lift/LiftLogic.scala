@@ -29,11 +29,13 @@ case class Lift(
     people: mutable.Queue[Person],
     capacity: Int
 ) {
-  private def isFull: Boolean          = people.size == capacity
-  def hasRoom: Boolean                 = !isFull
-  def hasPeople: Boolean               = people.nonEmpty
-  def isEmpty: Boolean                 = people.isEmpty
-  def accepts(person: Person): Boolean = hasRoom && person.desiredDirection == direction
+  def isFull: Boolean    = people.size == capacity
+  def hasRoom: Boolean   = people.size != capacity
+  def hasPeople: Boolean = people.nonEmpty
+  def isEmpty: Boolean   = people.isEmpty
+
+  def accepts(person: Person): Boolean =
+    hasRoom && person.desiredDirection == direction
 
   def nearestPassengerTarget: Option[Floor] =
     people.filter(_.matchesDirection(this)).map(_.destination).minByOption(floor => Math.abs(floor - position))
@@ -132,11 +134,11 @@ object LiftLogic {
 
     // Off-board people who reached their destination
     lift2.people.dequeueAll(_.destination == lift.position)
-    
+
     @tailrec
     def pickup(lift: Lift, queue: mutable.Queue[Person]): Lift =
       queue.dequeueFirst(lift.accepts) match
-        case None => lift
+        case None         => lift
         case Some(person) =>
           lift.people.enqueue(person)
           pickup(lift, queue)
