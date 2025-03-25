@@ -128,7 +128,7 @@ object LiftLogic {
       case _                                  => lift.direction
 
     // Off-board people who reached their destination
-    val lift3 = lift.copy(
+    val lift2 = lift.copy(
       direction = validDirection,
       people = lift.people.filter(_.destination != lift.position)
     )
@@ -141,21 +141,21 @@ object LiftLogic {
           val liftWithMorePeople = lift.copy(people = lift.people.enqueue(person))
           pickup(liftWithMorePeople, newQueue)
 
-    val queue           = building.floors(lift3.position)
-    val (lift4, queue2) = pickup(lift3, queue)
-    val floors2         = building.floors.updated(lift3.position, queue2)
+    val queue           = building.floors(lift2.position)
+    val (lift3, queue2) = pickup(lift2, queue)
+    val floors2         = building.floors.updated(lift2.position, queue2)
     val building2       = building.copy(floors2)
 
-    val (nextPosition, nextDirection) = getNextPositionAndDirection(building2, lift4)
-    val lift5                         = lift4.copy(nextPosition, nextDirection)
+    val (nextPosition, nextDirection) = getNextPositionAndDirection(building2, lift3)
+    val lift4                         = lift3.copy(nextPosition, nextDirection)
 
     // Register the stop. I added the extra condition because of a bug
     // by which the lift sometimes takes two turns for the very last move 🤔
     val stops2 = true match
-      case _ if lift4.position != lift5.position => stops :+ lift5.position
+      case _ if lift3.position != lift4.position => stops :+ lift4.position
       case _                                     => stops
 
-    state.copy(building2, lift5, stops2)
+    state.copy(building2, lift4, stops2)
   }
 
   private def getNextPositionAndDirection(building: Building, lift: Lift): (Floor, Direction) =
