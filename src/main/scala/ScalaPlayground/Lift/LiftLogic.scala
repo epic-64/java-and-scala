@@ -4,6 +4,7 @@ package ScalaPlayground.Lift
 
 import ScalaPlayground.Lift.Direction.{Down, Up}
 
+import scala.annotation.tailrec
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
@@ -102,15 +103,17 @@ object LiftLogic {
     var state = initialState
 
     state.stops += state.lift.position // register initial position as the first stop
-    println(state.toPrintable)         // draw the initial state of the lift
+    // println(state.toPrintable)         // draw the initial state of the lift
 
-    val State(building, lift, _) = state
+    @tailrec
+    def doStep(state: State): State = {
+      import state.{building, lift}
+      if building.isEmpty && lift.isEmpty && lift.position == 0
+      then state
+      else doStep(step(state))
+    }
 
-    while building.hasPeople || lift.hasPeople || lift.position > 0 do
-      state = step(state)
-      println(state.toPrintable)
-
-    state
+    doStep(state)
   }
 
   private def step(state: State): State = {
