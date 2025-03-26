@@ -120,7 +120,8 @@ object LiftLogic {
     val State(building, lift, stops) = state
     stops += lift.position // register initial stop
 
-    while building.hasPeople || lift.hasPeople || lift.position > 0 do state = step(state)
+    while building.hasPeople || lift.hasPeople || lift.position > 0
+    do state = step(state)
 
     state
   }
