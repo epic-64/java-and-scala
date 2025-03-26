@@ -4,6 +4,7 @@ package ScalaPlayground.Lift.Mutable
 
 import Direction.{Down, Up}
 
+import scala.annotation.tailrec
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
@@ -131,10 +132,13 @@ object LiftLogic {
     // get current floor queue
     val queue = building.floors(lift.position)
 
-    // Transfer people from floor queue into lift
-    while queue.exists(lift.accepts) do
-      val person = queue.dequeueFirst(lift.accepts).get
-      lift.people.enqueue(person)
+    @tailrec
+    def pickup(queue: mutable.Queue[Person], lift: Lift): Unit =
+      queue.dequeueFirst(lift.accepts) match
+        case None         => ()
+        case Some(person) => lift.people.enqueue(person); pickup(queue, lift)
+
+    pickup(queue, lift)
 
     val oldPosition                   = lift.position
     val (nextPosition, nextDirection) = getNextPositionAndDirection(building, lift)
