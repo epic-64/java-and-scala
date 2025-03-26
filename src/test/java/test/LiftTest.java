@@ -1,6 +1,6 @@
 package test;
 
-import ScalaPlayground.Lift.Dinglemouse;
+import ScalaPlayground.Lift.Mutable.Dinglemouse;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
