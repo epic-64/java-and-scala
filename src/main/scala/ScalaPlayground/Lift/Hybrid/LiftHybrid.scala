@@ -128,6 +128,7 @@ object LiftLogic {
       case p if p == floors.size - 1 => Down
       case _                         => lift.direction
     var position     = lift.position
+    val stopsBuffer  = mutable.ListBuffer.from(stops)
 
     // Pickup
     while peopleBuffer.size < lift.capacity && floorQueue.nonEmpty do
@@ -144,10 +145,10 @@ object LiftLogic {
     position = nextPosition
     direction = nextDirection
 
-    val finalLift = Lift(position, direction, Queue.from(peopleBuffer), lift.capacity)
-    val stops2    = if lift.position != finalLift.position then stops :+ finalLift.position else stops
+    if lift.position != position then stopsBuffer += position
 
-    state.copy(updatedBuilding, finalLift, stops2)
+    val finalLift = Lift(position, direction, Queue.from(peopleBuffer), lift.capacity)
+    state.copy(updatedBuilding, finalLift, stopsBuffer.toList)
   }
 
   private def getNextPositionAndDirection(building: Building, lift: Lift): (Floor, Direction) =
