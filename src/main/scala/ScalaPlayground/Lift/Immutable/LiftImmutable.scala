@@ -24,11 +24,11 @@ case class Person(position: Floor, destination: Floor) {
 }
 
 case class Lift(
-                 position: Floor,
-                 direction: Direction,
-                 people: Queue[Person],
-                 capacity: Int
-               ) {
+    position: Floor,
+    direction: Direction,
+    people: Queue[Person],
+    capacity: Int
+) {
   def isFull: Boolean    = people.size == capacity
   def hasRoom: Boolean   = people.size != capacity
   def hasPeople: Boolean = people.nonEmpty
@@ -109,7 +109,7 @@ object LiftLogic {
 
     @tailrec
     def resolve(state: State): State =
-      val newState = step(state)
+      val newState                 = step(state)
       val State(building, lift, _) = newState
       if building.isEmpty && lift.isEmpty && lift.position == 0 then newState
       else resolve(step(newState))

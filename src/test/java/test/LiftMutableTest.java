@@ -5,7 +5,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class LiftTest {
+public class LiftMutableTest {
     @Test
     public void testUp() {
         final int[][] queues = {
