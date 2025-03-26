@@ -120,15 +120,15 @@ object LiftLogic {
   private def step(state: State): State = {
     import state.{building, lift, stops}
 
-    val floors       = building.floors
-    val peopleBuffer = mutable.Queue.from(lift.people.filter(_.destination != lift.position))
-    val floorQueue   = mutable.Queue.from(floors(lift.position))
-    var direction    = lift.position match
-      case 0                         => Up
-      case p if p == floors.size - 1 => Down
-      case _                         => lift.direction
-    var position     = lift.position
-    val stopsBuffer  = mutable.ListBuffer.from(stops)
+    val mutableFloors = mutable.ListMap.from(building.floors.view.mapValues(mutable.Queue.from))
+    val peopleBuffer  = mutable.Queue.from(lift.people.filter(_.destination != lift.position))
+    val floorQueue    = mutableFloors(lift.position)
+    var direction     = lift.position match
+      case 0                                => Up
+      case p if p == mutableFloors.size - 1 => Down
+      case _                                => lift.direction
+    var position      = lift.position
+    val stopsBuffer   = mutable.ListBuffer.from(stops)
 
     // Pickup
     while peopleBuffer.size < lift.capacity && floorQueue.nonEmpty do
@@ -136,18 +136,16 @@ object LiftLogic {
       if next.desiredDirection == direction then peopleBuffer.enqueue(next)
       else floorQueue.enqueue(next) // put back at end if not accepted
 
-    val updatedBuilding = building.copy(
-      floors = floors.updated(position, Queue.from(floorQueue))
-    )
-
     val tempLift                      = Lift(position, direction, Queue.from(peopleBuffer), lift.capacity)
-    val (nextPosition, nextDirection) = getNextPositionAndDirection(updatedBuilding, tempLift)
+    val (nextPosition, nextDirection) =
+      getNextPositionAndDirection(Building(mutableFloors.view.mapValues(Queue.from).to(ListMap)), tempLift)
     position = nextPosition
     direction = nextDirection
 
     if lift.position != position then stopsBuffer += position
 
-    val finalLift = Lift(position, direction, Queue.from(peopleBuffer), lift.capacity)
+    val finalLift       = Lift(position, direction, Queue.from(peopleBuffer), lift.capacity)
+    val updatedBuilding = Building(mutableFloors.view.mapValues(Queue.from).to(ListMap))
     state.copy(updatedBuilding, finalLift, stopsBuffer.toList)
   }
 
