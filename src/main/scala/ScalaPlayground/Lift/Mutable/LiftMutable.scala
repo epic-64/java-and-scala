@@ -50,7 +50,7 @@ case class Lift(
   def nearestPassengerTarget: Option[Floor] =
     people.filter(_.matchesDirection(this)).map(_.destination).minByOption(floor => Math.abs(floor - position))
 
-  def getNextPositionAndDirection(building: Building): (Floor, Direction) =
+  def getNewPositionAndDirection(building: Building): (Floor, Direction) =
     List(                                          // Build a list of primary targets
       nearestPassengerTarget,                      // request from passenger already on the lift
       building.nearestRequestInSameDirection(this) // request from people [waiting in AND going to] the same direction
@@ -66,12 +66,12 @@ case class Lift(
   private def downwardsNewTarget(building: Building): (Floor, Direction) =
     building.lowestFloorGoingUp(this) match
       case Some(lowest) => (lowest, Up)
-      case None => (building.highestFloorGoingDown(this).getOrElse(0), Down)
+      case None         => (building.highestFloorGoingDown(this).getOrElse(0), Down)
 
   private def upwardsNewTarget(building: Building): (Floor, Direction) =
     building.highestFloorGoingDown(this) match
       case Some(highest) => (highest, Down)
-      case None => (building.lowestFloorGoingUp(this).getOrElse(0), Up)
+      case None          => (building.lowestFloorGoingUp(this).getOrElse(0), Up)
 }
 
 case class Building(floors: ListMap[Floor, mutable.Queue[Person]]) {
@@ -136,13 +136,12 @@ object Dinglemouse {
 object LiftLogic {
   def simulate(initialState: State): State = {
     var state = initialState
-    
+
     state.stops += state.lift.position // register initial position
 
     val State(building, lift, _) = state
-    
-    while building.hasPeople || lift.hasPeople || lift.position > 0 do
-      state = step(state)
+
+    while building.hasPeople || lift.hasPeople || lift.position > 0 do state = step(state)
 
     state
   }
@@ -154,14 +153,11 @@ object LiftLogic {
     lift.people.dequeueAll(_.destination == lift.position)
     lift.pickup(queue = building.floors(lift.position))
 
-    val oldPosition                   = lift.position
-    val (nextPosition, nextDirection) = lift.getNextPositionAndDirection(building)
-    
-    lift.direction = nextDirection
-    lift.position = nextPosition
+    val (newPosition, newDirection) = lift.getNewPositionAndDirection(building)
+    if (lift.position != newPosition) stops += newPosition
 
-    if (oldPosition != nextPosition)
-      stops += nextPosition
+    lift.direction = newDirection
+    lift.position = newPosition
 
     state
   }
