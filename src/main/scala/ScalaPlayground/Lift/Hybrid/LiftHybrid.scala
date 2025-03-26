@@ -125,40 +125,35 @@ object LiftLogic {
       case p if p == building.floors.size - 1 => Down
       case _                                  => lift.direction
 
-    // Off-board people who reached their destination
-    val lift2 = lift.copy(
+    // Mutable lift internals
+    val peopleBuffer = mutable.Queue.from(lift.people.filter(_.destination != lift.position))
+    val floorQueue   = mutable.Queue.from(building.floors(lift.position))
+
+    // Pickup
+    while peopleBuffer.size < lift.capacity && floorQueue.nonEmpty do
+      val next = floorQueue.dequeue()
+      if next.desiredDirection == validDirection then peopleBuffer.enqueue(next)
+      else floorQueue.enqueue(next) // put back at end if not accepted
+
+    val updatedLift = Lift(
+      position = lift.position,
       direction = validDirection,
-      people = lift.people.filter(_.destination != lift.position)
+      people = Queue.from(peopleBuffer),
+      capacity = lift.capacity
     )
 
-    @tailrec
-    def pickup(lift: Lift, queue: Queue[Person]): (Lift, Queue[Person]) =
-      queue.filter(lift.accepts).dequeueOption match
-        case None            => (lift, queue)
-        case Some(person, _) =>
-          val fullerLift   = lift.copy(people = lift.people.enqueue(person))
-          val emptierQueue = queue.diff(Seq(person))
-          pickup(fullerLift, emptierQueue)
-
-    // pick up people from the current floor
-    val (lift3, floorQueue) = pickup(lift = lift2, queue = building.floors(lift2.position))
-
-    // update the building to reflect the updated floor
-    val building2 = building.copy(floors = building.floors.updated(lift3.position, floorQueue))
+    val updatedBuilding = building.copy(
+      floors = building.floors.updated(lift.position, Queue.from(floorQueue))
+    )
 
     // core task: find the new target and direction
-    val (nextPosition, nextDirection) = getNextPositionAndDirection(building2, lift3)
+    val (nextPosition, nextDirection) = getNextPositionAndDirection(updatedBuilding, updatedLift)
 
-    // update lift parameters
-    val lift4 = lift3.copy(nextPosition, nextDirection)
+    val movedLift = updatedLift.copy(position = nextPosition, direction = nextDirection)
 
-    // Register the stop. I added the extra condition because of a bug
-    // by which the lift sometimes takes two turns for the very last move 🤔
-    val stops2 = true match
-      case _ if lift3.position != lift4.position => stops :+ lift4.position
-      case _                                     => stops
+    val stops2 = if updatedLift.position != movedLift.position then stops :+ movedLift.position else stops
 
-    state.copy(building2, lift4, stops2)
+    state.copy(updatedBuilding, movedLift, stops2)
   }
 
   private def getNextPositionAndDirection(building: Building, lift: Lift): (Floor, Direction) =
