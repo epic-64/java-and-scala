@@ -120,54 +120,48 @@ object LiftLogic {
   private def step(state: State): State = {
     import state.{building, lift, stops}
 
-    val validDirection = lift.position match
-      case 0                                  => Up
-      case p if p == building.floors.size - 1 => Down
-      case _                                  => lift.direction
-
-    // Mutable lift internals
+    val floors       = building.floors
     val peopleBuffer = mutable.Queue.from(lift.people.filter(_.destination != lift.position))
-    val floorQueue   = mutable.Queue.from(building.floors(lift.position))
+    val floorQueue   = mutable.Queue.from(floors(lift.position))
+    var direction    = lift.position match
+      case 0                         => Up
+      case p if p == floors.size - 1 => Down
+      case _                         => lift.direction
+    var position     = lift.position
 
     // Pickup
     while peopleBuffer.size < lift.capacity && floorQueue.nonEmpty do
       val next = floorQueue.dequeue()
-      if next.desiredDirection == validDirection then peopleBuffer.enqueue(next)
+      if next.desiredDirection == direction then peopleBuffer.enqueue(next)
       else floorQueue.enqueue(next) // put back at end if not accepted
 
-    val updatedLift = Lift(
-      position = lift.position,
-      direction = validDirection,
-      people = Queue.from(peopleBuffer),
-      capacity = lift.capacity
-    )
-
     val updatedBuilding = building.copy(
-      floors = building.floors.updated(lift.position, Queue.from(floorQueue))
+      floors = floors.updated(position, Queue.from(floorQueue))
     )
 
-    // core task: find the new target and direction
-    val (nextPosition, nextDirection) = getNextPositionAndDirection(updatedBuilding, updatedLift)
+    val tempLift                      = Lift(position, direction, Queue.from(peopleBuffer), lift.capacity)
+    val (nextPosition, nextDirection) = getNextPositionAndDirection(updatedBuilding, tempLift)
+    position = nextPosition
+    direction = nextDirection
 
-    val movedLift = updatedLift.copy(position = nextPosition, direction = nextDirection)
+    val finalLift = Lift(position, direction, Queue.from(peopleBuffer), lift.capacity)
+    val stops2    = if lift.position != finalLift.position then stops :+ finalLift.position else stops
 
-    val stops2 = if updatedLift.position != movedLift.position then stops :+ movedLift.position else stops
-
-    state.copy(updatedBuilding, movedLift, stops2)
+    state.copy(updatedBuilding, finalLift, stops2)
   }
 
   private def getNextPositionAndDirection(building: Building, lift: Lift): (Floor, Direction) =
-    List(                                          // Build a list of primary targets
-      lift.nearestPassengerTarget,                 // request from passenger already on the lift
-      building.nearestRequestInSameDirection(lift) // request from people [waiting in AND going to] the same direction
-    ).flatten // turn list of options into list of Integers
-      .minByOption(floor => Math.abs(floor - lift.position)) // get Some floor with the lowest distance, or None
+    List(
+      lift.nearestPassengerTarget,
+      building.nearestRequestInSameDirection(lift)
+    ).flatten
+      .minByOption(floor => Math.abs(floor - lift.position))
       .match
-        case Some(floor) => (floor, lift.direction) // return requested floor, keep direction
-        case None        =>                         // otherwise choose a new target
+        case Some(floor) => (floor, lift.direction)
+        case None        =>
           lift.direction match
-            case Up   => upwardsNewTarget(building, lift)   // look for people above going downwards
-            case Down => downwardsNewTarget(building, lift) // look for people below going upwards
+            case Up   => upwardsNewTarget(building, lift)
+            case Down => downwardsNewTarget(building, lift)
 
   private def downwardsNewTarget(building: Building, lift: Lift): (Floor, Direction) =
     building.lowestFloorGoingUp(lift) match
