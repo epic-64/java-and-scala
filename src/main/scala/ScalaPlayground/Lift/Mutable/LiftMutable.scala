@@ -35,7 +35,7 @@ case class Lift(
   def isEmpty: Boolean                 = people.isEmpty
   def accepts(person: Person): Boolean = hasRoom && person.desiredDirection == direction
 
-  def forceValidDirection(maxFloor: Floor): Unit = 
+  def forceValidDirection(maxFloor: Floor): Unit =
     direction = position match
       case 0                  => Up
       case p if p == maxFloor => Down
@@ -74,12 +74,12 @@ case class Lift(
       case None          => (building.lowestFloorGoingUp(this).getOrElse(0), Up)
 }
 
-case class Building(floors: ListMap[Floor, mutable.Queue[Person]]) {
-  def isEmpty: Boolean   = floors.values.forall(_.isEmpty)
+case class Building(floors: List[mutable.Queue[Person]]) {
+  def isEmpty: Boolean   = floors.forall(_.isEmpty)
   def hasPeople: Boolean = !isEmpty
 
   private def peopleGoing(direction: Direction): List[Person] =
-    floors.values.flatMap(queue => queue.filter(_.desiredDirection == direction)).toList
+    floors.flatMap(queue => queue.filter(_.desiredDirection == direction)).toList
 
   def lowestFloorGoingUp(lift: Lift): Option[Floor] =
     peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption
@@ -93,35 +93,15 @@ case class Building(floors: ListMap[Floor, mutable.Queue[Person]]) {
       case Down => peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
 }
 
-case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor]) {
-  def toPrintable: String = {
-    val sb = new StringBuilder()
+case class State(building: Building, lift: Lift, stops: mutable.ListBuffer[Floor])
 
-    sb.append(s"${stops.length} stops: ${stops.mkString(", ")}\n")
-
-    building.floors.toSeq.reverse.foreach { case (floor, queue) =>
-      sb.append(s"| $floor | ${queue.reverse.map(_.destination).mkString(", ").padTo(20, ' ')} |")
-
-      // draw the lift if it is on the current level
-      if lift.position == floor
-      then sb.append(s" | ${lift.people.map(_.destination).mkString(", ").padTo(15, ' ')} |")
-
-      sb.append('\n')
-    }
-
-    sb.toString()
-  }
-}
-
-// Excuse the name. Dinglemouse.theLift() is how the function is called in the Codewars test suite
 object Dinglemouse {
   def theLift(queues: Array[Array[Int]], capacity: Int): Array[Int] = {
-    val floors: ListMap[Int, mutable.Queue[Person]] =
-      queues.zipWithIndex
-        .map { case (queue, index) =>
-          (index, queue.map(destination => Person(position = index, destination = destination)).to(mutable.Queue))
-        }
-        .to(ListMap)
+    def toPersonQueue(queue: Array[Int], floor: Floor): mutable.Queue[Person] =
+      queue.map(destination => Person(position = floor, destination = destination)).to(mutable.Queue)
+
+    val floors: List[mutable.Queue[Person]] =
+      queues.zipWithIndex.map((queue, index) => toPersonQueue(queue, index)).toList
 
     val lift     = Lift(position = 0, Direction.Up, people = mutable.Queue.empty, capacity)
     val building = Building(floors)
@@ -137,9 +117,9 @@ object LiftLogic {
   def simulate(initialState: State): State = {
     var state = initialState
 
-    state.stops += state.lift.position // register initial position
+    val State(building, lift, stops) = state
+    stops += lift.position // register initial stop
 
-    val State(building, lift, _) = state
     while building.hasPeople || lift.hasPeople || lift.position > 0 do state = step(state)
 
     state
