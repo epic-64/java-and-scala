@@ -112,7 +112,7 @@ object LiftLogic {
       val newState                 = step(state)
       val State(building, lift, _) = newState
       if building.isEmpty && lift.isEmpty && lift.position == 0 then newState
-      else resolve(step(newState))
+      else resolve(newState)
 
     resolve(state)
   }
@@ -137,8 +137,8 @@ object LiftLogic {
       else floorQueue.enqueue(next) // put back at end if not accepted
 
     val tempLift                      = Lift(position, direction, Queue.from(peopleBuffer), lift.capacity)
-    val (nextPosition, nextDirection) =
-      getNextPositionAndDirection(Building(mutableFloors.view.mapValues(Queue.from).to(ListMap)), tempLift)
+    val tempBuilding                  = Building(mutableFloors.view.mapValues(Queue.from).to(ListMap))
+    val (nextPosition, nextDirection) = getNextPositionAndDirection(tempBuilding, tempLift)
     position = nextPosition
     direction = nextDirection
 

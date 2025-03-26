@@ -112,7 +112,7 @@ object LiftLogic {
       val newState                 = step(state)
       val State(building, lift, _) = newState
       if building.isEmpty && lift.isEmpty && lift.position == 0 then newState
-      else resolve(step(newState))
+      else resolve(newState)
 
     resolve(state)
   }
