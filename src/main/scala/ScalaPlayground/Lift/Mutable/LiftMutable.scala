@@ -35,14 +35,43 @@ case class Lift(
   def isEmpty: Boolean                 = people.isEmpty
   def accepts(person: Person): Boolean = hasRoom && person.desiredDirection == direction
 
+  def forceValidDirection(maxFloor: Floor): Unit =
+    direction = position match
+      case 0                  => Up
+      case p if p == maxFloor => Down
+      case _                  => direction
+
   @tailrec
   final def pickup(queue: mutable.Queue[Person]): Unit =
     queue.dequeueFirst(accepts) match
-      case None => ()
+      case None         => ()
       case Some(person) => people.enqueue(person); pickup(queue)
 
   def nearestPassengerTarget: Option[Floor] =
     people.filter(_.matchesDirection(this)).map(_.destination).minByOption(floor => Math.abs(floor - position))
+
+  def getNextPositionAndDirection(building: Building): (Floor, Direction) =
+    List(                                          // Build a list of primary targets
+      nearestPassengerTarget,                      // request from passenger already on the lift
+      building.nearestRequestInSameDirection(this) // request from people [waiting in AND going to] the same direction
+    ).flatten // turn list of options into list of Integers
+      .minByOption(floor => Math.abs(floor - position)) // get Some floor with the lowest distance, or None
+      .match
+        case Some(floor) => (floor, direction) // return requested floor, keep direction
+        case None        =>                    // otherwise choose a new target
+          direction match
+            case Up   => upwardsNewTarget(building)   // look for people above going downwards
+            case Down => downwardsNewTarget(building) // look for people below going upwards
+
+  private def downwardsNewTarget(building: Building): (Floor, Direction) =
+    building.lowestFloorGoingUp(this) match
+      case Some(lowest) => (lowest, Up)
+      case None => (building.highestFloorGoingDown(this).getOrElse(0), Down)
+
+  private def upwardsNewTarget(building: Building): (Floor, Direction) =
+    building.highestFloorGoingDown(this) match
+      case Some(highest) => (highest, Down)
+      case None => (building.lowestFloorGoingUp(this).getOrElse(0), Up)
 }
 
 case class Building(floors: ListMap[Floor, mutable.Queue[Person]]) {
@@ -107,71 +136,33 @@ object Dinglemouse {
 object LiftLogic {
   def simulate(initialState: State): State = {
     var state = initialState
-
-    state.stops += state.lift.position // register initial position as the first stop
-    println(state.toPrintable)         // draw the initial state of the lift
+    
+    state.stops += state.lift.position // register initial position
 
     val State(building, lift, _) = state
-
+    
     while building.hasPeople || lift.hasPeople || lift.position > 0 do
       state = step(state)
-      println(state.toPrintable)
 
     state
   }
 
   private def step(state: State): State = {
-    // Destructure state into convenient variables
-    val State(building, lift, stops) = state
+    import state.{building, lift, stops}
 
-    val maxFloor = building.floors.keys.maxOption.getOrElse(0)
-
-    // Always force the lift into a valid direction
-    lift.direction = lift.position match
-      case 0                  => Up
-      case p if p == maxFloor => Down
-      case _                  => lift.direction
-
-    // Off-board people who reached their destination
+    lift.forceValidDirection(maxFloor = building.floors.size - 1)
     lift.people.dequeueAll(_.destination == lift.position)
-
-    // get current floor queue
-    val queue = building.floors(lift.position)
-    lift.pickup(queue)
+    lift.pickup(queue = building.floors(lift.position))
 
     val oldPosition                   = lift.position
-    val (nextPosition, nextDirection) = getNextPositionAndDirection(building, lift)
-
-    // Set the new values
+    val (nextPosition, nextDirection) = lift.getNextPositionAndDirection(building)
+    
     lift.direction = nextDirection
     lift.position = nextPosition
-    
+
     if (oldPosition != nextPosition)
       stops += nextPosition
 
     state
   }
-
-  private def getNextPositionAndDirection(building: Building, lift: Lift): (Floor, Direction) =
-    List(                                          // Build a list of primary targets
-      lift.nearestPassengerTarget,                 // request from passenger already on the lift
-      building.nearestRequestInSameDirection(lift) // request from people [waiting in AND going to] the same direction
-    ).flatten // turn list of options into list of Integers
-      .minByOption(floor => Math.abs(floor - lift.position)) // get Some floor with the lowest distance, or None
-      .match
-        case Some(floor) => (floor, lift.direction) // return requested floor, keep direction
-        case None        =>                         // otherwise choose a new target
-          lift.direction match
-            case Up   => upwardsNewTarget(building, lift)   // look for people above going downwards
-            case Down => downwardsNewTarget(building, lift) // look for people below going upwards
-
-  private def downwardsNewTarget(building: Building, lift: Lift): (Floor, Direction) =
-    building.lowestFloorGoingUp(lift) match
-      case Some(lowest) => (lowest, Up)
-      case None         => (building.highestFloorGoingDown(lift).getOrElse(0), Down)
-
-  private def upwardsNewTarget(building: Building, lift: Lift): (Floor, Direction) =
-    building.highestFloorGoingDown(lift) match
-      case Some(highest) => (highest, Down)
-      case None          => (building.lowestFloorGoingUp(lift).getOrElse(0), Up)
 }
