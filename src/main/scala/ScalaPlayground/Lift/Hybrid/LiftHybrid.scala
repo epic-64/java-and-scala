@@ -120,7 +120,7 @@ object LiftLogic {
   private def step(state: State): State = {
     import state.{building, lift, stops}
 
-    val mutableFloors = mutable.ListMap.from(building.floors.view.mapValues(mutable.Queue.from))
+    val mutableFloors = ListMap.from(building.floors.view.mapValues(mutable.Queue.from))
     val peopleBuffer  = mutable.Queue.from(lift.people.filter(_.destination != lift.position))
     val floorQueue    = mutableFloors(lift.position)
     var direction     = lift.position match
