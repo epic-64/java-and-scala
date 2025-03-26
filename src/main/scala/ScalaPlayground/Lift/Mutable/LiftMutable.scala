@@ -5,7 +5,6 @@ package ScalaPlayground.Lift.Mutable
 import Direction.{Down, Up}
 
 import scala.annotation.tailrec
-import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
 type Floor = Int
