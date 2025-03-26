@@ -35,6 +35,12 @@ case class Lift(
   def isEmpty: Boolean                 = people.isEmpty
   def accepts(person: Person): Boolean = hasRoom && person.desiredDirection == direction
 
+  @tailrec
+  final def pickup(queue: mutable.Queue[Person]): Unit =
+    queue.dequeueFirst(accepts) match
+      case None => ()
+      case Some(person) => people.enqueue(person); pickup(queue)
+
   def nearestPassengerTarget: Option[Floor] =
     people.filter(_.matchesDirection(this)).map(_.destination).minByOption(floor => Math.abs(floor - position))
 }
@@ -131,14 +137,7 @@ object LiftLogic {
 
     // get current floor queue
     val queue = building.floors(lift.position)
-
-    @tailrec
-    def pickup(queue: mutable.Queue[Person], lift: Lift): Unit =
-      queue.dequeueFirst(lift.accepts) match
-        case None         => ()
-        case Some(person) => lift.people.enqueue(person); pickup(queue, lift)
-
-    pickup(queue, lift)
+    lift.pickup(queue)
 
     val oldPosition                   = lift.position
     val (nextPosition, nextDirection) = getNextPositionAndDirection(building, lift)
@@ -146,10 +145,9 @@ object LiftLogic {
     // Set the new values
     lift.direction = nextDirection
     lift.position = nextPosition
-
-    // Register the stop. I added the extra condition because of a bug
-    // by which the lift sometimes takes two turns for the very last move 🤔
-    if oldPosition != nextPosition then stops += nextPosition
+    
+    if (oldPosition != nextPosition)
+      stops += nextPosition
 
     state
   }
