@@ -54,8 +54,8 @@ case class Lift(
       .minByOption(floor => Math.abs(floor - position)) // get Some floor with the lowest distance, or None
       .match
         case Some(floor) => (floor, direction) // return requested floor, keep direction
-        case None        =>                    // otherwise choose a new target
-          direction match
+        case None        =>
+          direction match // otherwise choose a new target:
             case Up   => upwardsNewTarget(building)   // look for people above going downwards
             case Down => downwardsNewTarget(building) // look for people below going upwards
 
