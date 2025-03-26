@@ -36,10 +36,6 @@ case class Lift(
 
   def nearestPassengerTarget: Option[Floor] =
     people.filter(_.matchesDirection(this)).map(_.destination).minByOption(floor => Math.abs(floor - position))
-
-  def turn(): Unit = direction = direction match
-    case Up   => Down
-    case Down => Up
 }
 
 case class Building(floors: ListMap[Floor, mutable.Queue[Person]]) {
@@ -136,7 +132,7 @@ object LiftLogic {
     val queue = building.floors(lift.position)
 
     // Transfer people from floor queue into lift
-    while lift.hasRoom && queue.exists(lift.accepts) do
+    while queue.exists(lift.accepts) do
       val person = queue.dequeueFirst(lift.accepts).get
       lift.people.enqueue(person)
 
