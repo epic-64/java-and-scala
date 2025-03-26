@@ -35,7 +35,7 @@ case class Lift(
   def isEmpty: Boolean                 = people.isEmpty
   def accepts(person: Person): Boolean = hasRoom && person.desiredDirection == direction
 
-  def forceValidDirection(maxFloor: Floor): Unit =
+  def forceValidDirection(maxFloor: Floor): Unit = 
     direction = position match
       case 0                  => Up
       case p if p == maxFloor => Down
@@ -46,9 +46,6 @@ case class Lift(
     queue.dequeueFirst(accepts) match
       case None         => ()
       case Some(person) => people.enqueue(person); pickup(queue)
-
-  def nearestPassengerTarget: Option[Floor] =
-    people.filter(_.matchesDirection(this)).map(_.destination).minByOption(floor => Math.abs(floor - position))
 
   def getNewPositionAndDirection(building: Building): (Floor, Direction) =
     List(                                          // Build a list of primary targets
@@ -62,6 +59,9 @@ case class Lift(
           direction match
             case Up   => upwardsNewTarget(building)   // look for people above going downwards
             case Down => downwardsNewTarget(building) // look for people below going upwards
+
+  private def nearestPassengerTarget: Option[Floor] =
+    people.filter(_.matchesDirection(this)).map(_.destination).minByOption(floor => Math.abs(floor - position))
 
   private def downwardsNewTarget(building: Building): (Floor, Direction) =
     building.lowestFloorGoingUp(this) match
@@ -140,7 +140,6 @@ object LiftLogic {
     state.stops += state.lift.position // register initial position
 
     val State(building, lift, _) = state
-
     while building.hasPeople || lift.hasPeople || lift.position > 0 do state = step(state)
 
     state
