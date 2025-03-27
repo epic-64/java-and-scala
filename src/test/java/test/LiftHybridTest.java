@@ -1,11 +1,11 @@
 package test;
 
-import ScalaPlayground.Lift.Dinglemouse;
+import ScalaPlayground.Lift.Hybrid.Dinglemouse;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
 
-public class LiftTest {
+public class LiftHybridTest {
     @Test
     public void testUp() {
         final int[][] queues = {
