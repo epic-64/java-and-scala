@@ -2,11 +2,10 @@ package ScalaPlayground.Lift.Immutable
 
 // https://www.codewars.com/kata/58905bfa1decb981da00009e
 
-import Direction.{Down, Up}
+import ScalaPlayground.Lift.Immutable.Direction.{Down, Up}
 
 import scala.annotation.tailrec
 import scala.collection.immutable.{ListMap, Queue}
-import scala.collection.mutable
 
 type Floor = Int
 enum Direction { case Up, Down }
@@ -64,7 +63,7 @@ case class State(building: Building, lift: Lift, stops: List[Floor])
 
 extension (state: State) {
   def toPrintable: String = {
-    import state.{building, stops, lift}
+    import state.{building, lift, stops}
 
     val sb = new StringBuilder()
     sb.append(s"${stops.length} stops: ${stops.mkString(", ")}\n")
