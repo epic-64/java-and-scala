@@ -59,19 +59,19 @@ case class Lift(
 
   def align(building: Building): Lift =
     List(nearestPassengerTarget, building.nearestRequestInSameDirection(this)).flatten
-      .minByOption(floor => Math.abs(floor - position))
+      .minByOption(floor => Math.abs(floor - position)) 
       .match
         case Some(floor) => copy(position = floor, direction = direction)
         case None        =>
           direction match
             case Up   =>
-              building.lowestFloorGoingUp(this) match
-                case Some(lowest) => copy(lowest, Up)
-                case None         => copy(building.highestFloorGoingDown(this).getOrElse(0), Down)
-            case Down =>
               building.highestFloorGoingDown(this) match
                 case Some(highest) => copy(highest, Down)
                 case None          => copy(building.lowestFloorGoingUp(this).getOrElse(0), Up)
+            case Down =>
+              building.lowestFloorGoingUp(this) match
+                case Some(lowest) => copy(lowest, Up)
+                case None => copy(building.highestFloorGoingDown(this).getOrElse(0), Down)
 }
 
 case class Building(floors: Array[Queue[Person]]) {
