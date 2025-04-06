@@ -93,8 +93,6 @@ case class Building(floors: Array[Queue[Person]]) {
       case Down => peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
 }
 
-case class LiftBuildingCouple(lift: Lift, building: Building) {}
-
 case class LiftSystem(building: Building, lift: Lift, stops: List[Floor]) {
   private def fixDirection: LiftSystem =
     copy(lift = lift.fixDirection(building))
