@@ -20,9 +20,9 @@ case class Person(
     case _ if destination > position => Up
     case _ if destination < position => Down
 
-  def matchesDirection(lift: Lift): Boolean = desiredDirection == lift.direction
-  def isBelow(lift: Lift): Boolean          = position < lift.position
-  def isAbove(lift: Lift): Boolean          = position > lift.position
+  inline def matchesDirection(lift: Lift): Boolean = desiredDirection == lift.direction
+  inline def isBelow(lift: Lift): Boolean          = position < lift.position
+  inline def isAbove(lift: Lift): Boolean          = position > lift.position
 }
 
 case class Lift(
@@ -31,15 +31,15 @@ case class Lift(
     people: Queue[Person],
     capacity: Int
 ) {
-  def isFull: Boolean    = people.size == capacity
-  def hasRoom: Boolean   = people.size != capacity
-  def hasPeople: Boolean = people.nonEmpty
-  def isEmpty: Boolean   = people.isEmpty
+  val isFull: Boolean    = people.size == capacity
+  val hasRoom: Boolean   = people.size != capacity
+  val hasPeople: Boolean = people.nonEmpty
+  val isEmpty: Boolean   = people.isEmpty
 
-  def accepts(person: Person): Boolean =
+  inline def accepts(person: Person): Boolean =
     hasRoom && person.desiredDirection == direction
 
-  def nearestPassengerTarget: Option[Floor] =
+  inline def nearestPassengerTarget: Option[Floor] =
     people.filter(_.matchesDirection(this)).map(_.destination).minByOption(floor => Math.abs(floor - position))
 
   @tailrec final def pickup(building: Building): (Lift, Building) =
@@ -52,14 +52,14 @@ case class Lift(
         val emptierBuilding = building.copy(floors = building.floors.updated(position, emptierQueue))
         fullerLift.pickup(emptierBuilding)
 
-  def fixDirection(building: Building): Lift = position match
+  inline def fixDirection(building: Building): Lift = position match
     case 0                                    => copy(direction = Up)
     case p if p == building.floors.length - 1 => copy(direction = Down)
     case _                                    => this
 
-  def dropOff: Lift = copy(people = people.filter(_.destination != position))
+  inline def dropOff: Lift = copy(people = people.filter(_.destination != position))
 
-  def align(building: Building): Lift =
+  inline def align(building: Building): Lift =
     List(nearestPassengerTarget, building.nearestRequestInSameDirection(this)).flatten
       .minByOption(floor => Math.abs(floor - position))
       .match
@@ -79,19 +79,19 @@ case class Lift(
 case class Building(
     floors: Array[Queue[Person]]
 ) {
-  def isEmpty: Boolean   = floors.forall(_.isEmpty)
-  def hasPeople: Boolean = !isEmpty
+  val isEmpty: Boolean   = floors.forall(_.isEmpty)
+  val hasPeople: Boolean = !isEmpty
 
-  private def peopleGoing(direction: Direction): List[Person] =
+  inline private def peopleGoing(direction: Direction): List[Person] =
     floors.flatMap(queue => queue.filter(_.desiredDirection == direction)).toList
 
-  def lowestFloorGoingUp(lift: Lift): Option[Floor] =
+  inline def lowestFloorGoingUp(lift: Lift): Option[Floor] =
     peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption
 
-  def highestFloorGoingDown(lift: Lift): Option[Floor] =
+  inline def highestFloorGoingDown(lift: Lift): Option[Floor] =
     peopleGoing(Down).filter(_.isAbove(lift)).map(_.position).maxOption
 
-  def nearestRequestInSameDirection(lift: Lift): Option[Floor] =
+  inline def nearestRequestInSameDirection(lift: Lift): Option[Floor] =
     lift.direction match
       case Up   => peopleGoing(Up).filter(_.isAbove(lift)).map(_.position).minOption
       case Down => peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
@@ -102,15 +102,15 @@ case class LiftSystem(
     lift: Lift,
     stops: List[Floor]
 ) {
-  private def fixDirection: LiftSystem = copy(lift = lift.fixDirection(building))
-  private def dropOff: LiftSystem      = copy(lift = lift.dropOff)
-  private def align: LiftSystem        = copy(lift = lift.align(building))
+  inline private def fixDirection: LiftSystem = copy(lift = lift.fixDirection(building))
+  inline private def dropOff: LiftSystem      = copy(lift = lift.dropOff)
+  inline private def align: LiftSystem        = copy(lift = lift.align(building))
 
-  private def pickup: LiftSystem =
+  inline private def pickup: LiftSystem =
     val (lift2, building2) = lift.pickup(building)
     copy(lift = lift2, building = building2)
 
-  private def registerStop: LiftSystem =
+  inline private def registerStop: LiftSystem =
     stops.lastOption match
       case Some(lastStop) if lastStop == lift.position => this
       case _                                           => copy(stops = stops :+ lift.position)
