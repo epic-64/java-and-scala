@@ -40,13 +40,14 @@ case class Lift(
     people.filter(_.matchesDirection(this)).map(_.destination).minByOption(floor => Math.abs(floor - position))
 
   @tailrec
-  final def pickup(queue: Queue[Person]): (Lift, Queue[Person]) =
-    queue.filter(accepts).dequeueOption match
-      case None            => (this, queue)
+  final def pickup(building: Building): (Lift, Building) =
+    building.floors(position).filter(accepts).dequeueOption match
+      case None            => (this, building)
       case Some(person, _) =>
-        val fullerLift   = copy(people = people.enqueue(person))
-        val emptierQueue = queue.diff(Seq(person))
-        fullerLift.pickup(emptierQueue)
+        val fullerLift      = copy(people = people.enqueue(person))
+        val emptierQueue    = building.floors(position).diff(Seq(person))
+        val emptierBuilding = building.copy(floors = building.floors.updated(position, emptierQueue))
+        fullerLift.pickup(emptierBuilding)
 
   def fixDirection(building: Building): Lift = position match
     case 0                                  => copy(direction = Up)
@@ -152,11 +153,10 @@ object LiftLogic {
     val State(building1, lift1, stops1) = state
     val oldPosition                     = lift1.position
 
-    // pick up people from the current floor
-    val (lift2, floorQueue) = lift1.fixDirection(building1).dropOff.pickup(queue = building1.floors(lift1.position))
-
-    // update the building to reflect the updated floor
-    val building2 = building1.copy(floors = building1.floors.updated(lift2.position, floorQueue))
+    val (lift2, building2) = lift1
+      .fixDirection(building1)
+      .dropOff           // drop off people at their destination
+      .pickup(building1) // pick up people waiting on the current floor (returns new lift and building)
 
     // core task: find the new target and direction
     val lift3 = lift2.align(building2)
