@@ -100,7 +100,7 @@ case class LiftSystem(building: Building, lift: Lift, stops: List[Floor]) {
   private def dropOff: LiftSystem =
     copy(lift = lift.dropOff)
 
-  def pickup: LiftSystem =
+  private def pickup: LiftSystem =
     val (lift2, building2) = lift.pickup(building)
     copy(lift = lift2, building = building2)
 
@@ -110,8 +110,10 @@ case class LiftSystem(building: Building, lift: Lift, stops: List[Floor]) {
   def registerStop: LiftSystem =
     copy(stops = stops :+ lift.position)
 
+  def isDone: Boolean =
+    building.isEmpty && lift.isEmpty && lift.position == 0
+
   def step: LiftSystem =
-    println(this.toPrintable)
     registerStop.fixDirection.dropOff.pickup.align
 }
 
@@ -158,11 +160,9 @@ object LiftLogic {
   def simulate(initialState: LiftSystem): LiftSystem = {
     @tailrec
     def resolve(state: LiftSystem): LiftSystem =
-      val newState                      = state.step
-      val LiftSystem(building, lift, _) = newState
-      if building.isEmpty && lift.isEmpty && lift.position == 0
-      then newState
-      else resolve(newState)
+      if state.isDone
+      then state
+      else resolve(state.step)
 
     resolve(initialState).registerStop
   }
