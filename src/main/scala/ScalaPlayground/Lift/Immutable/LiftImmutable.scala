@@ -95,26 +95,28 @@ case class Building(floors: Seq[Queue[Person]]) {
 
 case class LiftBuildingCouple(lift: Lift, building: Building) {}
 
-case class State(building: Building, lift: Lift, stops: List[Floor]) {
-  private def fixDirection: State = copy(lift = lift.fixDirection(building))
+case class LiftSystem(building: Building, lift: Lift, stops: List[Floor]) {
+  private def fixDirection: LiftSystem =
+    copy(lift = lift.fixDirection(building))
 
-  private def dropOff: State = copy(lift = lift.dropOff)
+  private def dropOff: LiftSystem =
+    copy(lift = lift.dropOff)
 
-  def pickup: State =
+  def pickup: LiftSystem =
     val (lift2, building2) = lift.pickup(building)
     copy(lift = lift2, building = building2)
 
-  private def align: State = copy(lift = lift.align(building))
+  private def align: LiftSystem =
+    copy(lift = lift.align(building))
 
-  private def registerStop(oldPosition: Floor): State =
-    if oldPosition == lift.position
-    then this
-    else copy(stops = stops :+ lift.position)
+  def registerStop: LiftSystem =
+    copy(stops = stops :+ lift.position)
 
-  def step: State = this.fixDirection.dropOff.pickup.align.registerStop(lift.position)
+  def step: LiftSystem =
+    registerStop.fixDirection.dropOff.pickup.align
 }
 
-extension (state: State) {
+extension (state: LiftSystem) {
   def toPrintable: String = {
     import state.{building, lift, stops}
 
@@ -139,16 +141,14 @@ extension (state: State) {
 object Dinglemouse {
   def theLift(queues: Array[Array[Int]], capacity: Int): Array[Int] = {
     val floors: Seq[Queue[Person]] =
-      queues.zipWithIndex
-        .map { case (queue, index) =>
-          queue.map(destination => Person(position = index, destination = destination)).to(Queue)
-        }
-        .toSeq
+      queues.zipWithIndex.map { case (queue, index) =>
+        queue.map(destination => Person(position = index, destination = destination)).to(Queue)
+      }.toSeq
 
     val lift     = Lift(position = 0, Direction.Up, people = Queue.empty, capacity)
     val building = Building(floors)
 
-    val initialState = State(building = building, lift = lift, stops = List.empty)
+    val initialState = LiftSystem(building = building, lift = lift, stops = List.empty)
     val finalState   = LiftLogic.simulate(initialState)
 
     finalState.stops.toArray
@@ -156,17 +156,15 @@ object Dinglemouse {
 }
 
 object LiftLogic {
-  def simulate(initialState: State): State = {
-    val state = initialState.copy(stops = initialState.stops :+ initialState.lift.position)
-
+  def simulate(initialState: LiftSystem): LiftSystem = {
     @tailrec
-    def resolve(state: State): State =
-      val newState                 = state.step
-      val State(building, lift, _) = newState
+    def resolve(state: LiftSystem): LiftSystem =
+      val newState                      = state.step
+      val LiftSystem(building, lift, _) = newState
       if building.isEmpty && lift.isEmpty && lift.position == 0
       then newState
       else resolve(newState)
 
-    resolve(state)
+    resolve(initialState).registerStop
   }
 }
