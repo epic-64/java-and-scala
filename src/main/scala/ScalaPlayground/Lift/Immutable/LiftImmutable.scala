@@ -10,7 +10,10 @@ import scala.collection.immutable.Queue
 type Floor = Int
 enum Direction { case Up, Down }
 
-case class Person(position: Floor, destination: Floor) {
+case class Person(
+    position: Floor,
+    destination: Floor
+) {
   require(position != destination, "source and destination floor cannot be the same")
 
   val desiredDirection: Direction = (position, destination) match
@@ -74,7 +77,9 @@ case class Lift(
                 case None         => copy(building.highestFloorGoingDown(this).getOrElse(0), Down)
 }
 
-case class Building(floors: Array[Queue[Person]]) {
+case class Building(
+    floors: Array[Queue[Person]]
+) {
   def isEmpty: Boolean   = floors.forall(_.isEmpty)
   def hasPeople: Boolean = !isEmpty
 
@@ -93,19 +98,28 @@ case class Building(floors: Array[Queue[Person]]) {
       case Down => peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
 }
 
-case class LiftSystem(building: Building, lift: Lift, stops: List[Floor]) {
-  def fixDirection: LiftSystem = copy(lift = lift.fixDirection(building))
-  def dropOff: LiftSystem      = copy(lift = lift.dropOff)
-  def align: LiftSystem        = copy(lift = lift.align(building))
+case class LiftSystem(
+    building: Building,
+    lift: Lift,
+    stops: List[Floor]
+) {
+  private def fixDirection: LiftSystem = copy(lift = lift.fixDirection(building))
+  private def dropOff: LiftSystem      = copy(lift = lift.dropOff)
+  private def align: LiftSystem        = copy(lift = lift.align(building))
 
-  def pickup: LiftSystem =
+  private def pickup: LiftSystem =
     val (lift2, building2) = lift.pickup(building)
     copy(lift = lift2, building = building2)
 
-  def registerStop: LiftSystem =
+  private def registerStop: LiftSystem =
     stops.lastOption match
       case Some(lastStop) if lastStop == lift.position => this
       case _                                           => copy(stops = stops :+ lift.position)
+
+  @tailrec final def resolve: LiftSystem =
+    if building.isEmpty && lift.isEmpty && lift.position == 0
+    then registerStop
+    else registerStop.fixDirection.dropOff.pickup.align.resolve
 }
 
 // Excuse the name. Dinglemouse.theLift() is how the function is called in the Codewars test suite
@@ -116,16 +130,10 @@ object Dinglemouse {
         queue.map(destination => Person(position = index, destination = destination)).to(Queue)
       }
 
-    val lift     = Lift(position = 0, Direction.Up, people = Queue.empty, capacity)
-    val building = Building(floors)
-
-    @tailrec def resolve(state: LiftSystem): LiftSystem =
-      if state.building.isEmpty && state.lift.isEmpty && state.lift.position == 0
-      then state
-      else resolve(state.registerStop.fixDirection.dropOff.pickup.align)
-
+    val lift         = Lift(position = 0, Direction.Up, people = Queue.empty, capacity)
+    val building     = Building(floors)
     val initialState = LiftSystem(building, lift, stops = List.empty)
-    val finalState   = resolve(initialState).registerStop
+    val finalState   = initialState.resolve
 
     finalState.stops.toArray
   }
