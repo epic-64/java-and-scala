@@ -41,11 +41,12 @@ case class Lift(
 
   @tailrec
   final def pickup(building: Building): (Lift, Building) =
-    building.floors(position).filter(accepts).dequeueOption match
+    val queue = building.floors(position)
+    queue.filter(accepts).dequeueOption match
       case None            => (this, building)
       case Some(person, _) =>
         val fullerLift      = copy(people = people.enqueue(person))
-        val emptierQueue    = building.floors(position).diff(Seq(person))
+        val emptierQueue    = queue.diff(Seq(person))
         val emptierBuilding = building.copy(floors = building.floors.updated(position, emptierQueue))
         fullerLift.pickup(emptierBuilding)
 
