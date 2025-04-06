@@ -151,16 +151,12 @@ object Dinglemouse {
     val lift     = Lift(position = 0, Direction.Up, people = Queue.empty, capacity)
     val building = Building(floors)
 
+    @tailrec def resolve(state: LiftSystem): LiftSystem =
+      if state.isDone then state else resolve(state.step)
+
     val initialState = LiftSystem(building = building, lift = lift, stops = List.empty)
-    val finalState   = LiftLogic.simulate(initialState)
+    val finalState   = resolve(initialState).registerStop
 
     finalState.stops.toArray
   }
 }
-
-object LiftLogic:
-  def simulate(initialState: LiftSystem): LiftSystem =
-    @tailrec def resolve(state: LiftSystem): LiftSystem =
-      if state.isDone then state else resolve(state.step)
-
-    resolve(initialState).registerStop
