@@ -42,8 +42,7 @@ case class Lift(
   def nearestPassengerTarget: Option[Floor] =
     people.filter(_.matchesDirection(this)).map(_.destination).minByOption(floor => Math.abs(floor - position))
 
-  @tailrec
-  final def pickup(building: Building): (Lift, Building) =
+  @tailrec final def pickup(building: Building): (Lift, Building) =
     val queue = building.floors(position)
     queue.filter(accepts).dequeueOption match
       case None            => (this, building)
