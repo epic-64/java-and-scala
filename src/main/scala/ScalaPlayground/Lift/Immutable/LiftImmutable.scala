@@ -166,6 +166,6 @@ object LiftLogic {
       then newState
       else resolve(newState)
 
-    resolve(initialState)
+    resolve(initialState).registerStop
   }
 }
