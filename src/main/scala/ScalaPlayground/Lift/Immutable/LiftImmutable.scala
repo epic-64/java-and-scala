@@ -38,6 +38,41 @@ case class Lift(
 
   def nearestPassengerTarget: Option[Floor] =
     people.filter(_.matchesDirection(this)).map(_.destination).minByOption(floor => Math.abs(floor - position))
+
+  @tailrec
+  final def pickup(queue: Queue[Person]): (Lift, Queue[Person]) =
+    queue.filter(accepts).dequeueOption match
+      case None            => (this, queue)
+      case Some(person, _) =>
+        val fullerLift   = copy(people = people.enqueue(person))
+        val emptierQueue = queue.diff(Seq(person))
+        fullerLift.pickup(emptierQueue)
+
+  def fixDirection: Lift = position match
+    case 0                      => copy(direction = Up)
+    case p if p == capacity - 1 => copy(direction = Down)
+    case _                      => this
+
+  def dropOff: Lift = copy(people = people.filter(_.destination != position))
+
+  def getNextPositionAndDirection(building: Building): Lift =
+    List(                                          // Build a list of primary targets
+      nearestPassengerTarget,                      // request from passenger already on the lift
+      building.nearestRequestInSameDirection(this) // request from people [waiting in AND going to] the same direction
+    ).flatten // turn list of options into list of Integers
+      .minByOption(floor => Math.abs(floor - position)) // get Some floor with the lowest distance, or None
+      .match
+        case Some(floor) => copy(position = floor, direction = direction) // return requested floor, keep direction
+        case None        =>                                               // otherwise choose a new target
+          direction match
+            case Up   =>
+              building.lowestFloorGoingUp(this) match
+                case Some(lowest) => copy(lowest, Up)
+                case None         => copy(building.highestFloorGoingDown(this).getOrElse(0), Down)
+            case Down =>
+              building.highestFloorGoingDown(this) match
+                case Some(highest) => copy(highest, Down)
+                case None          => copy(building.lowestFloorGoingUp(this).getOrElse(0), Up)
 }
 
 case class Building(floors: ListMap[Floor, Queue[Person]]) {
@@ -117,69 +152,24 @@ object LiftLogic {
   }
 
   private def step(state: State): State = {
-    import state.{building, lift, stops}
-
-    val validDirection = lift.position match
-      case 0                                  => Up
-      case p if p == building.floors.size - 1 => Down
-      case _                                  => lift.direction
-
-    // Off-board people who reached their destination
-    val lift2 = lift.copy(
-      direction = validDirection,
-      people = lift.people.filter(_.destination != lift.position)
-    )
-
-    @tailrec
-    def pickup(lift: Lift, queue: Queue[Person]): (Lift, Queue[Person]) =
-      queue.filter(lift.accepts).dequeueOption match
-        case None            => (lift, queue)
-        case Some(person, _) =>
-          val fullerLift   = lift.copy(people = lift.people.enqueue(person))
-          val emptierQueue = queue.diff(Seq(person))
-          pickup(fullerLift, emptierQueue)
+    val State(building1, lift1, stops1) = state
+    val oldPosition                     = lift1.position
 
     // pick up people from the current floor
-    val (lift3, floorQueue) = pickup(lift = lift2, queue = building.floors(lift2.position))
+    val (lift2, floorQueue) = lift1.fixDirection.dropOff.pickup(queue = building1.floors(lift1.position))
 
     // update the building to reflect the updated floor
-    val building2 = building.copy(floors = building.floors.updated(lift3.position, floorQueue))
+    val building2 = building1.copy(floors = building1.floors.updated(lift2.position, floorQueue))
 
     // core task: find the new target and direction
-    val (nextPosition, nextDirection) = getNextPositionAndDirection(building2, lift3)
-
-    // update lift parameters
-    val lift4 = lift3.copy(nextPosition, nextDirection)
+    val lift4 = lift2.getNextPositionAndDirection(building2)
 
     // Register the stop. I added the extra condition because of a bug
     // by which the lift sometimes takes two turns for the very last move 🤔
     val stops2 = true match
-      case _ if lift3.position != lift4.position => stops :+ lift4.position
-      case _                                     => stops
+      case _ if oldPosition != lift4.position => stops1 :+ lift4.position
+      case _                                  => stops1
 
     state.copy(building2, lift4, stops2)
   }
-
-  private def getNextPositionAndDirection(building: Building, lift: Lift): (Floor, Direction) =
-    List(                                          // Build a list of primary targets
-      lift.nearestPassengerTarget,                 // request from passenger already on the lift
-      building.nearestRequestInSameDirection(lift) // request from people [waiting in AND going to] the same direction
-    ).flatten // turn list of options into list of Integers
-      .minByOption(floor => Math.abs(floor - lift.position)) // get Some floor with the lowest distance, or None
-      .match
-        case Some(floor) => (floor, lift.direction) // return requested floor, keep direction
-        case None        =>                         // otherwise choose a new target
-          lift.direction match
-            case Up   => upwardsNewTarget(building, lift)   // look for people above going downwards
-            case Down => downwardsNewTarget(building, lift) // look for people below going upwards
-
-  private def downwardsNewTarget(building: Building, lift: Lift): (Floor, Direction) =
-    building.lowestFloorGoingUp(lift) match
-      case Some(lowest) => (lowest, Up)
-      case None         => (building.highestFloorGoingDown(lift).getOrElse(0), Down)
-
-  private def upwardsNewTarget(building: Building, lift: Lift): (Floor, Direction) =
-    building.highestFloorGoingDown(lift) match
-      case Some(highest) => (highest, Down)
-      case None          => (building.lowestFloorGoingUp(lift).getOrElse(0), Up)
 }
