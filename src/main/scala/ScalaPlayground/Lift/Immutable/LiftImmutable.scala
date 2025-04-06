@@ -41,6 +41,15 @@ case class Lift(
 
   inline def nearestPassengerTarget: Option[Floor] =
     people.filter(_.matchesDirection(this)).map(_.destination).minByOption(floor => Math.abs(floor - position))
+  
+  inline def fixDirection(building: Building): Lift =
+    position match
+      case 0 => copy(direction = Up)
+      case p if p == building.floors.length - 1 => copy(direction = Down)
+      case _ => this
+
+  inline def dropOff: Lift =
+    copy(people = people.filter(_.destination != position))
 
   @tailrec final def pickup(building: Building): (Lift, Building) =
     val queue = building.floors(position)
@@ -51,13 +60,6 @@ case class Lift(
         val emptierQueue    = queue.diff(Seq(person))
         val emptierBuilding = building.copy(floors = building.floors.updated(position, emptierQueue))
         fullerLift.pickup(emptierBuilding)
-
-  inline def fixDirection(building: Building): Lift = position match
-    case 0                                    => copy(direction = Up)
-    case p if p == building.floors.length - 1 => copy(direction = Down)
-    case _                                    => this
-
-  inline def dropOff: Lift = copy(people = people.filter(_.destination != position))
 
   inline def align(building: Building): Lift =
     List(nearestPassengerTarget, building.nearestRequestInSameDirection(this)).flatten
