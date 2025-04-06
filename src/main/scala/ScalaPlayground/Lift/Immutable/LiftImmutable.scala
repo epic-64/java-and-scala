@@ -93,7 +93,26 @@ case class Building(floors: ListMap[Floor, Queue[Person]]) {
       case Down => peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
 }
 
-case class State(building: Building, lift: Lift, stops: List[Floor])
+case class LiftBuildingCouple(lift: Lift, building: Building) {}
+
+case class State(building: Building, lift: Lift, stops: List[Floor]) {
+  private def fixDirection: State = copy(lift = lift.fixDirection(building))
+
+  private def dropOff: State = copy(lift = lift.dropOff)
+
+  def pickup: State =
+    val (lift2, building2) = lift.pickup(building)
+    copy(lift = lift2, building = building2)
+
+  private def align: State = copy(lift = lift.align(building))
+  
+  private def registerStop(oldPosition: Floor): State =
+    if oldPosition == lift.position
+    then this
+    else copy(stops = stops :+ lift.position)
+
+  def step: State = this.fixDirection.dropOff.pickup.align.registerStop(lift.position)
+}
 
 extension (state: State) {
   def toPrintable: String = {
@@ -142,33 +161,12 @@ object LiftLogic {
 
     @tailrec
     def resolve(state: State): State =
-      val newState                 = step(state)
+      val newState                 = state.step
       val State(building, lift, _) = newState
-      if building.isEmpty && lift.isEmpty && lift.position == 0 then newState
+      if building.isEmpty && lift.isEmpty && lift.position == 0
+      then newState
       else resolve(newState)
 
     resolve(state)
-  }
-
-  private def step(state: State): State = {
-    val State(building1, lift1, stops1) = state
-    val oldPosition                     = lift1.position
-
-    val (lift2, building2) = lift1
-      .fixDirection(building1)
-      .dropOff           // drop off people at their destination
-      .pickup(building1) // pick up people waiting on the current floor (returns new lift and building)
-
-    // core task: find the new target and direction
-    val lift3 = lift2.align(building2)
-
-    // Register the stop. I added the extra condition because of a bug
-    // by which the lift sometimes takes two turns for the very last move 🤔
-    val stops2 = 
-      if oldPosition != lift3.position
-      then stops1 :+ lift3.position
-      else stops1
-
-    state.copy(building2, lift3, stops2)
   }
 }
