@@ -71,7 +71,7 @@ case class Lift(
             case Down =>
               building.lowestFloorGoingUp(this) match
                 case Some(lowest) => copy(lowest, Up)
-                case None => copy(building.highestFloorGoingDown(this).getOrElse(0), Down)
+                case None         => copy(building.highestFloorGoingDown(this).getOrElse(0), Down)
 }
 
 case class Building(floors: Array[Queue[Person]]) {
@@ -94,29 +94,18 @@ case class Building(floors: Array[Queue[Person]]) {
 }
 
 case class LiftSystem(building: Building, lift: Lift, stops: List[Floor]) {
-  private def fixDirection: LiftSystem =
-    copy(lift = lift.fixDirection(building))
+  def fixDirection: LiftSystem = copy(lift = lift.fixDirection(building))
+  def dropOff: LiftSystem      = copy(lift = lift.dropOff)
+  def align: LiftSystem        = copy(lift = lift.align(building))
 
-  private def dropOff: LiftSystem =
-    copy(lift = lift.dropOff)
-
-  private def pickup: LiftSystem =
+  def pickup: LiftSystem =
     val (lift2, building2) = lift.pickup(building)
     copy(lift = lift2, building = building2)
-
-  private def align: LiftSystem =
-    copy(lift = lift.align(building))
 
   def registerStop: LiftSystem =
     stops.lastOption match
       case Some(lastStop) if lastStop == lift.position => this
       case _                                           => copy(stops = stops :+ lift.position)
-
-  def isDone: Boolean =
-    building.isEmpty && lift.isEmpty && lift.position == 0
-
-  def step: LiftSystem =
-    registerStop.fixDirection.dropOff.pickup.align
 }
 
 // Excuse the name. Dinglemouse.theLift() is how the function is called in the Codewars test suite
@@ -131,11 +120,13 @@ object Dinglemouse {
     val building = Building(floors)
 
     @tailrec def resolve(state: LiftSystem): LiftSystem =
-      if state.isDone then state else resolve(state.step)
+      if state.building.isEmpty && state.lift.isEmpty && state.lift.position == 0
+      then state
+      else resolve(state.registerStop.fixDirection.dropOff.pickup.align)
 
-    val initialState = LiftSystem(building = building, lift = lift, stops = List.empty)
-    val finalState   = resolve(initialState)
+    val initialState = LiftSystem(building, lift, stops = List.empty)
+    val finalState   = resolve(initialState).registerStop
 
-    finalState.registerStop.stops.toArray
+    finalState.stops.toArray
   }
 }
