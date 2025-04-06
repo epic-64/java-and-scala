@@ -48,22 +48,19 @@ case class Lift(
         val emptierQueue = queue.diff(Seq(person))
         fullerLift.pickup(emptierQueue)
 
-  def fixDirection: Lift = position match
-    case 0                      => copy(direction = Up)
-    case p if p == capacity - 1 => copy(direction = Down)
-    case _                      => this
+  def fixDirection(building: Building): Lift = position match
+    case 0                                  => copy(direction = Up)
+    case p if p == building.floors.size - 1 => copy(direction = Down)
+    case _                                  => this
 
   def dropOff: Lift = copy(people = people.filter(_.destination != position))
 
-  def getNextPositionAndDirection(building: Building): Lift =
-    List(                                          // Build a list of primary targets
-      nearestPassengerTarget,                      // request from passenger already on the lift
-      building.nearestRequestInSameDirection(this) // request from people [waiting in AND going to] the same direction
-    ).flatten // turn list of options into list of Integers
-      .minByOption(floor => Math.abs(floor - position)) // get Some floor with the lowest distance, or None
+  def align(building: Building): Lift =
+    List(nearestPassengerTarget, building.nearestRequestInSameDirection(this)).flatten
+      .minByOption(floor => Math.abs(floor - position))
       .match
-        case Some(floor) => copy(position = floor, direction = direction) // return requested floor, keep direction
-        case None        =>                                               // otherwise choose a new target
+        case Some(floor) => copy(position = floor, direction = direction)
+        case None        =>
           direction match
             case Up   =>
               building.lowestFloorGoingUp(this) match
@@ -156,20 +153,20 @@ object LiftLogic {
     val oldPosition                     = lift1.position
 
     // pick up people from the current floor
-    val (lift2, floorQueue) = lift1.fixDirection.dropOff.pickup(queue = building1.floors(lift1.position))
+    val (lift2, floorQueue) = lift1.fixDirection(building1).dropOff.pickup(queue = building1.floors(lift1.position))
 
     // update the building to reflect the updated floor
     val building2 = building1.copy(floors = building1.floors.updated(lift2.position, floorQueue))
 
     // core task: find the new target and direction
-    val lift4 = lift2.getNextPositionAndDirection(building2)
+    val lift3 = lift2.align(building2)
 
     // Register the stop. I added the extra condition because of a bug
     // by which the lift sometimes takes two turns for the very last move 🤔
     val stops2 = true match
-      case _ if oldPosition != lift4.position => stops1 :+ lift4.position
+      case _ if oldPosition != lift3.position => stops1 :+ lift3.position
       case _                                  => stops1
 
-    state.copy(building2, lift4, stops2)
+    state.copy(building2, lift3, stops2)
   }
 }
