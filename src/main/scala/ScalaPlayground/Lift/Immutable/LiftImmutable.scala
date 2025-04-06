@@ -59,7 +59,7 @@ case class Lift(
 
   def align(building: Building): Lift =
     List(nearestPassengerTarget, building.nearestRequestInSameDirection(this)).flatten
-      .minByOption(floor => Math.abs(floor - position)) 
+      .minByOption(floor => Math.abs(floor - position))
       .match
         case Some(floor) => copy(position = floor, direction = direction)
         case None        => // switch direction
@@ -134,8 +134,8 @@ object Dinglemouse {
       if state.isDone then state else resolve(state.step)
 
     val initialState = LiftSystem(building = building, lift = lift, stops = List.empty)
-    val finalState   = resolve(initialState).registerStop
+    val finalState   = resolve(initialState)
 
-    finalState.stops.toArray
+    finalState.registerStop.stops.toArray
   }
 }
