@@ -113,6 +113,7 @@ case class LiftSystem(building: Building, lift: Lift, stops: List[Floor]) {
     copy(stops = stops :+ lift.position)
 
   def step: LiftSystem =
+    println(this.toPrintable)
     registerStop.fixDirection.dropOff.pickup.align
 }
 
@@ -123,7 +124,7 @@ extension (state: LiftSystem) {
     val sb = new StringBuilder()
     sb.append(s"${stops.length} stops: ${stops.mkString(", ")}\n")
 
-    building.floors.reverse.zipWithIndex.foreach { (queue, floor) =>
+    building.floors.zipWithIndex.reverse.foreach { (queue, floor) =>
       sb.append(s"| $floor | ${queue.reverse.map(_.destination).mkString(", ").padTo(20, ' ')} |")
 
       // draw the lift if it is on the current level
@@ -165,6 +166,6 @@ object LiftLogic {
       then newState
       else resolve(newState)
 
-    resolve(initialState).registerStop
+    resolve(initialState)
   }
 }
