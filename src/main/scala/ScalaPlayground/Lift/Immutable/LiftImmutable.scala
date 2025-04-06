@@ -51,9 +51,9 @@ case class Lift(
         fullerLift.pickup(emptierBuilding)
 
   def fixDirection(building: Building): Lift = position match
-    case 0                                  => copy(direction = Up)
-    case p if p == building.floors.size - 1 => copy(direction = Down)
-    case _                                  => this
+    case 0                                    => copy(direction = Up)
+    case p if p == building.floors.length - 1 => copy(direction = Down)
+    case _                                    => this
 
   def dropOff: Lift = copy(people = people.filter(_.destination != position))
 
@@ -108,7 +108,9 @@ case class LiftSystem(building: Building, lift: Lift, stops: List[Floor]) {
     copy(lift = lift.align(building))
 
   def registerStop: LiftSystem =
-    copy(stops = stops :+ lift.position)
+    stops.lastOption match
+      case Some(lastStop) if lastStop == lift.position => this
+      case _                                           => copy(stops = stops :+ lift.position)
 
   def isDone: Boolean =
     building.isEmpty && lift.isEmpty && lift.position == 0
@@ -156,14 +158,9 @@ object Dinglemouse {
   }
 }
 
-object LiftLogic {
-  def simulate(initialState: LiftSystem): LiftSystem = {
-    @tailrec
-    def resolve(state: LiftSystem): LiftSystem =
-      if state.isDone
-      then state
-      else resolve(state.step)
+object LiftLogic:
+  def simulate(initialState: LiftSystem): LiftSystem =
+    @tailrec def resolve(state: LiftSystem): LiftSystem =
+      if state.isDone then state else resolve(state.step)
 
     resolve(initialState).registerStop
-  }
-}
