@@ -74,7 +74,7 @@ case class Lift(
                 case None          => copy(building.lowestFloorGoingUp(this).getOrElse(0), Up)
 }
 
-case class Building(floors: Seq[Queue[Person]]) {
+case class Building(floors: Array[Queue[Person]]) {
   def isEmpty: Boolean   = floors.forall(_.isEmpty)
   def hasPeople: Boolean = !isEmpty
 
@@ -140,10 +140,10 @@ extension (state: LiftSystem) {
 // Excuse the name. Dinglemouse.theLift() is how the function is called in the Codewars test suite
 object Dinglemouse {
   def theLift(queues: Array[Array[Int]], capacity: Int): Array[Int] = {
-    val floors: Seq[Queue[Person]] =
+    val floors: Array[Queue[Person]] =
       queues.zipWithIndex.map { case (queue, index) =>
         queue.map(destination => Person(position = index, destination = destination)).to(Queue)
-      }.toSeq
+      }
 
     val lift     = Lift(position = 0, Direction.Up, people = Queue.empty, capacity)
     val building = Building(floors)
