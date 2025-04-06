@@ -164,9 +164,10 @@ object LiftLogic {
 
     // Register the stop. I added the extra condition because of a bug
     // by which the lift sometimes takes two turns for the very last move 🤔
-    val stops2 = true match
-      case _ if oldPosition != lift3.position => stops1 :+ lift3.position
-      case _                                  => stops1
+    val stops2 = 
+      if oldPosition != lift3.position
+      then stops1 :+ lift3.position
+      else stops1
 
     state.copy(building2, lift3, stops2)
   }
