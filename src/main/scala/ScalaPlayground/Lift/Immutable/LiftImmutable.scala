@@ -5,7 +5,7 @@ package ScalaPlayground.Lift.Immutable
 import ScalaPlayground.Lift.Immutable.Direction.{Down, Up}
 
 import scala.annotation.tailrec
-import scala.collection.immutable.{ListMap, Queue}
+import scala.collection.immutable.Queue
 
 type Floor = Int
 enum Direction { case Up, Down }
@@ -74,12 +74,12 @@ case class Lift(
                 case None          => copy(building.lowestFloorGoingUp(this).getOrElse(0), Up)
 }
 
-case class Building(floors: ListMap[Floor, Queue[Person]]) {
-  def isEmpty: Boolean   = floors.values.forall(_.isEmpty)
+case class Building(floors: Seq[Queue[Person]]) {
+  def isEmpty: Boolean   = floors.forall(_.isEmpty)
   def hasPeople: Boolean = !isEmpty
 
   private def peopleGoing(direction: Direction): List[Person] =
-    floors.values.flatMap(queue => queue.filter(_.desiredDirection == direction)).toList
+    floors.flatMap(queue => queue.filter(_.desiredDirection == direction)).toList
 
   def lowestFloorGoingUp(lift: Lift): Option[Floor] =
     peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption
@@ -105,7 +105,7 @@ case class State(building: Building, lift: Lift, stops: List[Floor]) {
     copy(lift = lift2, building = building2)
 
   private def align: State = copy(lift = lift.align(building))
-  
+
   private def registerStop(oldPosition: Floor): State =
     if oldPosition == lift.position
     then this
@@ -121,7 +121,7 @@ extension (state: State) {
     val sb = new StringBuilder()
     sb.append(s"${stops.length} stops: ${stops.mkString(", ")}\n")
 
-    building.floors.toSeq.reverse.foreach { case (floor, queue) =>
+    building.floors.reverse.zipWithIndex.foreach { (queue, floor) =>
       sb.append(s"| $floor | ${queue.reverse.map(_.destination).mkString(", ").padTo(20, ' ')} |")
 
       // draw the lift if it is on the current level
@@ -138,12 +138,12 @@ extension (state: State) {
 // Excuse the name. Dinglemouse.theLift() is how the function is called in the Codewars test suite
 object Dinglemouse {
   def theLift(queues: Array[Array[Int]], capacity: Int): Array[Int] = {
-    val floors: ListMap[Int, Queue[Person]] =
+    val floors: Seq[Queue[Person]] =
       queues.zipWithIndex
         .map { case (queue, index) =>
-          (index, queue.map(destination => Person(position = index, destination = destination)).to(Queue))
+          queue.map(destination => Person(position = index, destination = destination)).to(Queue)
         }
-        .to(ListMap)
+        .toSeq
 
     val lift     = Lift(position = 0, Direction.Up, people = Queue.empty, capacity)
     val building = Building(floors)
