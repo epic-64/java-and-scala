@@ -62,7 +62,7 @@ case class Lift(
       .minByOption(floor => Math.abs(floor - position)) 
       .match
         case Some(floor) => copy(position = floor, direction = direction)
-        case None        =>
+        case None        => // switch direction
           direction match
             case Up   =>
               building.highestFloorGoingDown(this) match
