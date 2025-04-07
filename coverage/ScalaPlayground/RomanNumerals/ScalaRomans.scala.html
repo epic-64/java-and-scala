@@ -1,0 +1,2473 @@
+<html>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title id="title">
+          ScalaPlayground/RomanNumerals/ScalaRomans.scala.html
+        </title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/css/theme.default.min.css" type="text/css"/><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/js/jquery.tablesorter.min.js"></script><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"/><script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script><script type="text/javascript">
+        $(document).ready(function() {$(".tablesorter").tablesorter();});
+      </script>
+        <style>
+          table.codegrid { font-family: monospace; font-size: 12px; width: auto!important; }table.statementlist { width: auto!important; font-size: 13px; } table.codegrid td { padding: 0!important; border: 0!important } table td.linenumber { width: 40px!important; } 
+        </style>
+      </head>
+      <body style="font-family: monospace;">
+        <ul class="nav nav-tabs">
+          <li>
+            <a href="#codegrid" data-toggle="tab">Codegrid</a>
+          </li>
+          <li>
+            <a href="#statementlist" data-toggle="tab">Statement List</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane active" id="codegrid">
+            <pre style='font-size: 12pt; font-family: courier, monospace;'>1 <span style=''>package ScalaPlayground.RomanNumerals
+</span>2 <span style=''>
+</span>3 <span style=''>import JavaPlayground.RomanNumerals.JavaRomans
+</span>4 <span style=''>
+</span>5 <span style=''>import scala.annotation.tailrec
+</span>6 <span style=''>
+</span>7 <span style=''>object App {
+</span>8 <span style=''>  </span><span style='background: #F0ADAD'>def main</span><span style=''>(args: Array[String]): Unit = {
+</span>9 <span style=''>    val javaRomans = </span><span style='background: #F0ADAD'>new JavaRomans()</span><span style=''>
+</span>10 <span style=''>    val scalaRomans = </span><span style='background: #F0ADAD'>ScalaRomansPipeline()</span><span style=''>
+</span>11 <span style=''>
+</span>12 <span style=''>    </span><span style='background: #F0ADAD'>println(javaRomans.toNumeral(1996))</span><span style=''>
+</span>13 <span style=''>    </span><span style='background: #F0ADAD'>println(scalaRomans.toNumeral(1996))</span><span style=''>
+</span>14 <span style=''>
+</span>15 <span style=''>    </span><span style='background: #F0ADAD'>println(147.toRomanNumeral)</span><span style=''>
+</span>16 <span style=''>    </span><span style='background: #F0ADAD'>println(&quot;MMXXIV&quot;.toInt)</span><span style=''>
+</span>17 <span style=''>  }
+</span>18 <span style=''>}
+</span>19 <span style=''>
+</span>20 <span style=''>extension (n: Int) </span><span style='background: #AEF1AE'>def toRomanNumeral</span><span style=''>: String = </span><span style='background: #AEF1AE'>ScalaRomansImperative().toNumeral(n)</span><span style=''>
+</span>21 <span style=''>extension (numeral: String) </span><span style='background: #AEF1AE'>def toInt</span><span style=''>: Int    = </span><span style='background: #AEF1AE'>ScalaRomansImperative().toInt(numeral)</span><span style=''>
+</span>22 <span style=''>
+</span>23 <span style=''>trait Romans:
+</span>24 <span style=''>  def toNumeral(number: Int): String
+</span>25 <span style=''>  def toInt(roman: String): Int
+</span>26 <span style=''>
+</span>27 <span style=''>private val romanNumerals: Vector[(Int, String)] = </span><span style='background: #AEF1AE'>Vector(
+</span>28 <span style=''></span><span style='background: #AEF1AE'>  1000 -&gt; &quot;M&quot;,
+</span>29 <span style=''></span><span style='background: #AEF1AE'>  900  -&gt; &quot;CM&quot;,
+</span>30 <span style=''></span><span style='background: #AEF1AE'>  500  -&gt; &quot;D&quot;,
+</span>31 <span style=''></span><span style='background: #AEF1AE'>  400  -&gt; &quot;CD&quot;,
+</span>32 <span style=''></span><span style='background: #AEF1AE'>  100  -&gt; &quot;C&quot;,
+</span>33 <span style=''></span><span style='background: #AEF1AE'>  90   -&gt; &quot;XC&quot;,
+</span>34 <span style=''></span><span style='background: #AEF1AE'>  50   -&gt; &quot;L&quot;,
+</span>35 <span style=''></span><span style='background: #AEF1AE'>  40   -&gt; &quot;XL&quot;,
+</span>36 <span style=''></span><span style='background: #AEF1AE'>  10   -&gt; &quot;X&quot;,
+</span>37 <span style=''></span><span style='background: #AEF1AE'>  9    -&gt; &quot;IX&quot;,
+</span>38 <span style=''></span><span style='background: #AEF1AE'>  5    -&gt; &quot;V&quot;,
+</span>39 <span style=''></span><span style='background: #AEF1AE'>  4    -&gt; &quot;IV&quot;,
+</span>40 <span style=''></span><span style='background: #AEF1AE'>  1    -&gt; &quot;I&quot;
+</span>41 <span style=''></span><span style='background: #AEF1AE'>)</span><span style=''>
+</span>42 <span style=''>
+</span>43 <span style=''>class ScalaRomansImperative extends Romans:
+</span>44 <span style=''>  </span><span style='background: #AEF1AE'>override def toNumeral</span><span style=''>(number: Int): String = {
+</span>45 <span style=''>    val sb        = </span><span style='background: #AEF1AE'>new StringBuilder</span><span style=''>
+</span>46 <span style=''>    var remaining = number
+</span>47 <span style=''>
+</span>48 <span style=''>    </span><span style='background: #AEF1AE'>for ((value, numeral) &lt;- romanNumerals)
+</span>49 <span style=''></span><span style='background: #AEF1AE'>      while (remaining &gt;= value) {
+</span>50 <span style=''></span><span style='background: #AEF1AE'>        sb.append(numeral)
+</span>51 <span style=''></span><span style='background: #AEF1AE'>        remaining -= value
+</span>52 <span style=''></span><span style='background: #AEF1AE'>      }</span><span style=''>
+</span>53 <span style=''>
+</span>54 <span style=''>    </span><span style='background: #AEF1AE'>sb.toString()</span><span style=''>
+</span>55 <span style=''>  }
+</span>56 <span style=''>
+</span>57 <span style=''>  </span><span style='background: #AEF1AE'>override def toInt</span><span style=''>(roman: String): Int = {
+</span>58 <span style=''>    var result    = 0
+</span>59 <span style=''>    var remaining = roman
+</span>60 <span style=''>
+</span>61 <span style=''>    </span><span style='background: #AEF1AE'>for ((value, numeral) &lt;- romanNumerals)
+</span>62 <span style=''></span><span style='background: #AEF1AE'>      while (remaining.startsWith(numeral)) {
+</span>63 <span style=''></span><span style='background: #AEF1AE'>        result += value
+</span>64 <span style=''></span><span style='background: #AEF1AE'>        remaining = remaining.substring(numeral.length)
+</span>65 <span style=''></span><span style='background: #AEF1AE'>      }</span><span style=''>
+</span>66 <span style=''>
+</span>67 <span style=''>    result
+</span>68 <span style=''>  }
+</span>69 <span style=''>end ScalaRomansImperative
+</span>70 <span style=''>
+</span>71 <span style=''>class ScalaRomansIdiomatic extends Romans {
+</span>72 <span style=''>  </span><span style='background: #AEF1AE'>def toNumeral</span><span style=''>(number: Int): String = {
+</span>73 <span style=''>    </span><span style='background: #AEF1AE'>@tailrec
+</span>74 <span style=''></span><span style='background: #AEF1AE'>    def convert</span><span style=''>(remaining: Int, pairs: Vector[(Int, String)], result: String = &quot;&quot;): String =
+</span>75 <span style=''>      pairs match
+</span>76 <span style=''>        case (value, numeral) +: _ if remaining &gt;= value </span><span style='background: #AEF1AE'>=&gt; convert(remaining - value, pairs, result + numeral)</span><span style=''>
+</span>77 <span style=''>        case _ +: tail                                   </span><span style='background: #AEF1AE'>=&gt; convert(remaining, tail, result)</span><span style=''>
+</span>78 <span style=''>        case _                                           </span><span style='background: #AEF1AE'>=&gt; result</span><span style=''>
+</span>79 <span style=''>
+</span>80 <span style=''>    </span><span style='background: #AEF1AE'>convert(number, romanNumerals)</span><span style=''>
+</span>81 <span style=''>  }
+</span>82 <span style=''>
+</span>83 <span style=''>  </span><span style='background: #AEF1AE'>override def toInt</span><span style=''>(roman: String): Int = {
+</span>84 <span style=''>    </span><span style='background: #AEF1AE'>@tailrec
+</span>85 <span style=''></span><span style='background: #AEF1AE'>    def convert</span><span style=''>(remaining: String, pairs: Vector[(Int, String)], result: Int = 0): Int =
+</span>86 <span style=''>      pairs match
+</span>87 <span style=''>        case (value, numeral) +: _ if </span><span style='background: #AEF1AE'>remaining.startsWith(numeral)</span><span style=''> </span><span style='background: #AEF1AE'>=&gt;
+</span>88 <span style=''></span><span style='background: #AEF1AE'>          convert(remaining.substring(numeral.length), pairs, result + value)</span><span style=''>
+</span>89 <span style=''>        case _ +: tail                                              </span><span style='background: #AEF1AE'>=&gt; convert(remaining, tail, result)</span><span style=''>
+</span>90 <span style=''>        case _                                                      </span><span style='background: #AEF1AE'>=&gt; result</span><span style=''>
+</span>91 <span style=''>
+</span>92 <span style=''>    </span><span style='background: #AEF1AE'>convert(roman, romanNumerals)</span><span style=''>
+</span>93 <span style=''>  }
+</span>94 <span style=''>}
+</span>95 <span style=''>
+</span>96 <span style=''>class ScalaRomansPipeline extends Romans:
+</span>97 <span style=''>  </span><span style='background: #AEF1AE'>override def toNumeral</span><span style=''>(number: Int): String =
+</span>98 <span style=''>    </span><span style='background: #AEF1AE'>(&quot;I&quot; * number)
+</span>99 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;IIIII&quot;, &quot;V&quot;)
+</span>100 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;IIII&quot;, &quot;IV&quot;)
+</span>101 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;VV&quot;, &quot;X&quot;)
+</span>102 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;VIV&quot;, &quot;IX&quot;)
+</span>103 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;XXXXX&quot;, &quot;L&quot;)
+</span>104 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;XXXX&quot;, &quot;XL&quot;)
+</span>105 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;LL&quot;, &quot;C&quot;)
+</span>106 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;LXL&quot;, &quot;XC&quot;)
+</span>107 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;CCCCC&quot;, &quot;D&quot;)
+</span>108 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;CCCC&quot;, &quot;CD&quot;)
+</span>109 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;DD&quot;, &quot;M&quot;)
+</span>110 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;DCD&quot;, &quot;CM&quot;)</span><span style=''>
+</span>111 <span style=''>
+</span>112 <span style=''>  </span><span style='background: #AEF1AE'>override def toInt</span><span style=''>(roman: String): Int =
+</span>113 <span style=''>    </span><span style='background: #AEF1AE'>roman
+</span>114 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;CM&quot;, &quot;DCD&quot;)
+</span>115 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;M&quot;, &quot;DD&quot;)
+</span>116 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;CD&quot;, &quot;CCCC&quot;)
+</span>117 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;D&quot;, &quot;CCCCC&quot;)
+</span>118 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;XC&quot;, &quot;LXL&quot;)
+</span>119 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;C&quot;, &quot;LL&quot;)
+</span>120 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;XL&quot;, &quot;XXXX&quot;)
+</span>121 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;L&quot;, &quot;XXXXX&quot;)
+</span>122 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;IX&quot;, &quot;VIV&quot;)
+</span>123 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;X&quot;, &quot;VV&quot;)
+</span>124 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;IV&quot;, &quot;IIII&quot;)
+</span>125 <span style=''></span><span style='background: #AEF1AE'>      .replace(&quot;V&quot;, &quot;IIIII&quot;)
+</span>126 <span style=''></span><span style='background: #AEF1AE'>      .length</span><span style=''>
+</span>127 <span style=''>end ScalaRomansPipeline
+</span></pre>
+          </div>
+          <div class="tab-pane" id="statementlist">
+            <table cellspacing="0" cellpadding="0" class="table statementlist">
+      <tr>
+        <th>Line</th>
+        <th>Stmt Id</th>
+        <th>Pos</th>
+        <th>Tree</th>
+        <th>Symbol</th>
+        <th>Tests</th>
+        <th>Code</th>
+      </tr><tr>
+        <td>
+          8
+        </td>
+        <td>
+          502
+        </td>
+        <td>
+          135
+          -
+          143
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          main
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          def main
+        </td>
+      </tr><tr>
+        <td>
+          9
+        </td>
+        <td>
+          492
+        </td>
+        <td>
+          196
+          -
+          212
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          &lt;init&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          new JavaRomans()
+        </td>
+      </tr><tr>
+        <td>
+          10
+        </td>
+        <td>
+          493
+        </td>
+        <td>
+          235
+          -
+          256
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          &lt;init&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          ScalaRomansPipeline()
+        </td>
+      </tr><tr>
+        <td>
+          12
+        </td>
+        <td>
+          495
+        </td>
+        <td>
+          270
+          -
+          296
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          toNumeral
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          javaRomans.toNumeral(1996)
+        </td>
+      </tr><tr>
+        <td>
+          12
+        </td>
+        <td>
+          494
+        </td>
+        <td>
+          262
+          -
+          297
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          println
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          println(javaRomans.toNumeral(1996))
+        </td>
+      </tr><tr>
+        <td>
+          13
+        </td>
+        <td>
+          496
+        </td>
+        <td>
+          302
+          -
+          338
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          println
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          println(scalaRomans.toNumeral(1996))
+        </td>
+      </tr><tr>
+        <td>
+          13
+        </td>
+        <td>
+          497
+        </td>
+        <td>
+          310
+          -
+          337
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          toNumeral
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          scalaRomans.toNumeral(1996)
+        </td>
+      </tr><tr>
+        <td>
+          15
+        </td>
+        <td>
+          499
+        </td>
+        <td>
+          352
+          -
+          370
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          toRomanNumeral
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          147.toRomanNumeral
+        </td>
+      </tr><tr>
+        <td>
+          15
+        </td>
+        <td>
+          498
+        </td>
+        <td>
+          344
+          -
+          371
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          println
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          println(147.toRomanNumeral)
+        </td>
+      </tr><tr>
+        <td>
+          16
+        </td>
+        <td>
+          501
+        </td>
+        <td>
+          384
+          -
+          398
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          toInt
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          &quot;MMXXIV&quot;.toInt
+        </td>
+      </tr><tr>
+        <td>
+          16
+        </td>
+        <td>
+          500
+        </td>
+        <td>
+          376
+          -
+          399
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          println
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          println(&quot;MMXXIV&quot;.toInt)
+        </td>
+      </tr><tr>
+        <td>
+          20
+        </td>
+        <td>
+          568
+        </td>
+        <td>
+          455
+          -
+          491
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          toNumeral
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          ScalaRomansImperative().toNumeral(n)
+        </td>
+      </tr><tr>
+        <td>
+          20
+        </td>
+        <td>
+          570
+        </td>
+        <td>
+          426
+          -
+          444
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          toRomanNumeral
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def toRomanNumeral
+        </td>
+      </tr><tr>
+        <td>
+          20
+        </td>
+        <td>
+          569
+        </td>
+        <td>
+          455
+          -
+          478
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          &lt;init&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          ScalaRomansImperative()
+        </td>
+      </tr><tr>
+        <td>
+          21
+        </td>
+        <td>
+          573
+        </td>
+        <td>
+          520
+          -
+          529
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          toInt
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def toInt
+        </td>
+      </tr><tr>
+        <td>
+          21
+        </td>
+        <td>
+          572
+        </td>
+        <td>
+          540
+          -
+          563
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          &lt;init&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          ScalaRomansImperative()
+        </td>
+      </tr><tr>
+        <td>
+          21
+        </td>
+        <td>
+          571
+        </td>
+        <td>
+          540
+          -
+          578
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          toInt
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          ScalaRomansImperative().toInt(numeral)
+        </td>
+      </tr><tr>
+        <td>
+          27
+        </td>
+        <td>
+          574
+        </td>
+        <td>
+          715
+          -
+          924
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          apply
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          Vector(\n  1000 -&gt; &quot;M&quot;,\n  900  -&gt; &quot;CM&quot;,\n  500  -&gt; &quot;D&quot;,\n  400  -&gt; &quot;CD&quot;,\n  100  -&gt; &quot;C&quot;,\n  90   -&gt; &quot;XC&quot;,\n  50   -&gt; &quot;L&quot;,\n  40   -&gt; &quot;XL&quot;,\n  10   -&gt; &quot;X&quot;,\n  9    -&gt; &quot;IX&quot;,\n  5    -&gt; &quot;V&quot;,\n  4    -&gt; &quot;IV&quot;,\n  1    -&gt; &quot;I&quot;\n)
+        </td>
+      </tr><tr>
+        <td>
+          28
+        </td>
+        <td>
+          575
+        </td>
+        <td>
+          725
+          -
+          736
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          -&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          1000 -&gt; &quot;M&quot;
+        </td>
+      </tr><tr>
+        <td>
+          29
+        </td>
+        <td>
+          576
+        </td>
+        <td>
+          740
+          -
+          752
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          -&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          900  -&gt; &quot;CM&quot;
+        </td>
+      </tr><tr>
+        <td>
+          30
+        </td>
+        <td>
+          577
+        </td>
+        <td>
+          756
+          -
+          767
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          -&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          500  -&gt; &quot;D&quot;
+        </td>
+      </tr><tr>
+        <td>
+          31
+        </td>
+        <td>
+          578
+        </td>
+        <td>
+          771
+          -
+          783
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          -&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          400  -&gt; &quot;CD&quot;
+        </td>
+      </tr><tr>
+        <td>
+          32
+        </td>
+        <td>
+          579
+        </td>
+        <td>
+          787
+          -
+          798
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          -&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          100  -&gt; &quot;C&quot;
+        </td>
+      </tr><tr>
+        <td>
+          33
+        </td>
+        <td>
+          580
+        </td>
+        <td>
+          802
+          -
+          814
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          -&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          90   -&gt; &quot;XC&quot;
+        </td>
+      </tr><tr>
+        <td>
+          34
+        </td>
+        <td>
+          581
+        </td>
+        <td>
+          818
+          -
+          829
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          -&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          50   -&gt; &quot;L&quot;
+        </td>
+      </tr><tr>
+        <td>
+          35
+        </td>
+        <td>
+          582
+        </td>
+        <td>
+          833
+          -
+          845
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          -&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          40   -&gt; &quot;XL&quot;
+        </td>
+      </tr><tr>
+        <td>
+          36
+        </td>
+        <td>
+          583
+        </td>
+        <td>
+          849
+          -
+          860
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          -&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          10   -&gt; &quot;X&quot;
+        </td>
+      </tr><tr>
+        <td>
+          37
+        </td>
+        <td>
+          584
+        </td>
+        <td>
+          864
+          -
+          876
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          -&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          9    -&gt; &quot;IX&quot;
+        </td>
+      </tr><tr>
+        <td>
+          38
+        </td>
+        <td>
+          585
+        </td>
+        <td>
+          880
+          -
+          891
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          -&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          5    -&gt; &quot;V&quot;
+        </td>
+      </tr><tr>
+        <td>
+          39
+        </td>
+        <td>
+          586
+        </td>
+        <td>
+          895
+          -
+          907
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          -&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          4    -&gt; &quot;IV&quot;
+        </td>
+      </tr><tr>
+        <td>
+          40
+        </td>
+        <td>
+          587
+        </td>
+        <td>
+          911
+          -
+          922
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          -&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          1    -&gt; &quot;I&quot;
+        </td>
+      </tr><tr>
+        <td>
+          44
+        </td>
+        <td>
+          508
+        </td>
+        <td>
+          972
+          -
+          994
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          toNumeral
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          override def toNumeral
+        </td>
+      </tr><tr>
+        <td>
+          45
+        </td>
+        <td>
+          503
+        </td>
+        <td>
+          1040
+          -
+          1057
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          &lt;init&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          new StringBuilder
+        </td>
+      </tr><tr>
+        <td>
+          48
+        </td>
+        <td>
+          504
+        </td>
+        <td>
+          1090
+          -
+          1226
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          foreach
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          for ((value, numeral) &lt;- romanNumerals)\n      while (remaining &gt;= value) {\n        sb.append(numeral)\n        remaining -= value\n      }
+        </td>
+      </tr><tr>
+        <td>
+          49
+        </td>
+        <td>
+          506
+        </td>
+        <td>
+          1136
+          -
+          1226
+        </td>
+        <td>
+          WhileDo
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          while (remaining &gt;= value) {\n        sb.append(numeral)\n        remaining -= value\n      }
+        </td>
+      </tr><tr>
+        <td>
+          50
+        </td>
+        <td>
+          505
+        </td>
+        <td>
+          1173
+          -
+          1191
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          append
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sb.append(numeral)
+        </td>
+      </tr><tr>
+        <td>
+          54
+        </td>
+        <td>
+          507
+        </td>
+        <td>
+          1232
+          -
+          1245
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          toString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          sb.toString()
+        </td>
+      </tr><tr>
+        <td>
+          57
+        </td>
+        <td>
+          514
+        </td>
+        <td>
+          1253
+          -
+          1271
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          toInt
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          override def toInt
+        </td>
+      </tr><tr>
+        <td>
+          61
+        </td>
+        <td>
+          509
+        </td>
+        <td>
+          1349
+          -
+          1522
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          foreach
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          for ((value, numeral) &lt;- romanNumerals)\n      while (remaining.startsWith(numeral)) {\n        result += value\n        remaining = remaining.substring(numeral.length)\n      }
+        </td>
+      </tr><tr>
+        <td>
+          62
+        </td>
+        <td>
+          510
+        </td>
+        <td>
+          1402
+          -
+          1431
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          startsWith
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          remaining.startsWith(numeral)
+        </td>
+      </tr><tr>
+        <td>
+          62
+        </td>
+        <td>
+          513
+        </td>
+        <td>
+          1395
+          -
+          1522
+        </td>
+        <td>
+          WhileDo
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          while (remaining.startsWith(numeral)) {\n        result += value\n        remaining = remaining.substring(numeral.length)\n      }
+        </td>
+      </tr><tr>
+        <td>
+          64
+        </td>
+        <td>
+          512
+        </td>
+        <td>
+          1499
+          -
+          1513
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          length
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          numeral.length
+        </td>
+      </tr><tr>
+        <td>
+          64
+        </td>
+        <td>
+          511
+        </td>
+        <td>
+          1479
+          -
+          1514
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          substring
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          remaining.substring(numeral.length)
+        </td>
+      </tr><tr>
+        <td>
+          72
+        </td>
+        <td>
+          525
+        </td>
+        <td>
+          1612
+          -
+          1625
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          toNumeral
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          def toNumeral
+        </td>
+      </tr><tr>
+        <td>
+          74
+        </td>
+        <td>
+          522
+        </td>
+        <td>
+          1743
+          -
+          1743
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          convert$default$3
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          
+        </td>
+      </tr><tr>
+        <td>
+          74
+        </td>
+        <td>
+          521
+        </td>
+        <td>
+          1655
+          -
+          1679
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          convert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          @tailrec\n    def convert
+        </td>
+      </tr><tr>
+        <td>
+          76
+        </td>
+        <td>
+          517
+        </td>
+        <td>
+          1832
+          -
+          1886
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; convert(remaining - value, pairs, result + numeral)
+        </td>
+      </tr><tr>
+        <td>
+          76
+        </td>
+        <td>
+          516
+        </td>
+        <td>
+          1869
+          -
+          1885
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          +
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          result + numeral
+        </td>
+      </tr><tr>
+        <td>
+          76
+        </td>
+        <td>
+          515
+        </td>
+        <td>
+          1835
+          -
+          1886
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          convert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          convert(remaining - value, pairs, result + numeral)
+        </td>
+      </tr><tr>
+        <td>
+          77
+        </td>
+        <td>
+          519
+        </td>
+        <td>
+          1944
+          -
+          1979
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; convert(remaining, tail, result)
+        </td>
+      </tr><tr>
+        <td>
+          77
+        </td>
+        <td>
+          518
+        </td>
+        <td>
+          1947
+          -
+          1979
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          convert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          convert(remaining, tail, result)
+        </td>
+      </tr><tr>
+        <td>
+          78
+        </td>
+        <td>
+          520
+        </td>
+        <td>
+          2037
+          -
+          2046
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; result
+        </td>
+      </tr><tr>
+        <td>
+          80
+        </td>
+        <td>
+          523
+        </td>
+        <td>
+          2052
+          -
+          2082
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          convert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          convert(number, romanNumerals)
+        </td>
+      </tr><tr>
+        <td>
+          80
+        </td>
+        <td>
+          524
+        </td>
+        <td>
+          2052
+          -
+          2059
+        </td>
+        <td>
+          Ident
+        </td>
+        <td>
+          convert$default$3
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          convert
+        </td>
+      </tr><tr>
+        <td>
+          83
+        </td>
+        <td>
+          538
+        </td>
+        <td>
+          2090
+          -
+          2108
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          toInt
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          override def toInt
+        </td>
+      </tr><tr>
+        <td>
+          85
+        </td>
+        <td>
+          534
+        </td>
+        <td>
+          2137
+          -
+          2161
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          convert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          @tailrec\n    def convert
+        </td>
+      </tr><tr>
+        <td>
+          85
+        </td>
+        <td>
+          535
+        </td>
+        <td>
+          2225
+          -
+          2225
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          convert$default$3
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          
+        </td>
+      </tr><tr>
+        <td>
+          87
+        </td>
+        <td>
+          530
+        </td>
+        <td>
+          2321
+          -
+          2401
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt;\n          convert(remaining.substring(numeral.length), pairs, result + value)
+        </td>
+      </tr><tr>
+        <td>
+          87
+        </td>
+        <td>
+          526
+        </td>
+        <td>
+          2291
+          -
+          2320
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          startsWith
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          remaining.startsWith(numeral)
+        </td>
+      </tr><tr>
+        <td>
+          88
+        </td>
+        <td>
+          528
+        </td>
+        <td>
+          2342
+          -
+          2377
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          substring
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          remaining.substring(numeral.length)
+        </td>
+      </tr><tr>
+        <td>
+          88
+        </td>
+        <td>
+          527
+        </td>
+        <td>
+          2334
+          -
+          2401
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          convert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          convert(remaining.substring(numeral.length), pairs, result + value)
+        </td>
+      </tr><tr>
+        <td>
+          88
+        </td>
+        <td>
+          529
+        </td>
+        <td>
+          2362
+          -
+          2376
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          length
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          numeral.length
+        </td>
+      </tr><tr>
+        <td>
+          89
+        </td>
+        <td>
+          532
+        </td>
+        <td>
+          2470
+          -
+          2505
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; convert(remaining, tail, result)
+        </td>
+      </tr><tr>
+        <td>
+          89
+        </td>
+        <td>
+          531
+        </td>
+        <td>
+          2473
+          -
+          2505
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          convert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          convert(remaining, tail, result)
+        </td>
+      </tr><tr>
+        <td>
+          90
+        </td>
+        <td>
+          533
+        </td>
+        <td>
+          2574
+          -
+          2583
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          =&gt; result
+        </td>
+      </tr><tr>
+        <td>
+          92
+        </td>
+        <td>
+          537
+        </td>
+        <td>
+          2589
+          -
+          2596
+        </td>
+        <td>
+          Ident
+        </td>
+        <td>
+          convert$default$3
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          convert
+        </td>
+      </tr><tr>
+        <td>
+          92
+        </td>
+        <td>
+          536
+        </td>
+        <td>
+          2589
+          -
+          2618
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          convert
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          convert(roman, romanNumerals)
+        </td>
+      </tr><tr>
+        <td>
+          97
+        </td>
+        <td>
+          553
+        </td>
+        <td>
+          2670
+          -
+          2692
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          toNumeral
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          override def toNumeral
+        </td>
+      </tr><tr>
+        <td>
+          98
+        </td>
+        <td>
+          552
+        </td>
+        <td>
+          2721
+          -
+          2724
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          augmentString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot;I&quot;
+        </td>
+      </tr><tr>
+        <td>
+          98
+        </td>
+        <td>
+          551
+        </td>
+        <td>
+          2721
+          -
+          2733
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          *
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          &quot;I&quot; * number
+        </td>
+      </tr><tr>
+        <td>
+          99
+        </td>
+        <td>
+          550
+        </td>
+        <td>
+          2720
+          -
+          2763
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          (&quot;I&quot; * number)\n      .replace(&quot;IIIII&quot;, &quot;V&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          100
+        </td>
+        <td>
+          549
+        </td>
+        <td>
+          2720
+          -
+          2792
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          (&quot;I&quot; * number)\n      .replace(&quot;IIIII&quot;, &quot;V&quot;)\n      .replace(&quot;IIII&quot;, &quot;IV&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          101
+        </td>
+        <td>
+          548
+        </td>
+        <td>
+          2720
+          -
+          2818
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          (&quot;I&quot; * number)\n      .replace(&quot;IIIII&quot;, &quot;V&quot;)\n      .replace(&quot;IIII&quot;, &quot;IV&quot;)\n      .replace(&quot;VV&quot;, &quot;X&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          102
+        </td>
+        <td>
+          547
+        </td>
+        <td>
+          2720
+          -
+          2846
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          (&quot;I&quot; * number)\n      .replace(&quot;IIIII&quot;, &quot;V&quot;)\n      .replace(&quot;IIII&quot;, &quot;IV&quot;)\n      .replace(&quot;VV&quot;, &quot;X&quot;)\n      .replace(&quot;VIV&quot;, &quot;IX&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          103
+        </td>
+        <td>
+          546
+        </td>
+        <td>
+          2720
+          -
+          2875
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          (&quot;I&quot; * number)\n      .replace(&quot;IIIII&quot;, &quot;V&quot;)\n      .replace(&quot;IIII&quot;, &quot;IV&quot;)\n      .replace(&quot;VV&quot;, &quot;X&quot;)\n      .replace(&quot;VIV&quot;, &quot;IX&quot;)\n      .replace(&quot;XXXXX&quot;, &quot;L&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          104
+        </td>
+        <td>
+          545
+        </td>
+        <td>
+          2720
+          -
+          2904
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          (&quot;I&quot; * number)\n      .replace(&quot;IIIII&quot;, &quot;V&quot;)\n      .replace(&quot;IIII&quot;, &quot;IV&quot;)\n      .replace(&quot;VV&quot;, &quot;X&quot;)\n      .replace(&quot;VIV&quot;, &quot;IX&quot;)\n      .replace(&quot;XXXXX&quot;, &quot;L&quot;)\n      .replace(&quot;XXXX&quot;, &quot;XL&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          105
+        </td>
+        <td>
+          544
+        </td>
+        <td>
+          2720
+          -
+          2930
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          (&quot;I&quot; * number)\n      .replace(&quot;IIIII&quot;, &quot;V&quot;)\n      .replace(&quot;IIII&quot;, &quot;IV&quot;)\n      .replace(&quot;VV&quot;, &quot;X&quot;)\n      .replace(&quot;VIV&quot;, &quot;IX&quot;)\n      .replace(&quot;XXXXX&quot;, &quot;L&quot;)\n      .replace(&quot;XXXX&quot;, &quot;XL&quot;)\n      .replace(&quot;LL&quot;, &quot;C&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          106
+        </td>
+        <td>
+          543
+        </td>
+        <td>
+          2720
+          -
+          2958
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          (&quot;I&quot; * number)\n      .replace(&quot;IIIII&quot;, &quot;V&quot;)\n      .replace(&quot;IIII&quot;, &quot;IV&quot;)\n      .replace(&quot;VV&quot;, &quot;X&quot;)\n      .replace(&quot;VIV&quot;, &quot;IX&quot;)\n      .replace(&quot;XXXXX&quot;, &quot;L&quot;)\n      .replace(&quot;XXXX&quot;, &quot;XL&quot;)\n      .replace(&quot;LL&quot;, &quot;C&quot;)\n      .replace(&quot;LXL&quot;, &quot;XC&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          107
+        </td>
+        <td>
+          542
+        </td>
+        <td>
+          2720
+          -
+          2987
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          (&quot;I&quot; * number)\n      .replace(&quot;IIIII&quot;, &quot;V&quot;)\n      .replace(&quot;IIII&quot;, &quot;IV&quot;)\n      .replace(&quot;VV&quot;, &quot;X&quot;)\n      .replace(&quot;VIV&quot;, &quot;IX&quot;)\n      .replace(&quot;XXXXX&quot;, &quot;L&quot;)\n      .replace(&quot;XXXX&quot;, &quot;XL&quot;)\n      .replace(&quot;LL&quot;, &quot;C&quot;)\n      .replace(&quot;LXL&quot;, &quot;XC&quot;)\n      .replace(&quot;CCCCC&quot;, &quot;D&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          108
+        </td>
+        <td>
+          541
+        </td>
+        <td>
+          2720
+          -
+          3016
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          (&quot;I&quot; * number)\n      .replace(&quot;IIIII&quot;, &quot;V&quot;)\n      .replace(&quot;IIII&quot;, &quot;IV&quot;)\n      .replace(&quot;VV&quot;, &quot;X&quot;)\n      .replace(&quot;VIV&quot;, &quot;IX&quot;)\n      .replace(&quot;XXXXX&quot;, &quot;L&quot;)\n      .replace(&quot;XXXX&quot;, &quot;XL&quot;)\n      .replace(&quot;LL&quot;, &quot;C&quot;)\n      .replace(&quot;LXL&quot;, &quot;XC&quot;)\n      .replace(&quot;CCCCC&quot;, &quot;D&quot;)\n      .replace(&quot;CCCC&quot;, &quot;CD&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          109
+        </td>
+        <td>
+          540
+        </td>
+        <td>
+          2720
+          -
+          3042
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          (&quot;I&quot; * number)\n      .replace(&quot;IIIII&quot;, &quot;V&quot;)\n      .replace(&quot;IIII&quot;, &quot;IV&quot;)\n      .replace(&quot;VV&quot;, &quot;X&quot;)\n      .replace(&quot;VIV&quot;, &quot;IX&quot;)\n      .replace(&quot;XXXXX&quot;, &quot;L&quot;)\n      .replace(&quot;XXXX&quot;, &quot;XL&quot;)\n      .replace(&quot;LL&quot;, &quot;C&quot;)\n      .replace(&quot;LXL&quot;, &quot;XC&quot;)\n      .replace(&quot;CCCCC&quot;, &quot;D&quot;)\n      .replace(&quot;CCCC&quot;, &quot;CD&quot;)\n      .replace(&quot;DD&quot;, &quot;M&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          110
+        </td>
+        <td>
+          539
+        </td>
+        <td>
+          2720
+          -
+          3070
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          (&quot;I&quot; * number)\n      .replace(&quot;IIIII&quot;, &quot;V&quot;)\n      .replace(&quot;IIII&quot;, &quot;IV&quot;)\n      .replace(&quot;VV&quot;, &quot;X&quot;)\n      .replace(&quot;VIV&quot;, &quot;IX&quot;)\n      .replace(&quot;XXXXX&quot;, &quot;L&quot;)\n      .replace(&quot;XXXX&quot;, &quot;XL&quot;)\n      .replace(&quot;LL&quot;, &quot;C&quot;)\n      .replace(&quot;LXL&quot;, &quot;XC&quot;)\n      .replace(&quot;CCCCC&quot;, &quot;D&quot;)\n      .replace(&quot;CCCC&quot;, &quot;CD&quot;)\n      .replace(&quot;DD&quot;, &quot;M&quot;)\n      .replace(&quot;DCD&quot;, &quot;CM&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          112
+        </td>
+        <td>
+          567
+        </td>
+        <td>
+          3074
+          -
+          3092
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          toInt
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          override def toInt
+        </td>
+      </tr><tr>
+        <td>
+          113
+        </td>
+        <td>
+          554
+        </td>
+        <td>
+          3119
+          -
+          3474
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          length
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          roman\n      .replace(&quot;CM&quot;, &quot;DCD&quot;)\n      .replace(&quot;M&quot;, &quot;DD&quot;)\n      .replace(&quot;CD&quot;, &quot;CCCC&quot;)\n      .replace(&quot;D&quot;, &quot;CCCCC&quot;)\n      .replace(&quot;XC&quot;, &quot;LXL&quot;)\n      .replace(&quot;C&quot;, &quot;LL&quot;)\n      .replace(&quot;XL&quot;, &quot;XXXX&quot;)\n      .replace(&quot;L&quot;, &quot;XXXXX&quot;)\n      .replace(&quot;IX&quot;, &quot;VIV&quot;)\n      .replace(&quot;X&quot;, &quot;VV&quot;)\n      .replace(&quot;IV&quot;, &quot;IIII&quot;)\n      .replace(&quot;V&quot;, &quot;IIIII&quot;)\n      .length
+        </td>
+      </tr><tr>
+        <td>
+          114
+        </td>
+        <td>
+          566
+        </td>
+        <td>
+          3119
+          -
+          3152
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          roman\n      .replace(&quot;CM&quot;, &quot;DCD&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          115
+        </td>
+        <td>
+          565
+        </td>
+        <td>
+          3119
+          -
+          3178
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          roman\n      .replace(&quot;CM&quot;, &quot;DCD&quot;)\n      .replace(&quot;M&quot;, &quot;DD&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          116
+        </td>
+        <td>
+          564
+        </td>
+        <td>
+          3119
+          -
+          3207
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          roman\n      .replace(&quot;CM&quot;, &quot;DCD&quot;)\n      .replace(&quot;M&quot;, &quot;DD&quot;)\n      .replace(&quot;CD&quot;, &quot;CCCC&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          117
+        </td>
+        <td>
+          563
+        </td>
+        <td>
+          3119
+          -
+          3236
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          roman\n      .replace(&quot;CM&quot;, &quot;DCD&quot;)\n      .replace(&quot;M&quot;, &quot;DD&quot;)\n      .replace(&quot;CD&quot;, &quot;CCCC&quot;)\n      .replace(&quot;D&quot;, &quot;CCCCC&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          118
+        </td>
+        <td>
+          562
+        </td>
+        <td>
+          3119
+          -
+          3264
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          roman\n      .replace(&quot;CM&quot;, &quot;DCD&quot;)\n      .replace(&quot;M&quot;, &quot;DD&quot;)\n      .replace(&quot;CD&quot;, &quot;CCCC&quot;)\n      .replace(&quot;D&quot;, &quot;CCCCC&quot;)\n      .replace(&quot;XC&quot;, &quot;LXL&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          119
+        </td>
+        <td>
+          561
+        </td>
+        <td>
+          3119
+          -
+          3290
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          roman\n      .replace(&quot;CM&quot;, &quot;DCD&quot;)\n      .replace(&quot;M&quot;, &quot;DD&quot;)\n      .replace(&quot;CD&quot;, &quot;CCCC&quot;)\n      .replace(&quot;D&quot;, &quot;CCCCC&quot;)\n      .replace(&quot;XC&quot;, &quot;LXL&quot;)\n      .replace(&quot;C&quot;, &quot;LL&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          120
+        </td>
+        <td>
+          560
+        </td>
+        <td>
+          3119
+          -
+          3319
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          roman\n      .replace(&quot;CM&quot;, &quot;DCD&quot;)\n      .replace(&quot;M&quot;, &quot;DD&quot;)\n      .replace(&quot;CD&quot;, &quot;CCCC&quot;)\n      .replace(&quot;D&quot;, &quot;CCCCC&quot;)\n      .replace(&quot;XC&quot;, &quot;LXL&quot;)\n      .replace(&quot;C&quot;, &quot;LL&quot;)\n      .replace(&quot;XL&quot;, &quot;XXXX&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          121
+        </td>
+        <td>
+          559
+        </td>
+        <td>
+          3119
+          -
+          3348
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          roman\n      .replace(&quot;CM&quot;, &quot;DCD&quot;)\n      .replace(&quot;M&quot;, &quot;DD&quot;)\n      .replace(&quot;CD&quot;, &quot;CCCC&quot;)\n      .replace(&quot;D&quot;, &quot;CCCCC&quot;)\n      .replace(&quot;XC&quot;, &quot;LXL&quot;)\n      .replace(&quot;C&quot;, &quot;LL&quot;)\n      .replace(&quot;XL&quot;, &quot;XXXX&quot;)\n      .replace(&quot;L&quot;, &quot;XXXXX&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          122
+        </td>
+        <td>
+          558
+        </td>
+        <td>
+          3119
+          -
+          3376
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          roman\n      .replace(&quot;CM&quot;, &quot;DCD&quot;)\n      .replace(&quot;M&quot;, &quot;DD&quot;)\n      .replace(&quot;CD&quot;, &quot;CCCC&quot;)\n      .replace(&quot;D&quot;, &quot;CCCCC&quot;)\n      .replace(&quot;XC&quot;, &quot;LXL&quot;)\n      .replace(&quot;C&quot;, &quot;LL&quot;)\n      .replace(&quot;XL&quot;, &quot;XXXX&quot;)\n      .replace(&quot;L&quot;, &quot;XXXXX&quot;)\n      .replace(&quot;IX&quot;, &quot;VIV&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          123
+        </td>
+        <td>
+          557
+        </td>
+        <td>
+          3119
+          -
+          3402
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          roman\n      .replace(&quot;CM&quot;, &quot;DCD&quot;)\n      .replace(&quot;M&quot;, &quot;DD&quot;)\n      .replace(&quot;CD&quot;, &quot;CCCC&quot;)\n      .replace(&quot;D&quot;, &quot;CCCCC&quot;)\n      .replace(&quot;XC&quot;, &quot;LXL&quot;)\n      .replace(&quot;C&quot;, &quot;LL&quot;)\n      .replace(&quot;XL&quot;, &quot;XXXX&quot;)\n      .replace(&quot;L&quot;, &quot;XXXXX&quot;)\n      .replace(&quot;IX&quot;, &quot;VIV&quot;)\n      .replace(&quot;X&quot;, &quot;VV&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          124
+        </td>
+        <td>
+          556
+        </td>
+        <td>
+          3119
+          -
+          3431
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          roman\n      .replace(&quot;CM&quot;, &quot;DCD&quot;)\n      .replace(&quot;M&quot;, &quot;DD&quot;)\n      .replace(&quot;CD&quot;, &quot;CCCC&quot;)\n      .replace(&quot;D&quot;, &quot;CCCCC&quot;)\n      .replace(&quot;XC&quot;, &quot;LXL&quot;)\n      .replace(&quot;C&quot;, &quot;LL&quot;)\n      .replace(&quot;XL&quot;, &quot;XXXX&quot;)\n      .replace(&quot;L&quot;, &quot;XXXXX&quot;)\n      .replace(&quot;IX&quot;, &quot;VIV&quot;)\n      .replace(&quot;X&quot;, &quot;VV&quot;)\n      .replace(&quot;IV&quot;, &quot;IIII&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          125
+        </td>
+        <td>
+          555
+        </td>
+        <td>
+          3119
+          -
+          3460
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          replace
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #AEF1AE">
+          roman\n      .replace(&quot;CM&quot;, &quot;DCD&quot;)\n      .replace(&quot;M&quot;, &quot;DD&quot;)\n      .replace(&quot;CD&quot;, &quot;CCCC&quot;)\n      .replace(&quot;D&quot;, &quot;CCCCC&quot;)\n      .replace(&quot;XC&quot;, &quot;LXL&quot;)\n      .replace(&quot;C&quot;, &quot;LL&quot;)\n      .replace(&quot;XL&quot;, &quot;XXXX&quot;)\n      .replace(&quot;L&quot;, &quot;XXXXX&quot;)\n      .replace(&quot;IX&quot;, &quot;VIV&quot;)\n      .replace(&quot;X&quot;, &quot;VV&quot;)\n      .replace(&quot;IV&quot;, &quot;IIII&quot;)\n      .replace(&quot;V&quot;, &quot;IIIII&quot;)
+        </td>
+      </tr>
+    </table>
+          </div>
+        </div>
+      </body>
+    </html>

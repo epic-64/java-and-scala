@@ -1,0 +1,760 @@
+<html>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title id="title">
+          ScalaPlayground/Lift/Immutable/LiftExtensions.scala.html
+        </title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/css/theme.default.min.css" type="text/css"/><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.20.1/js/jquery.tablesorter.min.js"></script><link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" type="text/css"/><script src="https://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script><script type="text/javascript">
+        $(document).ready(function() {$(".tablesorter").tablesorter();});
+      </script>
+        <style>
+          table.codegrid { font-family: monospace; font-size: 12px; width: auto!important; }table.statementlist { width: auto!important; font-size: 13px; } table.codegrid td { padding: 0!important; border: 0!important } table td.linenumber { width: 40px!important; } 
+        </style>
+      </head>
+      <body style="font-family: monospace;">
+        <ul class="nav nav-tabs">
+          <li>
+            <a href="#codegrid" data-toggle="tab">Codegrid</a>
+          </li>
+          <li>
+            <a href="#statementlist" data-toggle="tab">Statement List</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane active" id="codegrid">
+            <pre style='font-size: 12pt; font-family: courier, monospace;'>1 <span style=''>package ScalaPlayground.Lift.Immutable
+</span>2 <span style=''>
+</span>3 <span style=''>extension (state: LiftSystem) {
+</span>4 <span style=''>  </span><span style='background: #F0ADAD'>def toPrintable</span><span style=''>: String = {
+</span>5 <span style=''>    import state.{building, lift, stops}
+</span>6 <span style=''>
+</span>7 <span style=''>    val sb = </span><span style='background: #F0ADAD'>new StringBuilder()</span><span style=''>
+</span>8 <span style=''>    </span><span style='background: #F0ADAD'>sb.append(s&quot;${stops.length} stops: ${stops.mkString(&quot;, &quot;)}\n&quot;)</span><span style=''>
+</span>9 <span style=''>
+</span>10 <span style=''>    </span><span style='background: #F0ADAD'>building.floors.zipWithIndex.reverse.foreach { (queue, floor) =&gt;
+</span>11 <span style=''></span><span style='background: #F0ADAD'>      sb.append(s&quot;| $floor | ${queue.reverse.map(_.destination).mkString(&quot;, &quot;).padTo(20, ' ')} |&quot;)
+</span>12 <span style=''></span><span style='background: #F0ADAD'>
+</span>13 <span style=''></span><span style='background: #F0ADAD'>      // draw the lift if it is on the current level
+</span>14 <span style=''></span><span style='background: #F0ADAD'>      if lift.position == floor
+</span>15 <span style=''></span><span style='background: #F0ADAD'>      then sb.append(s&quot; | ${lift.people.map(_.destination).mkString(&quot;, &quot;).padTo(15, ' ')} |&quot;)
+</span>16 <span style=''></span><span style='background: #F0ADAD'>
+</span>17 <span style=''></span><span style='background: #F0ADAD'>      sb.append('\n')
+</span>18 <span style=''></span><span style='background: #F0ADAD'>    }</span><span style=''>
+</span>19 <span style=''>
+</span>20 <span style=''>    </span><span style='background: #F0ADAD'>sb.toString()</span><span style=''>
+</span>21 <span style=''>  }
+</span>22 <span style=''>}
+</span></pre>
+          </div>
+          <div class="tab-pane" id="statementlist">
+            <table cellspacing="0" cellpadding="0" class="table statementlist">
+      <tr>
+        <th>Line</th>
+        <th>Stmt Id</th>
+        <th>Pos</th>
+        <th>Tree</th>
+        <th>Symbol</th>
+        <th>Tests</th>
+        <th>Code</th>
+      </tr><tr>
+        <td>
+          4
+        </td>
+        <td>
+          240
+        </td>
+        <td>
+          74
+          -
+          89
+        </td>
+        <td>
+          DefDef
+        </td>
+        <td>
+          toPrintable
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          def toPrintable
+        </td>
+      </tr><tr>
+        <td>
+          7
+        </td>
+        <td>
+          212
+        </td>
+        <td>
+          157
+          -
+          176
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          &lt;init&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          new StringBuilder()
+        </td>
+      </tr><tr>
+        <td>
+          8
+        </td>
+        <td>
+          214
+        </td>
+        <td>
+          191
+          -
+          242
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          s
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          s&quot;${stops.length} stops: ${stops.mkString(&quot;, &quot;)}\\n&quot;
+        </td>
+      </tr><tr>
+        <td>
+          8
+        </td>
+        <td>
+          216
+        </td>
+        <td>
+          218
+          -
+          238
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          mkString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          stops.mkString(&quot;, &quot;)
+        </td>
+      </tr><tr>
+        <td>
+          8
+        </td>
+        <td>
+          213
+        </td>
+        <td>
+          181
+          -
+          243
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          append
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          sb.append(s&quot;${stops.length} stops: ${stops.mkString(&quot;, &quot;)}\\n&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          8
+        </td>
+        <td>
+          215
+        </td>
+        <td>
+          195
+          -
+          207
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          length
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          stops.length
+        </td>
+      </tr><tr>
+        <td>
+          10
+        </td>
+        <td>
+          218
+        </td>
+        <td>
+          249
+          -
+          285
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          refArrayOps
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          building.floors.zipWithIndex.reverse
+        </td>
+      </tr><tr>
+        <td>
+          10
+        </td>
+        <td>
+          220
+        </td>
+        <td>
+          249
+          -
+          264
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          refArrayOps
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          building.floors
+        </td>
+      </tr><tr>
+        <td>
+          10
+        </td>
+        <td>
+          217
+        </td>
+        <td>
+          249
+          -
+          621
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          foreach
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          building.floors.zipWithIndex.reverse.foreach { (queue, floor) =&gt;\n      sb.append(s&quot;| $floor | ${queue.reverse.map(_.destination).mkString(&quot;, &quot;).padTo(20, ' ')} |&quot;)\n\n      // draw the lift if it is on the current level\n      if lift.position == floor\n      then sb.append(s&quot; | ${lift.people.map(_.destination).mkString(&quot;, &quot;).padTo(15, ' ')} |&quot;)\n\n      sb.append('\\n')\n    }
+        </td>
+      </tr><tr>
+        <td>
+          10
+        </td>
+        <td>
+          219
+        </td>
+        <td>
+          249
+          -
+          277
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          refArrayOps
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          building.floors.zipWithIndex
+        </td>
+      </tr><tr>
+        <td>
+          10
+        </td>
+        <td>
+          222
+        </td>
+        <td>
+          249
+          -
+          285
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          reverse
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          building.floors.zipWithIndex.reverse
+        </td>
+      </tr><tr>
+        <td>
+          10
+        </td>
+        <td>
+          221
+        </td>
+        <td>
+          249
+          -
+          277
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          zipWithIndex
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          building.floors.zipWithIndex
+        </td>
+      </tr><tr>
+        <td>
+          11
+        </td>
+        <td>
+          227
+        </td>
+        <td>
+          345
+          -
+          392
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          mkString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          queue.reverse.map(_.destination).mkString(&quot;, &quot;)
+        </td>
+      </tr><tr>
+        <td>
+          11
+        </td>
+        <td>
+          226
+        </td>
+        <td>
+          345
+          -
+          392
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          augmentString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          queue.reverse.map(_.destination).mkString(&quot;, &quot;)
+        </td>
+      </tr><tr>
+        <td>
+          11
+        </td>
+        <td>
+          229
+        </td>
+        <td>
+          345
+          -
+          358
+        </td>
+        <td>
+          Select
+        </td>
+        <td>
+          reverse
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          queue.reverse
+        </td>
+      </tr><tr>
+        <td>
+          11
+        </td>
+        <td>
+          223
+        </td>
+        <td>
+          320
+          -
+          412
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          append
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          sb.append(s&quot;| $floor | ${queue.reverse.map(_.destination).mkString(&quot;, &quot;).padTo(20, ' ')} |&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          11
+        </td>
+        <td>
+          225
+        </td>
+        <td>
+          345
+          -
+          407
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          padTo
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          queue.reverse.map(_.destination).mkString(&quot;, &quot;).padTo(20, ' ')
+        </td>
+      </tr><tr>
+        <td>
+          11
+        </td>
+        <td>
+          228
+        </td>
+        <td>
+          345
+          -
+          377
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          queue.reverse.map(_.destination)
+        </td>
+      </tr><tr>
+        <td>
+          11
+        </td>
+        <td>
+          224
+        </td>
+        <td>
+          330
+          -
+          411
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          s
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          s&quot;| $floor | ${queue.reverse.map(_.destination).mkString(&quot;, &quot;).padTo(20, ' ')} |&quot;
+        </td>
+      </tr><tr>
+        <td>
+          15
+        </td>
+        <td>
+          236
+        </td>
+        <td>
+          510
+          -
+          592
+        </td>
+        <td>
+          Block
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          sb.append(s&quot; | ${lift.people.map(_.destination).mkString(&quot;, &quot;).padTo(15, ' ')} |&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          15
+        </td>
+        <td>
+          235
+        </td>
+        <td>
+          527
+          -
+          557
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          map
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          lift.people.map(_.destination)
+        </td>
+      </tr><tr>
+        <td>
+          15
+        </td>
+        <td>
+          232
+        </td>
+        <td>
+          527
+          -
+          587
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          padTo
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          lift.people.map(_.destination).mkString(&quot;, &quot;).padTo(15, ' ')
+        </td>
+      </tr><tr>
+        <td>
+          15
+        </td>
+        <td>
+          234
+        </td>
+        <td>
+          527
+          -
+          572
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          mkString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          lift.people.map(_.destination).mkString(&quot;, &quot;)
+        </td>
+      </tr><tr>
+        <td>
+          15
+        </td>
+        <td>
+          237
+        </td>
+        <td>
+          592
+          -
+          592
+        </td>
+        <td>
+          Literal
+        </td>
+        <td>
+          &lt;none&gt;
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          
+        </td>
+      </tr><tr>
+        <td>
+          15
+        </td>
+        <td>
+          231
+        </td>
+        <td>
+          520
+          -
+          591
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          s
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          s&quot; | ${lift.people.map(_.destination).mkString(&quot;, &quot;).padTo(15, ' ')} |&quot;
+        </td>
+      </tr><tr>
+        <td>
+          15
+        </td>
+        <td>
+          230
+        </td>
+        <td>
+          510
+          -
+          592
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          append
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          sb.append(s&quot; | ${lift.people.map(_.destination).mkString(&quot;, &quot;).padTo(15, ' ')} |&quot;)
+        </td>
+      </tr><tr>
+        <td>
+          15
+        </td>
+        <td>
+          233
+        </td>
+        <td>
+          527
+          -
+          572
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          augmentString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          lift.people.map(_.destination).mkString(&quot;, &quot;)
+        </td>
+      </tr><tr>
+        <td>
+          17
+        </td>
+        <td>
+          238
+        </td>
+        <td>
+          600
+          -
+          615
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          append
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          sb.append('\\n')
+        </td>
+      </tr><tr>
+        <td>
+          20
+        </td>
+        <td>
+          239
+        </td>
+        <td>
+          627
+          -
+          640
+        </td>
+        <td>
+          Apply
+        </td>
+        <td>
+          toString
+        </td>
+        <td>
+          
+        </td>
+        <td style="background: #F0ADAD">
+          sb.toString()
+        </td>
+      </tr>
+    </table>
+          </div>
+        </div>
+      </body>
+    </html>
