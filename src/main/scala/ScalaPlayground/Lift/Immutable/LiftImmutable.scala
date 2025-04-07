@@ -5,7 +5,7 @@ package ScalaPlayground.Lift.Immutable
 import ScalaPlayground.Lift.Immutable.Direction.{Down, Up}
 
 import scala.annotation.tailrec
-import scala.collection.immutable.{ListMap, Queue}
+import scala.collection.immutable.Queue
 
 type Floor = Int
 enum Direction { case Up, Down }
@@ -38,14 +38,48 @@ case class Lift(
 
   def nearestPassengerTarget: Option[Floor] =
     people.filter(_.matchesDirection(this)).map(_.destination).minByOption(floor => Math.abs(floor - position))
+
+  @tailrec
+  final def pickup(building: Building): (Lift, Building) =
+    val queue = building.floors(position)
+    queue.filter(accepts).dequeueOption match
+      case None            => (this, building)
+      case Some(person, _) =>
+        val fullerLift      = copy(people = people.enqueue(person))
+        val emptierQueue    = queue.diff(Seq(person))
+        val emptierBuilding = building.copy(floors = building.floors.updated(position, emptierQueue))
+        fullerLift.pickup(emptierBuilding)
+
+  def fixDirection(building: Building): Lift = position match
+    case 0                                    => copy(direction = Up)
+    case p if p == building.floors.length - 1 => copy(direction = Down)
+    case _                                    => this
+
+  def dropOff: Lift = copy(people = people.filter(_.destination != position))
+
+  def align(building: Building): Lift =
+    List(nearestPassengerTarget, building.nearestRequestInSameDirection(this)).flatten
+      .minByOption(floor => Math.abs(floor - position))
+      .match
+        case Some(floor) => copy(position = floor, direction = direction)
+        case None        => // switch direction
+          direction match
+            case Up   =>
+              building.highestFloorGoingDown(this) match
+                case Some(highest) => copy(highest, Down)
+                case None          => copy(building.lowestFloorGoingUp(this).getOrElse(0), Up)
+            case Down =>
+              building.lowestFloorGoingUp(this) match
+                case Some(lowest) => copy(lowest, Up)
+                case None => copy(building.highestFloorGoingDown(this).getOrElse(0), Down)
 }
 
-case class Building(floors: ListMap[Floor, Queue[Person]]) {
-  def isEmpty: Boolean   = floors.values.forall(_.isEmpty)
+case class Building(floors: Array[Queue[Person]]) {
+  def isEmpty: Boolean   = floors.forall(_.isEmpty)
   def hasPeople: Boolean = !isEmpty
 
   private def peopleGoing(direction: Direction): List[Person] =
-    floors.values.flatMap(queue => queue.filter(_.desiredDirection == direction)).toList
+    floors.flatMap(queue => queue.filter(_.desiredDirection == direction)).toList
 
   def lowestFloorGoingUp(lift: Lift): Option[Floor] =
     peopleGoing(Up).filter(_.isBelow(lift)).map(_.position).minOption
@@ -59,127 +93,49 @@ case class Building(floors: ListMap[Floor, Queue[Person]]) {
       case Down => peopleGoing(Down).filter(_.isBelow(lift)).map(_.position).maxOption
 }
 
-case class State(building: Building, lift: Lift, stops: List[Floor])
+case class LiftSystem(building: Building, lift: Lift, stops: List[Floor]) {
+  private def fixDirection: LiftSystem =
+    copy(lift = lift.fixDirection(building))
 
-extension (state: State) {
-  def toPrintable: String = {
-    import state.{building, lift, stops}
+  private def dropOff: LiftSystem =
+    copy(lift = lift.dropOff)
 
-    val sb = new StringBuilder()
-    sb.append(s"${stops.length} stops: ${stops.mkString(", ")}\n")
+  private def pickup: LiftSystem =
+    val (lift2, building2) = lift.pickup(building)
+    copy(lift = lift2, building = building2)
 
-    building.floors.toSeq.reverse.foreach { case (floor, queue) =>
-      sb.append(s"| $floor | ${queue.reverse.map(_.destination).mkString(", ").padTo(20, ' ')} |")
+  private def align: LiftSystem =
+    copy(lift = lift.align(building))
 
-      // draw the lift if it is on the current level
-      if lift.position == floor
-      then sb.append(s" | ${lift.people.map(_.destination).mkString(", ").padTo(15, ' ')} |")
+  def registerStop: LiftSystem =
+    stops.lastOption match
+      case Some(lastStop) if lastStop == lift.position => this
+      case _                                           => copy(stops = stops :+ lift.position)
 
-      sb.append('\n')
-    }
+  def isDone: Boolean =
+    building.isEmpty && lift.isEmpty && lift.position == 0
 
-    sb.toString()
-  }
+  def step: LiftSystem =
+    registerStop.fixDirection.dropOff.pickup.align
 }
 
 // Excuse the name. Dinglemouse.theLift() is how the function is called in the Codewars test suite
 object Dinglemouse {
   def theLift(queues: Array[Array[Int]], capacity: Int): Array[Int] = {
-    val floors: ListMap[Int, Queue[Person]] =
-      queues.zipWithIndex
-        .map { case (queue, index) =>
-          (index, queue.map(destination => Person(position = index, destination = destination)).to(Queue))
-        }
-        .to(ListMap)
+    val floors: Array[Queue[Person]] =
+      queues.zipWithIndex.map { case (queue, index) =>
+        queue.map(destination => Person(position = index, destination = destination)).to(Queue)
+      }
 
     val lift     = Lift(position = 0, Direction.Up, people = Queue.empty, capacity)
     val building = Building(floors)
 
-    val initialState = State(building = building, lift = lift, stops = List.empty)
-    val finalState   = LiftLogic.simulate(initialState)
+    @tailrec def resolve(state: LiftSystem): LiftSystem =
+      if state.isDone then state else resolve(state.step)
 
-    finalState.stops.toArray
+    val initialState = LiftSystem(building = building, lift = lift, stops = List.empty)
+    val finalState   = resolve(initialState)
+
+    finalState.registerStop.stops.toArray
   }
-}
-
-object LiftLogic {
-  def simulate(initialState: State): State = {
-    val state = initialState.copy(stops = initialState.stops :+ initialState.lift.position)
-
-    @tailrec
-    def resolve(state: State): State =
-      val newState                 = step(state)
-      val State(building, lift, _) = newState
-      if building.isEmpty && lift.isEmpty && lift.position == 0 then newState
-      else resolve(newState)
-
-    resolve(state)
-  }
-
-  private def step(state: State): State = {
-    import state.{building, lift, stops}
-
-    val validDirection = lift.position match
-      case 0                                  => Up
-      case p if p == building.floors.size - 1 => Down
-      case _                                  => lift.direction
-
-    // Off-board people who reached their destination
-    val lift2 = lift.copy(
-      direction = validDirection,
-      people = lift.people.filter(_.destination != lift.position)
-    )
-
-    @tailrec
-    def pickup(lift: Lift, queue: Queue[Person]): (Lift, Queue[Person]) =
-      queue.filter(lift.accepts).dequeueOption match
-        case None            => (lift, queue)
-        case Some(person, _) =>
-          val fullerLift   = lift.copy(people = lift.people.enqueue(person))
-          val emptierQueue = queue.diff(Seq(person))
-          pickup(fullerLift, emptierQueue)
-
-    // pick up people from the current floor
-    val (lift3, floorQueue) = pickup(lift = lift2, queue = building.floors(lift2.position))
-
-    // update the building to reflect the updated floor
-    val building2 = building.copy(floors = building.floors.updated(lift3.position, floorQueue))
-
-    // core task: find the new target and direction
-    val (nextPosition, nextDirection) = getNextPositionAndDirection(building2, lift3)
-
-    // update lift parameters
-    val lift4 = lift3.copy(nextPosition, nextDirection)
-
-    // Register the stop. I added the extra condition because of a bug
-    // by which the lift sometimes takes two turns for the very last move 🤔
-    val stops2 = true match
-      case _ if lift3.position != lift4.position => stops :+ lift4.position
-      case _                                     => stops
-
-    state.copy(building2, lift4, stops2)
-  }
-
-  private def getNextPositionAndDirection(building: Building, lift: Lift): (Floor, Direction) =
-    List(                                          // Build a list of primary targets
-      lift.nearestPassengerTarget,                 // request from passenger already on the lift
-      building.nearestRequestInSameDirection(lift) // request from people [waiting in AND going to] the same direction
-    ).flatten // turn list of options into list of Integers
-      .minByOption(floor => Math.abs(floor - lift.position)) // get Some floor with the lowest distance, or None
-      .match
-        case Some(floor) => (floor, lift.direction) // return requested floor, keep direction
-        case None        =>                         // otherwise choose a new target
-          lift.direction match
-            case Up   => upwardsNewTarget(building, lift)   // look for people above going downwards
-            case Down => downwardsNewTarget(building, lift) // look for people below going upwards
-
-  private def downwardsNewTarget(building: Building, lift: Lift): (Floor, Direction) =
-    building.lowestFloorGoingUp(lift) match
-      case Some(lowest) => (lowest, Up)
-      case None         => (building.highestFloorGoingDown(lift).getOrElse(0), Down)
-
-  private def upwardsNewTarget(building: Building, lift: Lift): (Floor, Direction) =
-    building.highestFloorGoingDown(lift) match
-      case Some(highest) => (highest, Down)
-      case None          => (building.lowestFloorGoingUp(lift).getOrElse(0), Up)
 }
